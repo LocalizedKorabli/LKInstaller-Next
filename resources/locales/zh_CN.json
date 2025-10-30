@@ -1,0 +1,38 @@
+{
+  "lki.lang.name": "简体中文",
+  "lki.app.title": "澪刻本地化安装器",
+  "lki.tab.game": "游戏",
+  "lki.tab.advanced": "高级",
+  "lki.tab.settings": "设置",
+  "lki.tab.about": "关于",
+  "lki.game.detected_clients": "游戏实例",
+  "lki.game.client_type.production": "Mir Korabley正式服",
+  "lki.game.client_type.pts": "Mir Korabley测试服",
+  "lki.advanced.please_select": "请先在“游戏”选项卡中选择一个游戏实例",
+  "lki.game.btn.install_selected": "安装",
+
+  "lki.settings.language": "语言：",
+  "lki.settings.language.restart_required": "您需要重启软件以应用更改。",
+  "lki.settings.theme": "主题：",
+  "lki.settings.theme.light": "浅色",
+  "lki.settings.theme.dark": "深色",
+  "lki.settings.proxy": "代理：",
+  "lki.settings.proxy.configure": "配置",
+  "lki.settings.proxy.disabled": "不使用代理",
+  "lki.settings.proxy.system": "使用系统代理",
+  "lki.settings.proxy.manual": "自定义",
+
+  "lki.proxy.title": "代理设置",
+  "lki.proxy.mode": "代理类型",
+  "lki.proxy.manual_settings": "自定义代理",
+  "lki.proxy.host": "主机：",
+  "lki.proxy.port": "端口：",
+  "lki.proxy.username": "（可选）用户名：",
+  "lki.proxy.password": "（可选）密码：",
+  "lki.proxy.btn.save": "保存",
+  "lki.proxy.btn.cancel": "取消",
+  "lki.proxy.error.host_port_required": "使用自定义代理时必须填写主机和端口。",
+
+  "lki.advanced.preset": "预设：",
+  "lki.preset.default.name": "默认"
+}
