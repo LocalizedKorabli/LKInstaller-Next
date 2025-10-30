@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
+from pathlib import Path
 
 import settings
 import utils
@@ -7,12 +8,11 @@ from localizer import _, get_available_languages
 from settings import GlobalSettings
 import instance_manager
 
-# --- (新导入) ---
 from ui_manager import IconManager
 from ui_windows import ProxyConfigWindow, PresetManagerWindow
+from localization_sources import global_source_manager
+from game_instance import GameInstance, GameVersion
 
-
-# ---
 
 class LocalizationInstallerApp:
     def __init__(self, master, initial_theme):
@@ -32,14 +32,22 @@ class LocalizationInstallerApp:
 
         self.theme_var = tk.StringVar(value=settings.global_settings.get('theme', 'light'))
 
-        self.available_langs = get_available_languages()
-        self.lang_name_to_code = {v: k for k, v in self.available_langs.items()}
+        self.available_ui_langs = get_available_languages()
+        self.ui_lang_name_to_code = {v: k for k, v in self.available_ui_langs.items()}
         current_locale = settings.global_settings.language
-        self.current_lang_name = self.available_langs.get(current_locale, self.available_langs.get('en', 'English'))
+        self.current_lang_name = self.available_ui_langs.get(current_locale,
+                                                             self.available_ui_langs.get('en', 'English'))
 
         self.proxy_status_text = self._get_proxy_status_text()
 
-        self._build_preset_maps()
+        self.instance_type_keys = ['production', 'pts']
+        self.type_id_to_name = {
+            code: _(f"lki.game.client_type.{code}") for code in self.instance_type_keys
+        }
+        self.type_name_to_id = {name: code for code, name in self.type_id_to_name.items()}
+
+        self.preset_id_to_display_name = {}
+        self.display_name_to_preset_id = {}
 
         self._setup_styles()
 
@@ -74,8 +82,17 @@ class LocalizationInstallerApp:
         self.label_about.pack(pady=20, padx=20)
 
     def _build_preset_maps(self):
-        """从 settings.json 加载预设并构建查找字典"""
-        presets_dict = settings.global_settings.get('presets', {})
+        """从 *当前选定的实例* 加载预设并构建查找字典"""
+        if not self.selected_instance_id:
+            self.preset_id_to_display_name = {}
+            self.display_name_to_preset_id = {}
+            return
+
+        instance = self.instance_manager.get_instance(self.selected_instance_id)
+        if not instance:
+            return
+
+        presets_dict = instance.get('presets', {})
 
         self.preset_id_to_display_name = {}
         self.display_name_to_preset_id = {}
@@ -114,7 +131,7 @@ class LocalizationInstallerApp:
         lang_frame = ttk.Frame(self.tab_settings)
         lang_frame.grid(row=0, column=1, sticky='we', pady=10)
 
-        self.lang_combobox = ttk.Combobox(lang_frame, values=list(self.available_langs.values()), state='readonly')
+        self.lang_combobox = ttk.Combobox(lang_frame, values=list(self.available_ui_langs.values()), state='readonly')
         self.lang_combobox.set(self.current_lang_name)
         self.lang_combobox.pack(side='left', fill='x', expand=True)
 
@@ -146,8 +163,7 @@ class LocalizationInstallerApp:
         self.proxy_status_label = ttk.Label(proxy_frame, text=self.proxy_status_text)
         self.proxy_status_label.grid(row=0, column=0, sticky='w', padx=5)
 
-        self.proxy_config_btn = ttk.Button(proxy_frame, text=_('lki.settings.proxy.configure'),
-                                           command=self._open_proxy_window)
+        self.proxy_config_btn = ttk.Button(proxy_frame, text=_('lki.btn.configure'), command=self._open_proxy_window)
         self.proxy_config_btn.grid(row=0, column=1, sticky='e')
 
     def _create_game_tab_widgets(self):
@@ -198,7 +214,7 @@ class LocalizationInstallerApp:
 
     def _on_language_select(self, event=None):
         selected_name = self.lang_combobox.get()
-        selected_code = self.lang_name_to_code.get(selected_name)
+        selected_code = self.ui_lang_name_to_code.get(selected_name)
 
         if selected_code and selected_code != settings.global_settings.language:
             settings.global_settings.language = selected_code
@@ -251,20 +267,34 @@ class LocalizationInstallerApp:
                 ('production', "E:/SteamLibrary/steamapps/common/World of Warships"),
             ]
 
-            default_preset_id = "default"
+            current_ui_lang = settings.global_settings.language
 
             for type_code, path in dummy_clients:
                 name = _(f"lki.game.client_type.{type_code}")
-                self.instance_manager.add_instance(name, path, type_code, default_preset_id)
+                self.instance_manager.add_instance(name, path, type_code, current_ui_lang)
 
             self.game_instances = self.instance_manager.get_all()
 
-        sorted_instances = sorted(self.game_instances.items(), key=lambda item: item[1]['name'])
+        loaded_instances: List[GameInstance] = []
+        for instance_id, data in self.game_instances.items():
+            try:
+                instance = GameInstance(
+                    instance_id=instance_id,
+                    path=Path(data['path']),
+                    name=data['name'],
+                    type=data['type']
+                )
+                loaded_instances.append(instance)
+            except Exception as e:
+                print(f"Error loading game instance {data['path']}: {e}")
 
-        for instance_id, instance_data in sorted_instances:
-            self._add_client_entry(instance_id, instance_data)
+        loaded_instances.sort(key=lambda inst: inst.name)
 
-    def _add_client_entry(self, instance_id, instance_data):
+        for instance in loaded_instances:
+            self._add_client_entry(instance)
+
+    # --- (已修改：显示两个版本并使用翻译键) ---
+    def _add_client_entry(self, instance: GameInstance):
         """向可滚动框架中添加一个客户端条目"""
 
         item_frame = ttk.Frame(self.client_list_frame, padding=(5, 5), style="TFrame")
@@ -280,28 +310,28 @@ class LocalizationInstallerApp:
         text_frame = ttk.Frame(item_frame, style="TFrame")
         text_frame.pack(side='left', fill='x', expand=True)
 
-        type_key = f"lki.game.client_type.{instance_data.get('type', 'production')}"
+        # 1. 实例类型 (e.g., "Mir Korabley Live")
+        type_key = f"lki.game.client_type.{instance.type}"
         type_text = _(type_key)
 
         type_label = ttk.Label(text_frame, text=type_text, style="Client.TLabel")
         type_label.pack(anchor='w', fill='x')
 
-        path_label = ttk.Label(text_frame, text=instance_data['path'], style="Path.TLabel", wraplength=500)
+        # 2. 实例路径
+        path_label = ttk.Label(text_frame, text=str(instance.path), style="Path.TLabel", wraplength=500)
         path_label.pack(anchor='w', fill='x')
 
-        item_frame.type_label = type_label
-        item_frame.path_label = path_label
-        item_frame.text_frame = text_frame
+        # 3. 游戏版本和本地化状态
+        # (已修改) 显示最多两个版本
+        versions_to_display = instance.versions[:2]  # Get the top two versions
 
-        def on_click(event, frame=item_frame, id=instance_id):
+        def on_click(event, frame=item_frame, id=instance.instance_id):
             self._on_client_select(frame, id)
 
+        # (已修改) 绑定所有标签
         text_frame.bind("<Button-1>", on_click)
         type_label.bind("<Button-1>", on_click)
         path_label.bind("<Button-1>", on_click)
-
-        separator = ttk.Separator(self.client_list_frame, orient='horizontal')
-        separator.pack(fill='x', expand=True, padx=5, pady=2)
 
         self._bind_mousewheel(item_frame)
         self._bind_mousewheel(checkbutton)
@@ -309,17 +339,61 @@ class LocalizationInstallerApp:
         self._bind_mousewheel(type_label)
         self._bind_mousewheel(path_label)
 
+        if not versions_to_display:
+            status_text = _('lki.game.version_not_found')
+            status_label = ttk.Label(text_frame, text=status_text, style="Path.TLabel")
+            status_label.pack(anchor='w', fill='x')
+            status_label.bind("<Button-1>", on_click)
+            self._bind_mousewheel(status_label)
+        else:
+            for game_version in versions_to_display:
+                ver_str = game_version.exe_version or _('lki.game.version_unknown')
+                status_text = f"{_('lki.game.version_label')} {ver_str} ({_('lki.game.folder_label')} {game_version.bin_folder_name})"
+
+                if game_version.l10n_info:
+                    l10n_ver = game_version.l10n_info.version
+                    if game_version.verify_files(instance.path):
+                        l10n_status = _('lki.game.l10n_status.ok')
+                    else:
+                        l10n_status = _('lki.game.l10n_status.corrupted')
+                    status_text += f" ({_('lki.game.l10n_label')} {l10n_ver} - {l10n_status})"
+                else:
+                    status_text += f" ({_('lki.game.l10n_status.not_installed')})"
+
+                status_label = ttk.Label(text_frame, text=status_text, style="Path.TLabel")
+                status_label.pack(anchor='w', fill='x')
+                status_label.bind("<Button-1>", on_click)
+                self._bind_mousewheel(status_label)
+
+        item_frame.type_label = type_label
+        item_frame.path_label = path_label
+        item_frame.text_frame = text_frame
+
+        separator = ttk.Separator(self.client_list_frame, orient='horizontal')
+        separator.pack(fill='x', expand=True, padx=5, pady=2)
+
+    # --- (已修改：通用高亮) ---
     def _on_client_select(self, selected_frame, selected_id):
         """处理客户端条目的点击（选择）事件"""
 
         if self.selected_client_widget and self.selected_client_widget != selected_frame:
             self.selected_client_widget.text_frame.config(style="TFrame")
-            self.selected_client_widget.type_label.config(style="Client.TLabel")
-            self.selected_client_widget.path_label.config(style="Path.TLabel")
+            # 循环所有子标签
+            for child in self.selected_client_widget.text_frame.winfo_children():
+                if isinstance(child, ttk.Label):
+                    if child == self.selected_client_widget.type_label:
+                        child.config(style="Client.TLabel")
+                    else:
+                        child.config(style="Path.TLabel")  # 路径和状态标签
 
         selected_frame.text_frame.config(style="Selected.TFrame")
-        selected_frame.type_label.config(style="Selected.Client.TLabel")
-        selected_frame.path_label.config(style="Selected.Path.TLabel")
+        # 循环所有子标签
+        for child in selected_frame.text_frame.winfo_children():
+            if isinstance(child, ttk.Label):
+                if child == selected_frame.type_label:
+                    child.config(style="Selected.Client.TLabel")
+                else:
+                    child.config(style="Selected.Path.TLabel")  # 路径和状态标签
 
         self.selected_client_widget = selected_frame
         self.selected_instance_id = selected_id
@@ -331,6 +405,7 @@ class LocalizationInstallerApp:
     def _on_tab_changed(self, event):
         selected_tab_index = self.notebook.index(self.notebook.select())
         if selected_tab_index == 1:
+            self._build_preset_maps()
             self._update_advanced_tab()
 
     def _update_advanced_tab(self):
@@ -340,9 +415,10 @@ class LocalizationInstallerApp:
             widget.destroy()
 
         if self.selected_instance_id:
+            self._build_preset_maps()
             self.advanced_tab_placeholder.pack_forget()
             self._build_advanced_widgets()
-            self.advanced_tab_frame.pack(fill='x', expand=True, anchor='n')
+            self.advanced_tab_frame.pack(fill='both', expand=True, anchor='n')
         else:
             self.advanced_tab_frame.pack_forget()
             self.advanced_tab_placeholder.pack(pady=20, padx=20, fill='x')
@@ -350,32 +426,51 @@ class LocalizationInstallerApp:
     def _build_advanced_widgets(self):
         """在 advanced_tab_frame 中创建实际的控件"""
 
-        instance = self.instance_manager.get_instance(self.selected_instance_id)
-        if not instance:
+        instance_data = self.instance_manager.get_instance(self.selected_instance_id)
+        if not instance_data:
             return
 
         self.advanced_tab_frame.columnconfigure(1, weight=1)
 
-        # 1. 预设标签
-        preset_label = ttk.Label(self.advanced_tab_frame, text=_('lki.advanced.preset_label'))
-        preset_label.grid(row=0, column=0, sticky='e', padx=(0, 10), pady=10)
+        # --- Row 0: 实例名称 ---
+        type_key = f"lki.game.client_type.{instance_data.get('type', 'production')}"
+        name = _(type_key)
+        name_label = ttk.Label(self.advanced_tab_frame, text=name, style="Client.TLabel")
+        name_label.grid(row=0, column=0, columnspan=2, sticky='w', pady=(0, 20))
 
-        # 2. 预设下拉框
+        # --- Row 1: Instance Type (调换位置) ---
+        type_label = ttk.Label(self.advanced_tab_frame, text=_('lki.advanced.instance_type_label'))
+        type_label.grid(row=1, column=0, sticky='e', padx=(0, 10), pady=10)
+
+        type_frame = ttk.Frame(self.advanced_tab_frame)
+        type_frame.grid(row=1, column=1, sticky='we', pady=10)
+        type_frame.columnconfigure(0, weight=1)
+
+        self.type_combobox = ttk.Combobox(type_frame, values=list(self.type_id_to_name.values()), state='readonly')
+        self.type_combobox.grid(row=0, column=0, sticky='we')
+
+        current_type_code = instance_data.get('type', 'production')
+        current_type_name = self.type_id_to_name.get(current_type_code, _('lki.game.client_type.production'))
+        self.type_combobox.set(current_type_name)
+
+        self.type_combobox.bind("<<ComboboxSelected>>", self._on_instance_type_select)
+
+        # --- Row 2: Preset (调换位置) ---
+        preset_label = ttk.Label(self.advanced_tab_frame, text=_('lki.advanced.preset_label'))
+        preset_label.grid(row=2, column=0, sticky='e', padx=(0, 10), pady=10)
+
         preset_frame = ttk.Frame(self.advanced_tab_frame)
-        preset_frame.grid(row=0, column=1, sticky='we', pady=10)
+        preset_frame.grid(row=2, column=1, sticky='we', pady=10)
         preset_frame.columnconfigure(0, weight=1)
 
         self.preset_combobox = ttk.Combobox(preset_frame, values=list(self.preset_id_to_display_name.values()),
                                             state='readonly')
         self.preset_combobox.grid(row=0, column=0, sticky='we')
 
-        # 3. 设置下拉框的当前值
         self._update_preset_combobox()
 
-        # 4. 绑定保存事件
         self.preset_combobox.bind("<<ComboboxSelected>>", self._on_preset_select)
 
-        # 5. 管理(齿轮)按钮
         self.manage_preset_btn = ttk.Button(
             preset_frame,
             image=self.icons.manage,
@@ -389,7 +484,7 @@ class LocalizationInstallerApp:
         self.preset_combobox.config(values=list(self.preset_id_to_display_name.values()))
 
         instance = self.instance_manager.get_instance(self.selected_instance_id)
-        current_preset_id = instance.get('preset', 'default')
+        current_preset_id = instance.get('active_preset_id', 'default')
         current_preset_name = self.preset_id_to_display_name.get(current_preset_id, _('lki.preset.default.name'))
         self.preset_combobox.set(current_preset_name)
 
@@ -399,11 +494,36 @@ class LocalizationInstallerApp:
         selected_id = self.display_name_to_preset_id.get(selected_name, 'default')
 
         if selected_id and self.selected_instance_id:
-            print(f"Updating instance {self.selected_instance_id} preset to {selected_id}")
-            self.instance_manager.update_instance(
+            print(f"Updating instance {self.selected_instance_id} active preset to {selected_id}")
+            self.instance_manager.update_instance_data(
                 self.selected_instance_id,
-                {'preset': selected_id}
+                {'active_preset_id': selected_id}
             )
+
+    def _on_instance_type_select(self, event=None):
+        """当实例类型下拉框被更改时调用"""
+        selected_name = self.type_combobox.get()
+        selected_code = self.type_name_to_id.get(selected_name)
+
+        if not selected_code or not self.selected_instance_id:
+            return
+
+        instance = self.instance_manager.get_instance(self.selected_instance_id)
+        current_code = instance.get('type', 'production')
+
+        if selected_code == current_code:
+            return
+
+        confirm_text = _('lki.advanced.confirm_type_change') % (selected_name)
+        if messagebox.askyesno(_('lki.app.title'), confirm_text, parent=self.advanced_tab_frame):
+            print(f"Updating instance {self.selected_instance_id} type to {selected_code}")
+            self.instance_manager.update_instance_data(
+                self.selected_instance_id,
+                {'type': selected_code}
+            )
+        else:
+            current_name = self.type_id_to_name.get(current_code)
+            self.type_combobox.set(current_name)
 
     def _open_preset_manager(self):
         """打开预设管理器窗口"""

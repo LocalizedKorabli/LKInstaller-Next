@@ -1,15 +1,30 @@
 {
   "lki.lang.name": "简体中文",
   "lki.app.title": "澪刻本地化安装器",
+
   "lki.tab.game": "游戏",
   "lki.tab.advanced": "高级",
   "lki.tab.settings": "设置",
   "lki.tab.about": "关于",
+
   "lki.game.detected_clients": "游戏实例",
   "lki.game.client_type.production": "Mir Korabley正式服",
   "lki.game.client_type.pts": "Mir Korabley测试服",
-  "lki.advanced.please_select": "请先在“游戏”选项卡中选择一个游戏实例",
   "lki.game.btn.install_selected": "安装",
+
+  "lki.game.version_label": "版本:",
+  "lki.game.folder_label": "目录:",
+  "lki.game.l10n_label": "汉化:",
+  "lki.game.l10n_status.ok": "正常",
+  "lki.game.l10n_status.corrupted": "已损坏!",
+  "lki.game.l10n_status.not_installed": "未安装",
+  "lki.game.version_not_found": "未在找到游戏版本",
+  "lki.game.version_unknown": "???",
+
+  "lki.advanced.please_select": "请先在“游戏”选项卡中选中一个游戏实例",
+  "lki.advanced.preset_label": "安装预设：",
+  "lki.advanced.instance_type_label": "实例类型：",
+  "lki.advanced.confirm_type_change": "您确定要将客户端类型改为%s吗？\n\n“客户端类型”设定不会对您的游戏客户端造成实际影响，但决定了软件将安装适用于何种类型客户端的本地化包。",
 
   "lki.settings.language": "语言：",
   "lki.settings.language.restart_required": "您需要重启软件以应用更改。",
@@ -17,7 +32,6 @@
   "lki.settings.theme.light": "浅色",
   "lki.settings.theme.dark": "深色",
   "lki.settings.proxy": "代理：",
-  "lki.settings.proxy.configure": "配置",
   "lki.settings.proxy.disabled": "不使用代理",
   "lki.settings.proxy.system": "使用系统代理",
   "lki.settings.proxy.manual": "自定义",
@@ -29,10 +43,31 @@
   "lki.proxy.port": "端口：",
   "lki.proxy.username": "（可选）用户名：",
   "lki.proxy.password": "（可选）密码：",
-  "lki.proxy.btn.save": "保存",
-  "lki.proxy.btn.cancel": "取消",
   "lki.proxy.error.host_port_required": "使用自定义代理时必须填写主机和端口。",
 
-  "lki.advanced.preset": "预设：",
-  "lki.preset.default.name": "默认"
+  "lki.preset.default.name": "默认",
+  "lki.preset.manager.title": "管理预设",
+  "lki.preset.manager.language": "本地化语言：",
+  "lki.preset.manager.route": "下载线路：",
+  "lki.preset.manager.enter_name": "为新预设起一个名称：",
+  "lki.preset.manager.confirm_delete": "您确定要删除此预设吗？",
+  "lki.preset.manager.saved": "预设已保存。",
+  "lki.preset.error.name_exists": "已存在名称相同的预设。",
+  "lki.preset.btn.select": "选定并保存",
+
+  "lki.btn.save": "保存",
+  "lki.btn.save_changes": "保存改动",
+  "lki.btn.cancel": "取消",
+  "lki.btn.configure": "配置",
+  "lki.btn.new": "新建",
+  "lki.btn.save_as": "保存为",
+  "lki.btn.rename": "重命名",
+  "lki.btn.delete": "删除",
+
+  "l10n.zh_CN.name": "简体中文",
+  "l10n.en.name": "英文",
+
+  "l10n.route.gitee": "Gitee（大陆用户）",
+  "l10n.route.gitlab": "GitLab",
+  "l10n.route.github": "GitHub"
 }

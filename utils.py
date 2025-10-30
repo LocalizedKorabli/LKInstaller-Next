@@ -25,9 +25,12 @@ def get_system_language_codes() -> Tuple[Optional[str], Optional[str]]:
 
     return None, None
 
+
 '''
 Returns sets of exact languages and major languages.
 '''
+
+
 def gather_locales() -> Tuple[Set[str], Set[str]]:
     exact = set([])
     major = set([])
@@ -39,6 +42,7 @@ def gather_locales() -> Tuple[Set[str], Set[str]]:
         major.add(_locale.split('_')[0])
     return exact, major
 
+
 def select_locale_by_system_lang_code():
     exact, major = get_system_language_codes()
     available_exact, available_major = gather_locales()
@@ -48,3 +52,20 @@ def select_locale_by_system_lang_code():
         return major2exact.get(major, 'en')
     else:
         return 'en'
+
+
+# --- (已修改：简化逻辑) ---
+def determine_default_l10n_lang(ui_lang: str) -> str:
+    """
+    根据 UI 语言确定默认的*本地化*语言。
+    (不再需要 instance_type)
+    """
+    # 映射 UI 语言 (zh_CN) -> 本地化语言 (zh_CN)
+    # (之后可以添加 'zh_TW': 'zh_TW' 等)
+    mapping = {
+        'zh_CN': 'zh_CN',
+        'en': 'en'
+    }
+
+    # 回退到 'en'
+    return mapping.get(ui_lang, 'en')

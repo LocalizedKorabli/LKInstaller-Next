@@ -2,6 +2,7 @@ import tkinter as tk
 import settings
 import utils
 import instance_manager
+import localization_sources  # <-- 确保在 app 之前加载
 
 from app import LocalizationInstallerApp
 
