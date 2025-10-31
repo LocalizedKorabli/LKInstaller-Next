@@ -9,15 +9,11 @@ import instance_manager
 from localizer import _, get_available_languages
 from ui_manager import IconManager
 
-# --- (新导入) ---
 from ui.tab_game import GameTab
 from ui.tab_advanced import AdvancedTab
 from ui.tab_settings import SettingsTab
 from ui.tab_about import AboutTab
 from game_instance import GameInstance
-
-
-# --- (新导入结束) ---
 
 
 class LocalizationInstallerApp:
@@ -38,7 +34,6 @@ class LocalizationInstallerApp:
         self.notebook = ttk.Notebook(master)
         self.notebook.pack(pady=10, padx=10, expand=True, fill='both')
 
-        # --- (已修改：实例化选项卡) ---
         self.tab_game = GameTab(self.notebook, self.icons, self.type_id_to_name, self._on_instance_select)
 
         self.tab_advanced = AdvancedTab(self.notebook, self.icons, self.type_id_to_name)
@@ -54,11 +49,8 @@ class LocalizationInstallerApp:
         self.notebook.add(self.tab_about, text=_('lki.tab.about'))
 
         self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
-        # --- (修改结束) ---
 
-        # --- (新增：初始检测) ---
         self.master.after(100, self.run_initial_detection)
-        # --- (新增结束) ---
 
     def _setup_styles(self):
         """定义自定义字体和样式"""
@@ -80,15 +72,15 @@ class LocalizationInstallerApp:
                        foreground=[('active', self.select_bg), ('disabled', 'gray')],
                        underline=[('active', 1)])
 
-    # --- (新/修改：回调和协调器) ---
+        # (新增：安装进度条样式)
+        self.style.configure("success.TProgressbar", background="#0078d4")
+        self.style.configure("danger.TProgressbar", background="#d13438")
 
-    # (已修改：实现了首次启动逻辑)
     def run_initial_detection(self):
         """在启动时*仅一次*触发自动检测。"""
         if not settings.global_settings.get('ever_launched', False):
             print("Running *first time* instance import...")
 
-            # (已修改：调用正确的方法名)
             self.tab_game._on_auto_import(is_initial_run=True)
 
             settings.global_settings.set('ever_launched', True)

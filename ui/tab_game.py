@@ -21,6 +21,7 @@ from localizer import _
 from game_instance import GameInstance
 from ui.dialogs import CustomAskStringDialog
 from instance_detector import find_instances_for_auto_import, get_instance_type_from_path
+from installation_manager import InstallationManager, InstallationTask  # <-- (新增)
 
 
 class GameTab(ttk.Frame):
@@ -35,6 +36,9 @@ class GameTab(ttk.Frame):
         self.icons = icons
         self.type_id_to_name = type_id_to_name
         self.on_instance_select_callback = on_instance_select_callback
+
+        # (新增)
+        self.installation_manager = InstallationManager(self.app_master)
 
         self.instance_manager = instance_manager.global_instance_manager
         self.game_instances: Dict[str, any] = {}
@@ -51,6 +55,7 @@ class GameTab(ttk.Frame):
         self._load_and_display_instances()
         self._build_client_list_ui()
 
+    # (已修改：连接安装按钮)
     def _create_game_tab_widgets(self):
         """创建“游戏”选项卡中的所有小部件"""
 
@@ -77,14 +82,16 @@ class GameTab(ttk.Frame):
                                           command=self._on_auto_import)
         self.btn_auto_import.pack(side='left', padx=(2, 0))
 
-        # (已修改：添加 wraplength)
         hint_label = ttk.Label(self, text=_('lki.game.install_hint'), style="Hint.TLabel", anchor='center',
                                wraplength=400)
         hint_label.pack(fill='x', side='bottom', pady=(5, 0))
 
         bottom_frame = ttk.Frame(self)
         bottom_frame.pack(fill='x', side='bottom', pady=(10, 0))
-        self.btn_install_selected = ttk.Button(bottom_frame, text=_('lki.game.btn.install_selected'))
+
+        # (已修改：连接到新命令)
+        self.btn_install_selected = ttk.Button(bottom_frame, text=_('lki.game.btn.install_selected'),
+                                               command=self._on_install_clicked)
         self.btn_install_selected.pack(fill='x', expand=True)
 
         instance_actions_frame = ttk.Frame(self)
@@ -253,13 +260,19 @@ class GameTab(ttk.Frame):
 
                 if game_version.l10n_info:
                     l10n_ver = game_version.l10n_info.version
+                    l10n_lang = game_version.l10n_info.lang_code  # <-- (新增)
+
                     if game_version.verify_files():
                         l10n_status = _('lki.game.l10n_status.ok')
                     else:
                         l10n_status = _('lki.game.l10n_status.corrupted')
-                    status_text += f" ({_('lki.game.l10n_label')} {l10n_ver} - {l10n_status})"
+
+                    # (新增) 如果 lang_code 存在，则构建 [zh_CN] 字符串
+                    lang_str = f"[{l10n_lang}] " if l10n_lang else ""
+
+                    status_text += f" ({lang_str}{l10n_ver} - {l10n_status})"
                 else:
-                    status_text += f" ({_('lki.game.l10n_label')} {_('lki.game.l10n_status.not_installed')})"
+                    status_text += f" ({_('lki.game.l10n_status.not_installed')})"
 
                 status_label = ttk.Label(text_frame, text=status_text, style="Path.TLabel", cursor="hand2")
                 status_label.pack(anchor='w', fill='x')
@@ -464,6 +477,66 @@ class GameTab(ttk.Frame):
 
         self._clear_selection_and_refresh()
 
+    # --- (新增：安装逻辑) ---
+    def _on_install_clicked(self):
+        """收集勾选的任务并启动安装管理器。"""
+        tasks_to_run: List[InstallationTask] = []
+
+        # 1. 收集勾选的实例
+        checked_instance_ids = []
+        for i, check_var in enumerate(self.client_check_vars):
+            if check_var.get():
+                try:
+                    # (这是一个脆弱的假设，但它是目前最简单的方法)
+                    instance_id = list(self.game_instances.keys())[i]
+                    checked_instance_ids.append(instance_id)
+                except IndexError:
+                    pass  # (不应发生)
+
+        if not checked_instance_ids:
+            messagebox.showwarning(_('lki.game.btn.install_selected'), _('lki.install.error.no_instances_selected'))
+            return
+
+        # 2. 为每个实例创建任务
+        for instance_id in checked_instance_ids:
+            instance = self.loaded_game_instances.get(instance_id)
+            instance_data = self.instance_manager.get_instance(instance_id)
+
+            if not instance or not instance_data:
+                messagebox.showerror("Error", f"Could not find data for instance {instance_id}")
+                continue
+
+            if not instance.versions:
+                messagebox.showwarning(_('lki.game.btn.install_selected'),
+                                       _('lki.install.error.no_version_for_instance') % instance.name)
+                continue
+
+            active_preset_id = instance_data.get('active_preset_id', 'default')
+            preset_data = instance_data.get('presets', {}).get(active_preset_id)
+
+            if not preset_data:
+                messagebox.showerror("Error", f"Could not find preset {active_preset_id} for instance {instance.name}")
+                continue
+
+            # (为预设添加一个可显示的名称)
+            preset_data['name'] = _(preset_data.get('name_key')) if preset_data.get('is_default') else preset_data.get(
+                'name')
+
+            tasks_to_run.append(InstallationTask(instance, preset_data, self.app_master))
+
+        # 3. 启动管理器
+        if tasks_to_run:
+            self.installation_manager.start_installation(tasks_to_run, self._on_installation_complete)
+
+    def _on_installation_complete(self):
+        """
+        由 InstallationManager 在所有任务完成后调用的回调。
+        刷新游戏列表以显示新的安装状态。
+        """
+        print("Installation complete. Refreshing game list...")
+        self._clear_selection_and_refresh()
+
+    # --- (回调) ---
     def _open_import_instance_window(self):
         """打开“导入实例”窗口"""
         window = ImportInstanceWindow(self.app_master, self.type_id_to_name, self._on_import_instance_save)

@@ -3,59 +3,69 @@ from localizer import _
 from typing import Dict, Optional, List
 
 # --- (链接定义) ---
-EE_PACK_FILENAME = 'LKExperienceEnhancement.zip'
 MODS_URL_CHS = 'https://tapio.lanzn.com/b0nxzso2b'
 MODS_URL_EN = None
 
+# (已修改：添加了 'version' 和 'mo' 的新路径)
 # 1. 简体中文路由
 CHS_LIVE_ROUTES = {
     'gitee': {
-        'mo': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/',
-        'ee': f'https://gitee.com/localized-korabli/Korabli-LESTA-L10N/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+        'mo': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/global.mo',
+        'version': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/version.info',
+        'ee': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
     },
     'gitlab': {
-        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n/-/raw/main/Localizations/latest/',
-        'ee': f'https://gitlab.com/localizedkorabli/korabli-lesta-l10n/-/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n/-/raw/main/Localizations/latest/global.mo',
+        'version': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n/-/raw/main/Localizations/latest/version.info',
+        'ee': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
     },
     'github': {
-        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/',
-        'ee': f'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/global.mo',
+        'version': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/version.info',
+        'ee': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
     }
 }
 CHS_PT_ROUTES = {
     'gitee': {
-        'mo': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/',
-        'ee': f'https://gitee.com/localized-korabli/Korabli-LESTA-L10N-PublicTest/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+        'mo': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/global.mo',
+        'version': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/version.info',
+        'ee': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/BuiltInMods/LKExperienceEnhancement.zip'
     },
     'gitlab': {
-        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n-publictest/-/raw/Localizations/Localizations/latest/',
-        'ee': f'https://gitlab.com/localizedkorabli/korabli-lesta-l10n-publictest/-/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n-publictest/-/raw/Localizations/Localizations/latest/global.mo',
+        'version': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n-publictest/-/raw/Localizations/Localizations/latest/version.info',
+        'ee': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n-publictest/-/raw/Localizations/BuiltInMods/LKExperienceEnhancement.zip'
     },
     'github': {
-        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/',
-        'ee': f'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N-PublicTest/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/global.mo',
+        'version': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/version.info',
+        'ee': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/BuiltInMods/LKExperienceEnhancement.zip'
     }
 }
 
 # 2. 英文路由
 EN_LIVE_ROUTES = {
     'gitlab': {
-        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n/-/raw/main/Localizations/latest/',
-        'ee': f'https://gitlab.com/localizedkorabli/korabli-lesta-i18n/-/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n/-/raw/main/Localizations/latest/global.mo',
+        'version': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n/-/raw/main/Localizations/latest/version.info',
+        'ee': f'https://gitlab.com/localizedkorabli/korabli-lesta-i18n/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
     },
     'github': {
-        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N/raw/main/Localizations/latest/',
-        'ee': f'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N/raw/main/Localizations/latest/global.mo',
+        'version': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N/raw/main/Localizations/latest/version.info',
+        'ee': f'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
     }
 }
 EN_PT_ROUTES = {
     'gitlab': {
-        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n-publictest/-/raw/main/Localizations/latest/',
-        'ee': f'https://gitlab.com/localizedkorabli/korabli-lesta-i18n-publictest/-/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n-publictest/-/raw/main/Localizations/latest/global.mo',
+        'version': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n-publictest/-/raw/main/Localizations/latest/version.info',
+        'ee': f'https://gitlab.com/localizedkorabli/korabli-lesta-i18n-publictest/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
     },
     'github': {
-        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/Localizations/latest/',
-        'ee': f'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/Localizations/latest/global.mo',
+        'version': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/Localizations/latest/version.info',
+        'ee': f'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
     }
 }
 
@@ -82,13 +92,15 @@ class LocalizationSource:
         """获取 'production' 或 'pts' 的下载路由字典"""
         return self.routes.get(instance_type)
 
+    # (已修改：现在返回完整的字典)
     def get_urls(self, instance_type: str, route_id: str) -> Optional[Dict[str, str]]:
         """
-        根据实例类型和下载线路，获取 MO 和 EE 的 URL。
-        返回: {'mo': 'url', 'ee': 'url'}
+        根据实例类型和下载线路，获取 MO, EE 和 Version 的 URL。
+        返回: {'mo': 'url', 'ee': 'url', 'version': 'url'}
         """
         routes_for_type = self.get_routes_for_type(instance_type)
         if routes_for_type:
+            # (回退到第一个可用的路由)
             return routes_for_type.get(route_id, next(iter(routes_for_type.values()), None))
         return None
 
@@ -155,7 +167,6 @@ class SourceManager:
             name_to_id[display_name] = source_id
         return id_to_name, name_to_id
 
-    # (已修改：此函数现在只返回 *此* 来源的路由)
     def get_routes_for_source(self, source_id: str) -> List[str]:
         """获取一个本地化来源可用的下载线路列表 (例如 ['gitee', 'gitlab'])"""
         source = self.get_source(source_id)
@@ -169,7 +180,6 @@ class SourceManager:
 
         return keys
 
-    # (新增：获取 *所有* 路由)
     def get_all_available_route_ids(self) -> List[str]:
         """获取 *所有* 来源中 *所有* 可用的唯一路由 ID。"""
         all_keys = set()
@@ -177,7 +187,6 @@ class SourceManager:
             for route_dict in source.routes.values():
                 all_keys.update(route_dict.keys())
 
-        # 保持一个一致的（尽管是任意的）顺序
         return sorted(list(all_keys))
 
     def get_mods_url(self, source_id: str) -> Optional[str]:

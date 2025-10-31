@@ -30,9 +30,10 @@ class LocalizationInfo:
     一个数据类，用于保存 installation_info.json 的内容。
     """
 
-    def __init__(self, version: str, files: Dict[str, str]):
+    def __init__(self, version: str, files: Dict[str, str], lang_code: Optional[str] = None):
         self.version: str = version
         self.files: Dict[str, str] = files
+        self.lang_code: Optional[str] = lang_code
 
 
 class GameVersion:
@@ -111,7 +112,8 @@ class GameVersion:
 
             return LocalizationInfo(
                 version=data.get("version"),
-                files=data.get("files", {})
+                files=data.get("files", {}),
+                lang_code=data.get("lang_code")
             )
         except Exception as e:
             print(f"Error loading {info_path}: {e}")
@@ -128,7 +130,11 @@ class GameVersion:
             return False
 
         for relative_path, expected_hash in self.l10n_info.files.items():
-            absolute_path = self.game_root_path / relative_path
+
+            # --- (这是修复) ---
+            # 验证器必须在 mods 目录中查找文件
+            absolute_path = self.bin_folder_path / "mods" / relative_path
+            # --- (修复结束) ---
 
             actual_hash = _calculate_sha256(absolute_path)
 

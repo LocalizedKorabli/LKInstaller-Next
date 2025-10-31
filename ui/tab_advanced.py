@@ -142,13 +142,19 @@ class AdvancedTab(ttk.Frame):
 
                 if game_version.l10n_info:
                     l10n_ver = game_version.l10n_info.version
+                    l10n_lang = game_version.l10n_info.lang_code  # <-- (新增)
+
                     if game_version.verify_files():
                         l10n_status = _('lki.game.l10n_status.ok')
                     else:
                         l10n_status = _('lki.game.l10n_status.corrupted')
-                    l10n_text = f" ({_('lki.game.l10n_label')} {l10n_ver} - {l10n_status})"
+
+                    # (新增) 如果 lang_code 存在，则构建 [zh_CN] 字符串
+                    lang_str = f"[{l10n_lang}] " if l10n_lang else ""
+
+                    l10n_text = f" ({lang_str}{l10n_ver} - {l10n_status})"
                 else:
-                    l10n_text = f" ({_('lki.game.l10n_label')} {_('lki.game.l10n_status.not_installed')})"
+                    l10n_text = f" ({_('lki.game.l10n_status.not_installed')})"
 
                 full_version_string = version_text + l10n_text
                 version_label = ttk.Label(instance_details_frame, text=full_version_string, style="Path.TLabel")
@@ -168,6 +174,7 @@ class AdvancedTab(ttk.Frame):
         self.preset_combobox = ttk.Combobox(preset_config_frame, values=list(self.preset_id_to_display_name.values()),
                                             state='readonly')
         self.preset_combobox.grid(row=0, column=1, sticky='we', pady=(0, 10))
+        self.preset_combobox.bind("<<ComboboxSelected>>", self._on_preset_select)
 
         self.manage_preset_btn = ttk.Button(
             preset_config_frame,
