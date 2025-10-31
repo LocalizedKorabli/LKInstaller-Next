@@ -5,14 +5,22 @@ from typing import List, Dict, Optional
 import os
 import xml.etree.ElementTree as Et
 import threading
-import re  # <-- (新增)
+import re
+import subprocess
+import webbrowser
+
+try:
+    from tktooltip import ToolTip
+except ImportError:
+    print("Warning: tktooltip not found. Tooltips will be disabled.")
+    ToolTip = None
 
 import settings
 import instance_manager
 from localizer import _
 from game_instance import GameInstance
 from ui.dialogs import CustomAskStringDialog
-from instance_detector import detect_instances, detect_instance_type_from_path
+from instance_detector import find_instances_for_auto_import, get_instance_type_from_path
 
 
 class GameTab(ttk.Frame):
@@ -23,7 +31,7 @@ class GameTab(ttk.Frame):
     def __init__(self, master, icons, type_id_to_name, on_instance_select_callback):
         super().__init__(master, padding='10 10 10 10')
 
-        self.app_master = master.master  # (tk.Tk root)
+        self.app_master = master.master
         self.icons = icons
         self.type_id_to_name = type_id_to_name
         self.on_instance_select_callback = on_instance_select_callback
@@ -33,41 +41,69 @@ class GameTab(ttk.Frame):
         self.selected_instance_id: Optional[str] = None
         self.selected_client_widget: Optional[ttk.Frame] = None
 
+        self.loaded_game_instances: Dict[str, GameInstance] = {}
+
         self.client_check_vars: List[tk.BooleanVar] = []
         self.select_all_var = tk.BooleanVar()
 
         self._create_game_tab_widgets()
 
         self._load_and_display_instances()
-
-        # --- (已修改) ---
-        # 立即开始初始检测
-        self._on_detect_instances(is_initial_run=True)
-        # --- (修改结束) ---
+        self._build_client_list_ui()
 
     def _create_game_tab_widgets(self):
         """创建“游戏”选项卡中的所有小部件"""
+
         top_frame = ttk.Frame(self, padding=(5, 0))
         top_frame.pack(fill='x', side='top', pady=(0, 10))
-        buttons_frame = ttk.Frame(top_frame)
-        buttons_frame.pack(side='right', anchor='e')
+
+        top_buttons_frame = ttk.Frame(top_frame)
+        top_buttons_frame.pack(side='right', anchor='e')
         self.check_all_btn = ttk.Checkbutton(top_frame, variable=self.select_all_var, command=self._on_select_all)
         self.check_all_btn.pack(side='left', padx=(0, 10), anchor='center')
         title_label = ttk.Label(top_frame, text=_('lki.game.detected_clients'), style="Client.TLabel")
         title_label.pack(side='left', anchor='w')
 
-        self.btn_add = ttk.Button(buttons_frame, image=self.icons.add, style="Toolbutton",
-                                  command=self._open_add_instance_window)
-        self.btn_add.pack(side='left', padx=(0, 2))
-        self.btn_rename = ttk.Button(buttons_frame, image=self.icons.rename, style="Toolbutton",
+        self.btn_import = ttk.Button(top_buttons_frame, image=self.icons.import_icon, style="Toolbutton",
+                                     command=self._open_import_instance_window)
+        self.btn_import.pack(side='left', padx=(0, 2))
+        self.btn_rename = ttk.Button(top_buttons_frame, image=self.icons.rename, style="Toolbutton",
                                      command=self._open_edit_instance_window, state='disabled')
         self.btn_rename.pack(side='left', padx=2)
-        self.btn_remove = ttk.Button(buttons_frame, image=self.icons.remove, style="Toolbutton",
+        self.btn_remove = ttk.Button(top_buttons_frame, image=self.icons.remove, style="Toolbutton",
                                      command=self._open_delete_instance_window, state='disabled')
         self.btn_remove.pack(side='left', padx=2)
-        self.btn_detect = ttk.Button(buttons_frame, image=self.icons.detect, style="Toolbutton",
-                                     command=self._on_detect_instances)
-        self.btn_detect.pack(side='left', padx=(2, 0))
+        self.btn_auto_import = ttk.Button(top_buttons_frame, image=self.icons.auto_import_icon, style="Toolbutton",
+                                          command=self._on_auto_import)
+        self.btn_auto_import.pack(side='left', padx=(2, 0))
+
+        # (已修改：添加 wraplength)
+        hint_label = ttk.Label(self, text=_('lki.game.install_hint'), style="Hint.TLabel", anchor='center',
+                               wraplength=400)
+        hint_label.pack(fill='x', side='bottom', pady=(5, 0))
+
+        bottom_frame = ttk.Frame(self)
+        bottom_frame.pack(fill='x', side='bottom', pady=(10, 0))
+        self.btn_install_selected = ttk.Button(bottom_frame, text=_('lki.game.btn.install_selected'))
+        self.btn_install_selected.pack(fill='x', expand=True)
+
+        instance_actions_frame = ttk.Frame(self)
+        instance_actions_frame.pack(fill='x', side='bottom', pady=(5, 0))
+
+        bottom_buttons_frame = ttk.Frame(instance_actions_frame)
+        bottom_buttons_frame.pack(side='right', anchor='e')
+
+        self.btn_move_up = ttk.Button(bottom_buttons_frame, image=self.icons.up, style="Toolbutton",
+                                      command=self._move_instance_up, state='disabled')
+        self.btn_move_up.pack(side='left', padx=(0, 2))
+
+        self.btn_move_down = ttk.Button(bottom_buttons_frame, image=self.icons.down, style="Toolbutton",
+                                        command=self._move_instance_down, state='disabled')
+        self.btn_move_down.pack(side='left', padx=2)
+
+        self.btn_open_folder = ttk.Button(bottom_buttons_frame, image=self.icons.folder, style="Toolbutton",
+                                          command=self._open_instance_folder, state='disabled')
+        self.btn_open_folder.pack(side='left', padx=2)
 
         list_container = ttk.Frame(self)
         list_container.pack(fill='both', expand=True)
@@ -88,13 +124,14 @@ class GameTab(ttk.Frame):
         self._bind_mousewheel(self.canvas)
         self._bind_mousewheel(self.client_list_frame)
 
-        bottom_frame = ttk.Frame(self)
-        bottom_frame.pack(fill='x', side='bottom', pady=(10, 0))
-        self.btn_install_selected = ttk.Button(bottom_frame, text=_('lki.game.btn.install_selected'))
-        self.btn_install_selected.pack(fill='x', expand=True)
-
-        hint_label = ttk.Label(self, text=_('lki.game.install_hint'), style="Hint.TLabel", anchor='center')
-        hint_label.pack(fill='x', side='bottom', pady=(5, 0))
+        if ToolTip:
+            ToolTip(self.btn_import, _('lki.tooltip.add_instance'))
+            ToolTip(self.btn_rename, _('lki.tooltip.edit_instance'))
+            ToolTip(self.btn_remove, _('lki.tooltip.remove_instance'))
+            ToolTip(self.btn_auto_import, _('lki.tooltip.detect_instances'))
+            ToolTip(self.btn_move_up, _('lki.tooltip.move_up'))
+            ToolTip(self.btn_move_down, _('lki.tooltip.move_down'))
+            ToolTip(self.btn_open_folder, _('lki.tooltip.open_folder'))
 
     def _load_and_display_instances(self):
         """从管理器加载实例数据。"""
@@ -102,25 +139,22 @@ class GameTab(ttk.Frame):
 
     def _refresh_client_list(self):
         """清除、重新加载并重新构建客户端列表 UI。"""
-        # 1. 清除 UI
         for widget in self.client_list_frame.winfo_children():
             widget.destroy()
 
-        # 2. 重置内部跟踪器
         self.client_check_vars = []
         self.select_all_var.set(False)
         self.check_all_btn.state(['!alternate'])
 
-        # 3. 重新加载数据
         self.game_instances = self.instance_manager.get_all()
 
-        # 4. 重建 UI
         self._build_client_list_ui()
 
     def clear_selection_and_refresh(self):
         """由 App 调用，在外部事件（如更改类型）后刷新列表"""
         self.selected_instance_id = None
         self.selected_client_widget = None
+        self.loaded_game_instances.clear()
         self._refresh_client_list()
         self.on_instance_select_callback(None)
 
@@ -128,7 +162,9 @@ class GameTab(ttk.Frame):
         """
         使用 self.game_instances 中的数据填充客户端列表 UI。
         """
+        self.loaded_game_instances.clear()
         loaded_instances: List[GameInstance] = []
+
         for instance_id, data in self.game_instances.items():
             try:
                 instance = GameInstance(
@@ -138,16 +174,27 @@ class GameTab(ttk.Frame):
                     type=data['type']
                 )
                 loaded_instances.append(instance)
+                self.loaded_game_instances[instance_id] = instance
             except Exception as e:
                 print(f"Error loading game instance {data['path']}: {e}")
 
-        # (已移除) loaded_instances.sort(key=lambda inst: inst.name)
-        # ^^^ 这满足了“附加到末尾”的要求
+        frame_to_select: Optional[ttk.Frame] = None
+        id_to_select: Optional[str] = self.selected_instance_id
 
         for instance in loaded_instances:
-            self._add_client_entry(instance)
+            item_frame = self._add_client_entry(instance)
+            if instance.instance_id == id_to_select:
+                frame_to_select = item_frame
 
-    def _add_client_entry(self, instance: GameInstance):
+        if frame_to_select and id_to_select:
+            self._on_client_select(frame_to_select, id_to_select)
+
+    def get_selected_game_instance(self) -> Optional[GameInstance]:
+        if not self.selected_instance_id:
+            return None
+        return self.loaded_game_instances.get(self.selected_instance_id)
+
+    def _add_client_entry(self, instance: GameInstance) -> ttk.Frame:
         """向可滚动框架中添加一个客户端条目"""
         item_frame = ttk.Frame(self.client_list_frame, padding=(5, 5), style="TFrame")
         item_frame.pack(fill='x', expand=True)
@@ -162,7 +209,8 @@ class GameTab(ttk.Frame):
         text_frame = ttk.Frame(item_frame, style="TFrame", cursor="hand2")
         text_frame.pack(side='left', fill='x', expand=True)
 
-        name_label = ttk.Label(text_frame, text=instance.name, style="Client.TLabel", cursor="hand2")
+        name_label_text = f"{_('lki.game.name_label')} {instance.name}"
+        name_label = ttk.Label(text_frame, text=name_label_text, style="Client.TLabel", cursor="hand2")
         name_label.pack(anchor='w', fill='x')
 
         path_label_text = f"{_('lki.game.path_label')} {str(instance.path)}"
@@ -201,7 +249,7 @@ class GameTab(ttk.Frame):
         else:
             for game_version in versions_to_display:
                 ver_str = game_version.exe_version or _('lki.game.version_unknown')
-                status_text = f"{_('lki.game.version_label')} {ver_str} ({_('lki.game.folder_label')} {game_version.bin_folder_name})"
+                status_text = f"{_('lki.game.version_label')} {ver_str}"
 
                 if game_version.l10n_info:
                     l10n_ver = game_version.l10n_info.version
@@ -211,7 +259,7 @@ class GameTab(ttk.Frame):
                         l10n_status = _('lki.game.l10n_status.corrupted')
                     status_text += f" ({_('lki.game.l10n_label')} {l10n_ver} - {l10n_status})"
                 else:
-                    status_text += f" ({_('lki.game.l10n_status.not_installed')})"
+                    status_text += f" ({_('lki.game.l10n_label')} {_('lki.game.l10n_status.not_installed')})"
 
                 status_label = ttk.Label(text_frame, text=status_text, style="Path.TLabel", cursor="hand2")
                 status_label.pack(anchor='w', fill='x')
@@ -224,6 +272,8 @@ class GameTab(ttk.Frame):
 
         separator = ttk.Separator(self.client_list_frame, orient='horizontal')
         separator.pack(fill='x', expand=True, padx=5, pady=2)
+
+        return item_frame
 
     def _on_client_select(self, selected_frame, selected_id):
         """处理客户端条目的点击（选择）事件"""
@@ -256,9 +306,18 @@ class GameTab(ttk.Frame):
 
         self.btn_rename.config(state='normal')
         self.btn_remove.config(state='normal')
+        self.btn_open_folder.config(state='normal')
 
-        # 调用回调，通知 App
-        self.on_instance_select_callback(self.selected_instance_id)
+        keys = list(self.game_instances.keys())
+        try:
+            index = keys.index(selected_id)
+        except ValueError:
+            index = -1
+
+        self.btn_move_up.config(state='normal' if index > 0 else 'disabled')
+        self.btn_move_down.config(state='normal' if index != -1 and index < (len(keys) - 1) else 'disabled')
+
+        self.on_instance_select_callback(self.get_selected_game_instance())
 
     def _on_canvas_configure(self, event):
         canvas_width = event.width
@@ -296,81 +355,88 @@ class GameTab(ttk.Frame):
 
     def update_icons(self):
         """当主题更改时更新此选项卡上的图标"""
-        self.btn_add.config(image=self.icons.add)
+        self.btn_import.config(image=self.icons.import_icon)
         self.btn_rename.config(image=self.icons.rename)
         self.btn_remove.config(image=self.icons.remove)
-        self.btn_detect.config(image=self.icons.detect)
+        self.btn_auto_import.config(image=self.icons.auto_import_icon)
+        self.btn_move_up.config(image=self.icons.up)
+        self.btn_move_down.config(image=self.icons.down)
+        self.btn_open_folder.config(image=self.icons.folder)
 
     def _clear_selection_and_refresh(self):
         """内部助手，用于清除选择、刷新列表并通知 App"""
         self.selected_instance_id = None
         self.selected_client_widget = None
+        self.loaded_game_instances.clear()
         self._refresh_client_list()
-        self.on_instance_select_callback(None)  # 通知 App (及 AdvancedTab)
+        self.on_instance_select_callback(None)
         self.btn_rename.config(state='disabled')
         self.btn_remove.config(state='disabled')
+        self.btn_move_up.config(state='disabled')
+        self.btn_move_down.config(state='disabled')
+        self.btn_open_folder.config(state='disabled')
 
-    # --- (检测逻辑 - 已修改) ---
-    def _on_detect_instances(self, is_initial_run=False):
+    def _on_auto_import(self, is_initial_run=False):
         """Kicks off the instance detection in a new thread."""
-        self.btn_detect.config(state='disabled')
+        self.btn_auto_import.config(state='disabled')
 
         if not is_initial_run:
             self._clear_selection_and_refresh()
 
-        threading.Thread(target=self._run_detection_thread, args=(is_initial_run,), daemon=True).start()
+        threading.Thread(target=self._run_auto_import_thread, args=(is_initial_run,), daemon=True).start()
 
-    def _run_detection_thread(self, is_initial_run):
+    def _run_auto_import_thread(self, is_initial_run):
         """在单独的线程中运行以避免冻结 UI。"""
         try:
-            found_instances = detect_instances()
+            found_instances = find_instances_for_auto_import()
             new_count = 0
 
             if not found_instances and not is_initial_run:
                 self.app_master.after(0, messagebox.showinfo,
                                       _('lki.game.detected_clients'),
                                       _('lki.detect.none_found'))
-                self.app_master.after(0, self.btn_detect.config, {'state': 'normal'})
+                self.app_master.after(0, self.btn_auto_import.config, {'state': 'normal'})
                 return
 
             current_ui_lang = settings.global_settings.language
 
-            # (新增：命名逻辑)
-            # 1. 查找现有的最大编号
-            live_nums = [0]
-            pt_nums = [0]
+            used_live_nums = set()
+            used_pt_nums = set()
             for instance in self.instance_manager.get_all().values():
                 name = instance.get('name', '')
                 if name.startswith('MKLive-'):
-                    try:
-                        live_nums.append(int(name.split('-')[-1]))
-                    except ValueError:
-                        pass
+                    num_str = name.split('-')[-1]
+                    if num_str.isdigit():
+                        used_live_nums.add(int(num_str))
                 elif name.startswith('MKPT-'):
-                    try:
-                        pt_nums.append(int(name.split('-')[-1]))
-                    except ValueError:
-                        pass
+                    num_str = name.split('-')[-1]
+                    if num_str.isdigit():
+                        used_pt_nums.add(int(num_str))
 
-            # 2. 从最大编号+1开始计数
-            live_counter = max(live_nums) + 1
-            pt_counter = max(pt_nums) + 1
+            live_counter = 1
+            pt_counter = 1
 
             for path, type_code in found_instances:
                 instance_id = self.instance_manager._generate_id(path)
                 if instance_id not in self.game_instances:
-                    # 3. 生成新名称
+
                     if type_code == 'production':
+                        while live_counter in used_live_nums:
+                            live_counter += 1
                         name = f"MKLive-{live_counter}"
+                        used_live_nums.add(live_counter)
                         live_counter += 1
-                    else:  # 'pts'
+                    else:
+                        while pt_counter in used_pt_nums:
+                            pt_counter += 1
                         name = f"MKPT-{pt_counter}"
+                        used_pt_nums.add(pt_counter)
                         pt_counter += 1
 
                     self.instance_manager.add_instance(name, path, type_code, current_ui_lang)
                     new_count += 1
 
-            self.app_master.after(0, self._detection_finished, new_count, is_initial_run)
+            self.app_master.after(0, self._auto_import_finished, new_count, is_initial_run)
 
         except Exception as e:
             print(f"Error during instance detection thread: {e}")
@@ -378,11 +444,11 @@ class GameTab(ttk.Frame):
                 self.app_master.after(0, messagebox.showerror,
                                       _('lki.game.detected_clients'),
                                       f"An error occurred: {e}")
-            self.app_master.after(0, self.btn_detect.config, {'state': 'normal'})
+            self.app_master.after(0, self.btn_auto_import.config, {'state': 'normal'})
 
-    def _detection_finished(self, new_count: int, is_initial_run: bool):
+    def _auto_import_finished(self, new_count: int, is_initial_run: bool):
         """在检测线程完成后由主线程调用。"""
-        self.btn_detect.config(state='normal')
+        self.btn_auto_import.config(state='normal')
 
         if not is_initial_run:
             if new_count > 0:
@@ -398,13 +464,12 @@ class GameTab(ttk.Frame):
 
         self._clear_selection_and_refresh()
 
-    # --- (按钮回调) ---
-    def _open_add_instance_window(self):
-        """打开“添加实例”窗口"""
-        window = AddInstanceWindow(self.app_master, self.type_id_to_name, self._on_add_instance_save)
+    def _open_import_instance_window(self):
+        """打开“导入实例”窗口"""
+        window = ImportInstanceWindow(self.app_master, self.type_id_to_name, self._on_import_instance_save)
 
-    def _on_add_instance_save(self, name: str, path: str, type_code: str):
-        """“添加实例”窗口的保存回调"""
+    def _on_import_instance_save(self, name: str, path: str, type_code: str):
+        """“导入实例”窗口的保存回调"""
         current_ui_lang = settings.global_settings.language
         new_id = self.instance_manager.add_instance(name, path, type_code, current_ui_lang)
 
@@ -415,7 +480,6 @@ class GameTab(ttk.Frame):
         )
         self._clear_selection_and_refresh()
 
-    # (已修改：传递类型)
     def _open_edit_instance_window(self):
         """打开“编辑实例”窗口"""
         if not self.selected_instance_id:
@@ -427,7 +491,7 @@ class GameTab(ttk.Frame):
 
         current_name = instance_data.get('name')
         current_preset_id = instance_data.get('active_preset_id', 'default')
-        current_type = instance_data.get('type', 'production')  # <-- (新增)
+        current_type = instance_data.get('type', 'production')
 
         presets_dict = instance_data.get('presets', {})
         preset_id_to_display_name = {}
@@ -442,19 +506,18 @@ class GameTab(ttk.Frame):
             self.app_master,
             self.selected_instance_id,
             current_name,
-            current_type,  # <-- (新增)
+            current_type,
             current_preset_id,
-            self.type_id_to_name,  # <-- (新增)
+            self.type_id_to_name,
             preset_id_to_display_name,
             self._on_edit_instance_save
         )
 
-    # (已修改：接收类型)
     def _on_edit_instance_save(self, instance_id: str, new_name: str, new_type_code: str, new_preset_id: str):
         """“编辑实例”窗口的保存回调"""
         self.instance_manager.update_instance_data(instance_id, {
             'name': new_name,
-            'type': new_type_code,  # <-- (新增)
+            'type': new_type_code,
             'active_preset_id': new_preset_id
         })
         self._clear_selection_and_refresh()
@@ -488,11 +551,46 @@ class GameTab(ttk.Frame):
         )
         self._clear_selection_and_refresh()
 
+    def _open_instance_folder(self):
+        """打开所选实例的根文件夹"""
+        if not self.selected_instance_id:
+            return
+        instance_data = self.instance_manager.get_instance(self.selected_instance_id)
+        if not instance_data:
+            return
+
+        path = instance_data.get('path')
+        if not path:
+            return
+
+        try:
+            os.startfile(path)
+        except AttributeError:
+            try:
+                subprocess.run(['explorer', os.path.normpath(path)])
+            except Exception as e:
+                print(f"Error opening folder: {e}")
+                webbrowser.open(f'file:///{path}')
+
+    def _move_instance_up(self):
+        """将所选实例上移"""
+        if not self.selected_instance_id:
+            return
+        self.instance_manager.move_instance_up(self.selected_instance_id)
+        self._refresh_client_list()
+
+    def _move_instance_down(self):
+        """将所选实例下移"""
+        if not self.selected_instance_id:
+            return
+        self.instance_manager.move_instance_down(self.selected_instance_id)
+        self._refresh_client_list()
+
 
 # --- (从 ui_windows.py 移来的类) ---
 
-class AddInstanceWindow(tk.Toplevel):
-    """一个用于添加新游戏实例的弹出窗口。"""
+class ImportInstanceWindow(tk.Toplevel):
+    """一个用于导入新游戏实例的弹出窗口。"""
 
     def __init__(self, parent, type_map, on_save_callback):
         super().__init__(parent)
@@ -571,8 +669,7 @@ class AddInstanceWindow(tk.Toplevel):
 
         p = Path(path_str)
 
-        # (已修改：只返回 type_code)
-        type_code = detect_instance_type_from_path(p)
+        type_code = get_instance_type_from_path(p)
 
         if type_code:
             type_name = self.type_map.get(type_code)
@@ -596,18 +693,15 @@ class AddInstanceWindow(tk.Toplevel):
         else:
             self.save_btn.config(state='disabled')
 
-    # (已修改：添加重复路径检查)
     def _on_save(self):
         name = self.name_var.get().strip()
         path_str = self.path_var.get().strip()
         type_name = self.type_var.get()
 
-        # --- (请求 1：重复路径检查) ---
         instance_id = instance_manager.global_instance_manager._generate_id(path_str)
         if instance_id in instance_manager.global_instance_manager.instances:
             messagebox.showerror(_('lki.add_instance.title'), _('lki.add_instance.error.path_exists'), parent=self)
             return
-        # --- (检查结束) ---
 
         type_code = self.type_name_to_id.get(type_name)
 
@@ -615,7 +709,6 @@ class AddInstanceWindow(tk.Toplevel):
         self.destroy()
 
 
-# --- (已修改：迁移了“实例类型”设置) ---
 class EditInstanceWindow(tk.Toplevel):
     """一个用于编辑实例名称、类型和活动预设的弹出窗口。"""
 
@@ -628,6 +721,7 @@ class EditInstanceWindow(tk.Toplevel):
         self.resizable(False, False)
 
         self.instance_id = instance_id
+        self.current_type_code = current_type
         self.type_map = type_map
         self.type_name_to_id = {v: k for k, v in self.type_map.items()}
         self.preset_id_to_name = preset_map
@@ -635,7 +729,7 @@ class EditInstanceWindow(tk.Toplevel):
         self.on_save_callback = on_save_callback
 
         self.name_var = tk.StringVar(value=current_name)
-        self.type_var = tk.StringVar(value=self.type_map.get(current_type))  # (新增)
+        self.type_var = tk.StringVar(value=self.type_map.get(current_type))
         self.preset_var = tk.StringVar()
 
         main_frame = ttk.Frame(self, padding=10)
@@ -648,11 +742,12 @@ class EditInstanceWindow(tk.Toplevel):
         name_entry.grid(row=0, column=1, sticky='we', pady=5)
         name_entry.focus_set()
 
-        # 2. 实例类型 (新增)
+        # 2. 实例类型
         ttk.Label(main_frame, text=_('lki.add_instance.type')).grid(row=1, column=0, sticky='e', padx=(0, 10), pady=5)
         type_combo = ttk.Combobox(main_frame, textvariable=self.type_var,
                                   values=list(self.type_map.values()), state='readonly')
         type_combo.grid(row=1, column=1, sticky='we', pady=5)
+        type_combo.bind("<<ComboboxSelected>>", self._on_type_changed)
 
         # 3. 活动预设
         ttk.Label(main_frame, text=_('lki.edit_instance.active_preset')).grid(row=2, column=0, sticky='e', padx=(0, 10),
@@ -671,25 +766,39 @@ class EditInstanceWindow(tk.Toplevel):
         ttk.Button(button_frame, text=_('lki.btn.save'), command=self._on_save).pack(side='right')
         ttk.Button(button_frame, text=_('lki.btn.cancel'), command=self.destroy).pack(side='right', padx=5)
 
+    def _on_type_changed(self, event=None):
+        """当实例类型下拉框被更改时调用。"""
+        new_type_name = self.type_var.get()
+        new_type_code = self.type_name_to_id.get(new_type_name)
+
+        if not new_type_code or new_type_code == self.current_type_code:
+            return
+
+        confirm_text = _('lki.advanced.confirm_type_change') % new_type_name
+        if messagebox.askyesno(_('lki.app.title'), confirm_text, parent=self):
+            self.current_type_code = new_type_code
+        else:
+            current_type_name = self.type_map.get(self.current_type_code)
+            self.type_var.set(current_type_name)
+
     def _on_save(self):
         new_name = self.name_var.get().strip()
-        new_type_name = self.type_var.get()  # (新增)
+        new_type_name = self.type_var.get()
         new_preset_name = self.preset_var.get()
 
-        if not new_name or not new_preset_name or not new_type_name:  # (新增)
+        if not new_name or not new_preset_name or not new_type_name:
             return
 
-        new_type_code = self.type_name_to_id.get(new_type_name)  # (新增)
+        new_type_code = self.type_name_to_id.get(new_type_name)
         new_preset_id = self.preset_name_to_id.get(new_preset_name)
 
-        if not new_preset_id or not new_type_code:  # (新增)
+        if not new_preset_id or not new_type_code:
             return
 
-        self.on_save_callback(self.instance_id, new_name, new_type_code, new_preset_id)  # (新增)
+        self.on_save_callback(self.instance_id, new_name, new_type_code, new_preset_id)
         self.destroy()
 
 
-# --- (DeleteInstanceWindow 保持不变) ---
 class DeleteInstanceWindow(tk.Toplevel):
     """一个要求输入名称以确认删除的弹出窗口。"""
 

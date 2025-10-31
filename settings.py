@@ -4,13 +4,26 @@ import uuid
 from pathlib import Path
 from typing import Dict, Any
 
-from utils import select_locale_by_system_lang_code
+# (已修改：导入新函数)
+from utils import select_locale_by_system_lang_code, get_system_language_codes, is_system_gmt8_timezone
 
 settings_path: Path = Path('settings/global.json')
 
 
 class GlobalSettings:
     def __init__(self):
+
+        # --- (新增：首次启动时的区域设置) ---
+        exact_lang, _ = get_system_language_codes()
+        is_gmt8 = is_system_gmt8_timezone()
+
+        if exact_lang == 'zh_CN' and is_gmt8:
+            # 位于中国大陆
+            default_route_priority = ['gitee', 'gitlab', 'github']
+        else:
+            # 位于其他地区
+            default_route_priority = ['gitlab', 'github', 'gitee']
+        # --- (新增结束) ---
 
         defaults = {
             'language': select_locale_by_system_lang_code(),
@@ -22,16 +35,17 @@ class GlobalSettings:
                 'user': '',
                 'password': ''
             },
-            'presets': {
+            'presets': {  # (此预设仅用于 settings.py，现已废弃，但保留以防万一)
                 "default": {
                     "name_key": "lki.preset.default.name",
                     "lang_code": "en",
-                    "download_route": "gitee",
-                    "use_ee": True,  # <-- (新增)
-                    "use_mods": True,  # <-- (新增)
+                    "use_ee": True,
+                    "use_mods": True,
                     "is_default": True
                 }
-            }
+            },
+            'ever_launched': False,
+            'download_routes_priority': default_route_priority  # <-- (已修改)
         }
 
         saved_data: Dict[str, Any] = {}
@@ -52,8 +66,11 @@ class GlobalSettings:
         if 'proxy' in saved_data:
             self.data['proxy'].update(saved_data.get('proxy', {}))
 
-        if 'presets' in saved_data:
-            self.data['presets'].update(saved_data.get('presets', {}))
+        if 'ever_launched' in saved_data:
+            self.data['ever_launched'] = saved_data['ever_launched']
+
+        if 'download_routes_priority' in saved_data:
+            self.data['download_routes_priority'] = saved_data['download_routes_priority']
 
     @property
     def language(self):
@@ -96,38 +113,7 @@ class GlobalSettings:
         with open(settings_path, 'w', encoding='utf-8') as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
-    # --- (已修改：add_preset) ---
-    def add_preset(self, name: str, lang_code: str, download_route: str, use_ee: bool, use_mods: bool) -> str:
-        """创建一个新的自定义预设并返回其 ID"""
-        preset_id = str(uuid.uuid4())
-        self.data['presets'][preset_id] = {
-            "name": name,
-            "lang_code": lang_code,
-            "download_route": download_route,
-            "use_ee": use_ee,  # <-- (新增)
-            "use_mods": use_mods,  # <-- (新增)
-            "is_default": False
-        }
-        self.save()
-        return preset_id
-
-    def update_preset_data(self, preset_id: str, new_data: Dict[str, Any]):
-        """更新一个预设的数据（例如，更改 lang_code）"""
-        if preset_id in self.data['presets']:
-            self.data['presets'][preset_id].update(new_data)
-            self.save()
-
-    def rename_preset(self, preset_id: str, new_name: str):
-        """重命名一个自定义预设"""
-        if preset_id in self.data['presets'] and not self.data['presets'][preset_id].get('is_default'):
-            self.data['presets'][preset_id]['name'] = new_name
-            self.save()
-
-    def delete_preset(self, preset_id: str):
-        """删除一个自定义预设"""
-        if preset_id in self.data['presets'] and not self.data['presets'][preset_id].get('is_default'):
-            del self.data['presets'][preset_id]
-            self.save()
+    # --- (所有 preset 相关的方法已移除) ---
 
 
 global_settings = GlobalSettings()

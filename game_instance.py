@@ -40,10 +40,9 @@ class GameVersion:
     代表一个单独的游戏版本，对应于 "bin/" 目录下的一个数字文件夹。
     """
 
-    # (已修改：__init__ 现在需要 game_root_path)
     def __init__(self, bin_folder_path: Path, game_root_path: Path):
         self.bin_folder_path: Path = bin_folder_path
-        self.game_root_path: Path = game_root_path  # <-- (新增)
+        self.game_root_path: Path = game_root_path
         self.bin_folder_name: str = bin_folder_path.name
         self.exe_version: Optional[str] = None
         self.l10n_info: Optional[LocalizationInfo] = None
@@ -55,32 +54,49 @@ class GameVersion:
         self.exe_version = self._load_exe_version()
         self.l10n_info = self._load_l10n_info()
 
+    # --- (已修改：读取 ProductVersion 字符串) ---
     def _load_exe_version(self) -> Optional[str]:
         """
-        从 bin64/Korabli64.exe 中提取文件版本 (a.b)
+        从 bin64/Korabli64.exe 中提取产品版本 (a.b.c.d)
         """
-        exe_path = self.bin_folder_path / "bin64" / "Korabli64.exe"
-        if not exe_path.is_file():
-            exe_path = self.bin_folder_path / "bin64" / "WorldOfWarships64.exe"
-            if not exe_path.is_file():
+        exe_path_str = str(self.bin_folder_path / "bin64" / "Korabli64.exe")
+        if not os.path.exists(exe_path_str):
+            exe_path_str = str(self.bin_folder_path / "bin64" / "WorldOfWarships64.exe")
+            if not os.path.exists(exe_path_str):
                 print(f"Warning: Did not find Korabli64.exe or WorldOfWarships64.exe in {self.bin_folder_path}")
                 return None
 
         try:
-            info = win32api.GetFileVersionInfo(str(exe_path), '\\')
-            ms = info['FileVersionMS']
-            ls = info['FileVersionLS']
+            # 1. 获取语言和代码页
+            lang, codepage = win32api.GetFileVersionInfo(exe_path_str, '\\VarFileInfo\\Translation')[0]
 
-            major = (ms >> 16) & 0xffff
-            minor = (ms >> 0) & 0xffff
+            # 2. 构建字符串路径
+            str_info_path = f'\\StringFileInfo\\{lang:04x}{codepage:04x}\\ProductVersion'
 
-            return f"{major}.{minor}"
+            # 3. 查询 ProductVersion 字符串
+            product_version_string = win32api.GetFileVersionInfo(exe_path_str, str_info_path)
+
+            if product_version_string:
+                # 4. 清理字符串 (例如 "25,11,0,8828504" -> "25.11.0.8828504")
+                clean_version = product_version_string.replace(',', '.').strip()
+                return clean_version
+            else:
+                # (回退逻辑，以防万一 ProductVersion 字符串为空)
+                info = win32api.GetFileVersionInfo(exe_path_str, '\\')
+                ms = info['ProductVersionMS']
+                ls = info['ProductVersionLS']
+                major = (ms >> 16) & 0xffff
+                minor = (ms >> 0) & 0xffff
+                patch = (ls >> 16) & 0xffff
+                build = (ls >> 0) & 0xffff
+                return f"{major}.{minor}.{patch}.{build}"
 
         except Exception as e:
-            print(f"Error reading exe version from {exe_path}: {e}")
+            print(f"Error reading exe product version from {exe_path_str}: {e}")
             return None
 
-    # (已修改：使用新的 info 路径)
+    # --- (修改结束) ---
+
     def _load_l10n_info(self) -> Optional[LocalizationInfo]:
         """
         从 [实例]/lki/info/[版本号]/installation_info.json 加载信息。
@@ -101,7 +117,6 @@ class GameVersion:
             print(f"Error loading {info_path}: {e}")
             return None
 
-    # (已修改：使用 self.game_root_path)
     def verify_files(self) -> bool:
         """
         验证 l10n_info 中的所有文件哈希值是否与磁盘上的文件匹配。
@@ -113,7 +128,6 @@ class GameVersion:
             return False
 
         for relative_path, expected_hash in self.l10n_info.files.items():
-            # 相对路径是相对于游戏根目录 (e.g., bin/12345/res_mods/...)
             absolute_path = self.game_root_path / relative_path
 
             actual_hash = _calculate_sha256(absolute_path)
@@ -157,7 +171,6 @@ class GameInstance:
                 folder_path = bin_path / folder_name
                 if folder_path.is_dir():
                     print(f"Found game version folder: {folder_name}")
-                    # (已修改：传递 self.path)
                     self.versions.append(GameVersion(folder_path, self.path))
 
         self.versions.sort(key=lambda v: v.exe_version or "0.0", reverse=True)

@@ -1,8 +1,11 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from typing import List
 
 import settings
 from localizer import _, get_available_languages
+from localization_sources import global_source_manager
+from ui.dialogs import RoutePriorityWindow
 
 
 class SettingsTab(ttk.Frame):
@@ -10,12 +13,13 @@ class SettingsTab(ttk.Frame):
     “设置”选项卡 UI。
     """
 
-    def __init__(self, master, icons, on_theme_change_callback, on_language_change_callback):
+    def __init__(self, master, icons, on_theme_change_callback, on_language_change_callback, on_restart_callback):
         super().__init__(master, padding='10 10 10 10')
 
         self.icons = icons
         self.on_theme_change_callback = on_theme_change_callback
         self.on_language_change_callback = on_language_change_callback
+        self.on_restart_callback = on_restart_callback
 
         self.theme_var = tk.StringVar(value=settings.global_settings.get('theme', 'light'))
 
@@ -26,6 +30,13 @@ class SettingsTab(ttk.Frame):
                                                              self.available_ui_langs.get('en', 'English'))
 
         self.proxy_status_text = self._get_proxy_status_text()
+
+        # (新增：路由名称映射)
+        self.route_id_to_name = {
+            'gitee': _('l10n.route.gitee'),
+            'gitlab': _('l10n.route.gitlab'),
+            'github': _('l10n.route.github')
+        }
 
         self._create_settings_tab_widgets()
 
@@ -73,6 +84,35 @@ class SettingsTab(ttk.Frame):
         self.proxy_config_btn = ttk.Button(proxy_frame, text=_('lki.btn.configure'), command=self._open_proxy_window)
         self.proxy_config_btn.grid(row=0, column=1, sticky='e')
 
+        # --- (已修改：下载线路优先级) ---
+        route_label = ttk.Label(self, text=_('lki.settings.download_routes_priority'))
+        route_label.grid(row=5, column=0, sticky='e', padx=(0, 10), pady=10)
+
+        route_frame = ttk.Frame(self)
+        route_frame.grid(row=5, column=1, sticky='we', pady=10)
+        route_frame.columnconfigure(0, weight=1)
+
+        # (新增：摘要标签)
+        self.route_priority_display_label = ttk.Label(route_frame, text="", style="Hint.TLabel")
+        self.route_priority_display_label.grid(row=0, column=0, sticky='w', padx=5)
+
+        self.route_config_btn = ttk.Button(route_frame, text=_('lki.btn.configure'),
+                                           command=self._open_route_priority_window)
+        self.route_config_btn.grid(row=0, column=1, sticky='e')
+        # --- (修改结束) ---
+
+        self.rowconfigure(6, weight=1)
+
+        restart_frame = ttk.Frame(self)
+        restart_frame.grid(row=7, column=0, columnspan=2, sticky='se', pady=(20, 0))
+
+        self.restart_btn = ttk.Button(restart_frame, text=_('lki.settings.btn.restart'),
+                                      command=self._on_restart_click, style="Link.TButton")
+        self.restart_btn.pack(side='right')
+
+        # (新增：初始化摘要)
+        self._update_route_priority_display()
+
     def _on_language_select(self, event=None):
         selected_name = self.lang_combobox.get()
         selected_code = self.ui_lang_name_to_code.get(selected_name)
@@ -97,7 +137,6 @@ class SettingsTab(ttk.Frame):
         return _(key_map.get(proxy_mode, 'lki.settings.proxy.disabled'))
 
     def _open_proxy_window(self):
-        # self.master.master 是 Notebook 的父级，即 tk.Tk()
         window = ProxyConfigWindow(self.master.master, self._on_proxy_config_saved)
 
     def _on_proxy_config_saved(self):
@@ -105,11 +144,58 @@ class SettingsTab(ttk.Frame):
 
     def update_icons(self):
         """当主题更改时更新此选项卡上的图标（如果需要）"""
-        # self.proxy_config_btn 上的图标？目前没有
         pass
 
+    # (新增：更新摘要)
+    def _update_route_priority_display(self):
+        """更新设置页面上显示的下载线路优先级摘要。"""
+        route_ids = settings.global_settings.get('download_routes_priority', [])
 
+        display_names = []
+        for r_id in route_ids:
+            display_names.append(self.route_id_to_name.get(r_id, r_id))
+
+        if len(display_names) > 3:
+            display_text = ", ".join(display_names[:3]) + ", ..."
+        else:
+            display_text = ", ".join(display_names)
+
+        if not display_text:
+            display_text = _('lki.routes.not_configured')
+
+        self.route_priority_display_label.config(text=display_text)
+
+    def _open_route_priority_window(self):
+        current_list = settings.global_settings.get('download_routes_priority', ['gitee', 'gitlab', 'github'])
+        all_routes = global_source_manager.get_all_available_route_ids()
+
+        window = RoutePriorityWindow(
+            self.master.master,
+            self.icons,
+            current_list,
+            all_routes,
+            self._on_route_priority_save
+        )
+
+    # (已修改：保存后更新摘要)
+    def _on_route_priority_save(self, new_list: List[str]):
+        settings.global_settings.set('download_routes_priority', new_list)
+        settings.global_settings.save()
+        self._update_route_priority_display()  # <-- (新增)
+        messagebox.showinfo(_('lki.routes.title'), _('lki.routes.saved'), parent=self)
+
+    def _on_restart_click(self):
+        if messagebox.askyesno(
+                _('lki.restart.title'),
+                _('lki.restart.confirm'),
+                parent=self
+        ):
+            self.on_restart_callback()
+
+
+# (ProxyConfigWindow 保持不变)
 class ProxyConfigWindow(tk.Toplevel):
+    # (此类代码未更改)
     def __init__(self, parent, on_save_callback):
         super().__init__(parent)
         self.on_save_callback = on_save_callback

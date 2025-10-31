@@ -12,20 +12,22 @@
   "lki.game.client_type.pts": "Mir Korabley PT",
   "lki.game.btn.install_selected": "Install",
 
+  "lki.game.name_label": "Name:",
   "lki.game.path_label": "Path:",
   "lki.game.type_label": "Type:",
   "lki.game.version_label": "Version:",
-  "lki.game.folder_label": "Folder:",
   "lki.game.l10n_label": "L10n:",
   "lki.game.l10n_status.ok": "OK",
   "lki.game.l10n_status.corrupted": "Corrupted!",
   "lki.game.l10n_status.not_installed": "Not Installed",
   "lki.game.version_not_found": "No game version found",
   "lki.game.version_unknown": "???",
-  "lki.game.install_hint": "(Use the checkboxes to select one or more instances for installation.)",
+  "lki.game.install_hint": "You can use the checkboxes to select one or more instances for installation, then click the button above to install the localization package for them.",
 
   "lki.advanced.please_select": "To configure an instance, click its name in the 'Game' tab.",
+  "lki.advanced.instance_details": "Instance Details",
   "lki.advanced.preset_label": "Install Preset:",
+  "lki.advanced.preset_details": "Preset Configuration",
   "lki.advanced.instance_type_label": "Instance Type:",
   "lki.advanced.confirm_type_change": "Are you sure you want to change the instance type to %s?\n\nThis will not affect your game client, but it will determine which localization package is installed for this instance.",
 
@@ -38,6 +40,16 @@
   "lki.settings.proxy.disabled": "Disabled",
   "lki.settings.proxy.system": "Use System Proxy",
   "lki.settings.proxy.manual": "Manual",
+  "lki.settings.btn.restart": "Restart App",
+  "lki.settings.download_routes_priority": "Download Routes:",
+
+  "lki.restart.title": "Restart Application",
+  "lki.restart.confirm": "Are you sure you want to restart the application?\n(Language changes will take effect after restart.)",
+
+  "lki.routes.title": "Configure Download Routes",
+  "lki.routes.hint": "(Routes at the top of the list will be tried first.)",
+  "lki.routes.saved": "Download route order saved.",
+  "lki.routes.not_configured": "Not Configured",
 
   "lki.proxy.title": "Proxy Settings",
   "lki.proxy.mode": "Proxy Type",
@@ -73,7 +85,7 @@
   "lki.btn.copy": "Copy",
   "lki.btn.remove_instance": "Remove",
 
-  "lki.add_instance.title": "Add Instance",
+  "lki.add_instance.title": "Import Instance",
   "lki.add_instance.name": "Instance Name:",
   "lki.add_instance.path": "Instance Path:",
   "lki.add_instance.type": "Instance Type:",
@@ -83,7 +95,7 @@
   "lki.add_instance.error.path_exists": "An instance with this path already exists.",
   "lki.add_instance.status.checking": "Detecting...",
   "lki.add_instance.status.detected": "Detected instance type: %s",
-  "lki.add_instance.success": "Successfully created instance: %s",
+  "lki.add_instance.success": "Successfully imported instance: %s",
 
   "lki.detect.none_found": "No game instances were detected.",
   "lki.detect.found_new": "Successfully imported %d new instances.",
@@ -99,10 +111,23 @@
   "lki.delete_instance.error.mismatch": "Name does not match. Removal cancelled.",
   "lki.delete_instance.success": "Instance '%s' has been removed.",
 
+  "lki.tooltip.add_instance": "Import an instance",
+  "lki.tooltip.edit_instance": "Edit selected instance",
+  "lki.tooltip.remove_instance": "Remove selected instance",
+  "lki.tooltip.detect_instances": "Auto-import instances on this PC",
+  "lki.tooltip.move_up": "Move selected instance up",
+  "lki.tooltip.move_down": "Move selected instance down",
+  "lki.tooltip.open_folder": "Open selected instance's directory",
+  "lki.tooltip.route_up": "Increase Priority",
+  "lki.tooltip.route_down": "Decrease Priority",
+
+  "lki.generic.yes": "Yes",
+  "lki.generic.no": "No",
+
   "l10n.zh_CN.name": "Simplified Chinese",
   "l10n.en.name": "English",
 
-  "l10n.route.gitee": "Gitee (Mainland China)",
+  "l10n.route.gitee": "Gitee",
   "l10n.route.gitlab": "GitLab",
   "l10n.route.github": "GitHub"
 }

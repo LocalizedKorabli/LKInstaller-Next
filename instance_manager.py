@@ -3,11 +3,12 @@ import os
 import hashlib
 import uuid
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 import utils
 from localizer import _
 from utils import determine_default_l10n_lang
+from localization_sources import global_source_manager
 
 instances_path: Path = Path('settings/instances.json')
 
@@ -36,6 +37,18 @@ class InstanceManager:
 
         needs_save = False
         for instance_id, data in self.instances.items():
+            # (已修改：移除 download_route 和 download_routes)
+            for preset_id, preset_data in data.get('presets', {}).items():
+                if 'download_route' in preset_data:
+                    print(f"Migrating preset {preset_id} (removing download_route)...")
+                    del preset_data['download_route']
+                    needs_save = True
+                if 'download_routes' in preset_data:
+                    print(f"Migrating preset {preset_id} (removing download_routes)...")
+                    del preset_data['download_routes']
+                    needs_save = True
+            # (迁移结束)
+
             if 'presets' not in data:
                 print(f"Migrating old instance data for {instance_id}...")
 
@@ -45,7 +58,7 @@ class InstanceManager:
                     "default": {
                         "name_key": "lki.preset.default.name",
                         "lang_code": default_lang_code,
-                        "download_route": "gitee",
+                        # (download_routes 已移除)
                         "use_ee": True,
                         "use_mods": True,
                         "is_default": True
@@ -72,14 +85,45 @@ class InstanceManager:
         """按 ID 获取单个实例的数据"""
         return self.instances.get(instance_id)
 
-    # --- (新增) ---
     def delete_instance(self, instance_id: str):
         """删除一个实例"""
         if instance_id in self.instances:
             del self.instances[instance_id]
             self.save()
-    # --- (新增结束) ---
 
+    def _move_instance(self, instance_id: str, direction: int):
+        """
+        在实例字典中向上 (-1) 或向下 (+1) 移动一个条目。
+        """
+        if instance_id not in self.instances:
+            return
+
+        keys = list(self.instances.keys())
+        try:
+            index = keys.index(instance_id)
+        except ValueError:
+            return
+
+        new_index = index + direction
+
+        if new_index < 0 or new_index >= len(keys):
+            return
+
+        keys.insert(new_index, keys.pop(index))
+
+        new_instances = {key: self.instances[key] for key in keys}
+        self.instances = new_instances
+        self.save()
+
+    def move_instance_up(self, instance_id: str):
+        """在列表中将实例上移一位"""
+        self._move_instance(instance_id, -1)
+
+    def move_instance_down(self, instance_id: str):
+        """在列表中将实例下移一位"""
+        self._move_instance(instance_id, 1)
+
+    # (已修改：移除 download_routes)
     def add_instance(self, name: str, path: str, type: str, current_ui_lang: str) -> str:
         """
         添加一个新实例，并为其创建默认预设。
@@ -93,7 +137,7 @@ class InstanceManager:
         default_preset_data = {
             "name_key": "lki.preset.default.name",
             "lang_code": default_lang_code,
-            "download_route": "gitee",
+            # (download_routes 已移除)
             "use_ee": True,
             "use_mods": True,
             "is_default": True
@@ -118,9 +162,8 @@ class InstanceManager:
         self.instances[instance_id].update(data)
         self.save()
 
-        # --- (已修改：add_preset) ---
-
-    def add_preset(self, instance_id: str, name: str, lang_code: str, download_route: str, use_ee: bool,
+    # (已修改：签名变更)
+    def add_preset(self, instance_id: str, name: str, lang_code: str, use_ee: bool,
                    use_mods: bool) -> str:
         """为特定实例创建一个新的自定义预设并返回其 ID"""
         if instance_id not in self.instances:
@@ -132,7 +175,7 @@ class InstanceManager:
         self.instances[instance_id]['presets'][preset_id] = {
             "name": name,
             "lang_code": lang_code,
-            "download_route": download_route,
+            # (download_routes 已移除)
             "use_ee": use_ee,
             "use_mods": use_mods,
             "is_default": False

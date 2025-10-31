@@ -1,6 +1,7 @@
 import locale
 import os
 import sys
+import time  # <-- (新增)
 from pathlib import Path
 from typing import Optional, Tuple, List, Set, Dict
 
@@ -24,6 +25,25 @@ def get_system_language_codes() -> Tuple[Optional[str], Optional[str]]:
         return None, None
 
     return None, None
+
+
+# --- (新增：时区检查) ---
+def is_system_gmt8_timezone() -> bool:
+    """检查本地系统时区是否为 GMT+8。"""
+    try:
+        # time.timezone 返回 UTC 以西的偏移秒数。
+        # 对于 GMT+8（中国），在非夏令时期间，该值应为 -28800。
+        is_dst = time.daylight and time.localtime().tm_isdst
+        offset_seconds = -time.altzone if is_dst else -time.timezone
+
+        if offset_seconds == 28800:  # 8 * 60 * 60
+            return True
+    except Exception as e:
+        print(f"Error checking timezone: {e}")
+    return False
+
+
+# --- (新增结束) ---
 
 
 '''

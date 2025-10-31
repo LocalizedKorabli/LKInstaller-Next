@@ -4,8 +4,8 @@ from typing import Dict, Optional, List
 
 # --- (链接定义) ---
 EE_PACK_FILENAME = 'LKExperienceEnhancement.zip'
-MODS_URL_CHS = 'https://tapio.lanzn.com/b0nxzso2b'  # <-- (新增)
-MODS_URL_EN = None  # <-- (新增) 待定
+MODS_URL_CHS = 'https://tapio.lanzn.com/b0nxzso2b'
+MODS_URL_EN = None
 
 # 1. 简体中文路由
 CHS_LIVE_ROUTES = {
@@ -68,7 +68,7 @@ class LocalizationSource:
 
     def __init__(self, source_id: str, name_key: str,
                  routes_live: dict, routes_pt: dict,
-                 mods_url: Optional[str]):  # <-- (新增)
+                 mods_url: Optional[str]):
         self.id = source_id
         self.name_key = name_key
 
@@ -76,7 +76,7 @@ class LocalizationSource:
             'production': routes_live,
             'pts': routes_pt
         }
-        self.mods_url = mods_url  # <-- (新增)
+        self.mods_url = mods_url
 
     def get_routes_for_type(self, instance_type: str = 'production') -> Optional[dict]:
         """获取 'production' 或 'pts' 的下载路由字典"""
@@ -121,7 +121,7 @@ class SourceManager:
             name_key="l10n.zh_CN.name",
             routes_live=CHS_LIVE_ROUTES,
             routes_pt=CHS_PT_ROUTES,
-            mods_url=MODS_URL_CHS  # <-- (新增)
+            mods_url=MODS_URL_CHS
         )
 
         # 2. 英文
@@ -130,10 +130,9 @@ class SourceManager:
             name_key="l10n.en.name",
             routes_live=EN_LIVE_ROUTES,
             routes_pt=EN_PT_ROUTES,
-            mods_url=MODS_URL_EN  # <-- (新增)
+            mods_url=MODS_URL_EN
         )
 
-    # (已修改)
     def add_source(self, source_id: str, name_key: str, routes_live: dict, routes_pt: dict,
                    mods_url: Optional[str]):
         self.sources[source_id] = LocalizationSource(source_id, name_key, routes_live, routes_pt, mods_url)
@@ -156,6 +155,7 @@ class SourceManager:
             name_to_id[display_name] = source_id
         return id_to_name, name_to_id
 
+    # (已修改：此函数现在只返回 *此* 来源的路由)
     def get_routes_for_source(self, source_id: str) -> List[str]:
         """获取一个本地化来源可用的下载线路列表 (例如 ['gitee', 'gitlab'])"""
         source = self.get_source(source_id)
@@ -169,14 +169,23 @@ class SourceManager:
 
         return keys
 
-    # --- (新增) ---
+    # (新增：获取 *所有* 路由)
+    def get_all_available_route_ids(self) -> List[str]:
+        """获取 *所有* 来源中 *所有* 可用的唯一路由 ID。"""
+        all_keys = set()
+        for source in self.sources.values():
+            for route_dict in source.routes.values():
+                all_keys.update(route_dict.keys())
+
+        # 保持一个一致的（尽管是任意的）顺序
+        return sorted(list(all_keys))
+
     def get_mods_url(self, source_id: str) -> Optional[str]:
         """获取一个本地化来源的 mods 下载 URL"""
         source = self.get_source(source_id)
         if source:
             return source.mods_url
         return None
-    # --- (新增结束) ---
 
 
 # 全局实例
