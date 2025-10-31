@@ -23,10 +23,14 @@ class IconManager:
         self.remove = None
         self.detect = None
         self.manage = None
+        self.folder = None
+        self.download = None
+        self.copy = None  # <-- (新增)
 
     def _load_icon_set(self, theme_name):
         """加载特定主题的图标集"""
-        icon_names = ['add', 'rename', 'remove', 'detect', 'manage']
+        # (已修改)
+        icon_names = ['add', 'rename', 'remove', 'detect', 'manage', 'folder', 'download', 'copy']  # <-- (新增 'copy')
         for name in icon_names:
             path = utils.base_path.joinpath(f'resources/icons/{theme_name}/{name}.png')
             try:
@@ -48,3 +52,6 @@ class IconManager:
         self.remove = self.icons[theme_name]['remove']
         self.detect = self.icons[theme_name]['detect']
         self.manage = self.icons[theme_name]['manage']
+        self.folder = self.icons[theme_name]['folder']
+        self.download = self.icons[theme_name]['download']
+        self.copy = self.icons[theme_name]['copy']  # <-- (新增)

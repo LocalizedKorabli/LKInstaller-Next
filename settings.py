@@ -26,7 +26,9 @@ class GlobalSettings:
                 "default": {
                     "name_key": "lki.preset.default.name",
                     "lang_code": "en",
-                    "download_route": "gitee",  # <-- (新增)
+                    "download_route": "gitee",
+                    "use_ee": True,  # <-- (新增)
+                    "use_mods": True,  # <-- (新增)
                     "is_default": True
                 }
             }
@@ -95,13 +97,15 @@ class GlobalSettings:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
     # --- (已修改：add_preset) ---
-    def add_preset(self, name: str, lang_code: str, download_route: str) -> str:
+    def add_preset(self, name: str, lang_code: str, download_route: str, use_ee: bool, use_mods: bool) -> str:
         """创建一个新的自定义预设并返回其 ID"""
         preset_id = str(uuid.uuid4())
         self.data['presets'][preset_id] = {
             "name": name,
             "lang_code": lang_code,
-            "download_route": download_route,  # <-- (新增)
+            "download_route": download_route,
+            "use_ee": use_ee,  # <-- (新增)
+            "use_mods": use_mods,  # <-- (新增)
             "is_default": False
         }
         self.save()

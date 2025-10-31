@@ -4,6 +4,7 @@ import utils
 import instance_manager
 import localization_sources  # <-- 确保在 app 之前加载
 
+# (已修改：导入新的 app 位置)
 from app import LocalizationInstallerApp
 
 if __name__ == '__main__':
@@ -24,5 +25,5 @@ if __name__ == '__main__':
     try:
         settings.global_settings.save()
         instance_manager.global_instance_manager.save()
-    except AttributeError:
-        print("Settings module not fully implemented, skipping save.")
+    except Exception: # (捕捉更广泛的异常，因为 settings 可能未完全加载)
+        print("Settings module not fully loaded or failed, skipping save.")

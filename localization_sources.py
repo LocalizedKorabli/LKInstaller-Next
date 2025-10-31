@@ -2,52 +2,109 @@ import utils
 from localizer import _
 from typing import Dict, Optional, List
 
-# --- (链接定义保持不变) ---
-EE_PACK_URL = 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+# --- (链接定义) ---
+EE_PACK_FILENAME = 'LKExperienceEnhancement.zip'
+MODS_URL_CHS = 'https://tapio.lanzn.com/b0nxzso2b'  # <-- (新增)
+MODS_URL_EN = None  # <-- (新增) 待定
 
-MO_ROUTES_CHS_LIVE = {
-    'gitee': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/',
-    'gitlab': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n/-/raw/main/Localizations/latest/',
-    'github': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/'
+# 1. 简体中文路由
+CHS_LIVE_ROUTES = {
+    'gitee': {
+        'mo': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/',
+        'ee': f'https://gitee.com/localized-korabli/Korabli-LESTA-L10N/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+    },
+    'gitlab': {
+        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n/-/raw/main/Localizations/latest/',
+        'ee': f'https://gitlab.com/localizedkorabli/korabli-lesta-l10n/-/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+    },
+    'github': {
+        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/',
+        'ee': f'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+    }
+}
+CHS_PT_ROUTES = {
+    'gitee': {
+        'mo': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/',
+        'ee': f'https://gitee.com/localized-korabli/Korabli-LESTA-L10N-PublicTest/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+    },
+    'gitlab': {
+        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n-publictest/-/raw/Localizations/Localizations/latest/',
+        'ee': f'https://gitlab.com/localizedkorabli/korabli-lesta-l10n-publictest/-/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+    },
+    'github': {
+        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/',
+        'ee': f'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N-PublicTest/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+    }
 }
 
-MO_ROUTES_CHS_PT = {
-    'gitee': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/',
-    'gitlab': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n-publictest/-/raw/Localizations/Localizations/latest/',
-    'github': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/'
+# 2. 英文路由
+EN_LIVE_ROUTES = {
+    'gitlab': {
+        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n/-/raw/main/Localizations/latest/',
+        'ee': f'https://gitlab.com/localizedkorabli/korabli-lesta-i18n/-/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+    },
+    'github': {
+        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N/raw/main/Localizations/latest/',
+        'ee': f'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+    }
+}
+EN_PT_ROUTES = {
+    'gitlab': {
+        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n-publictest/-/raw/main/Localizations/latest/',
+        'ee': f'https://gitlab.com/localizedkorabli/korabli-lesta-i18n-publictest/-/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+    },
+    'github': {
+        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/Localizations/latest/',
+        'ee': f'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/BuiltInMods/{EE_PACK_FILENAME}'
+    }
 }
 
-MO_ROUTES_EN_LIVE = {
-    'gitlab': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n/-/raw/main/Localizations/latest/',
-    'github': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N/raw/main/Localizations/latest/'
-}
 
-MO_ROUTES_EN_PT = {
-    'gitlab': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n-publictest/-/raw/main/Localizations/latest/',
-    'github': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/Localizations/latest/'
-}
-
-
-# --- (链接定义结束) ---
+# --- (重构结束) ---
 
 
 class LocalizationSource:
     """存储一个可安装本地化包的数据。"""
 
     def __init__(self, source_id: str, name_key: str,
-                 mo_routes_live: dict, mo_routes_pt: dict, ee_url: Optional[str]):
+                 routes_live: dict, routes_pt: dict,
+                 mods_url: Optional[str]):  # <-- (新增)
         self.id = source_id
         self.name_key = name_key
 
-        self.mo_routes = {
-            'production': mo_routes_live,
-            'pts': mo_routes_pt
+        self.routes = {
+            'production': routes_live,
+            'pts': routes_pt
         }
-        self.ee_url = ee_url
+        self.mods_url = mods_url  # <-- (新增)
 
     def get_routes_for_type(self, instance_type: str = 'production') -> Optional[dict]:
-        """获取 'production' 或 'pts' 的下载路由"""
-        return self.mo_routes.get(instance_type)
+        """获取 'production' 或 'pts' 的下载路由字典"""
+        return self.routes.get(instance_type)
+
+    def get_urls(self, instance_type: str, route_id: str) -> Optional[Dict[str, str]]:
+        """
+        根据实例类型和下载线路，获取 MO 和 EE 的 URL。
+        返回: {'mo': 'url', 'ee': 'url'}
+        """
+        routes_for_type = self.get_routes_for_type(instance_type)
+        if routes_for_type:
+            return routes_for_type.get(route_id, next(iter(routes_for_type.values()), None))
+        return None
+
+    def get_available_route_ids(self) -> List[str]:
+        """获取此来源所有可用的路由 ID (例如 ['gitee', 'gitlab'])"""
+        routes_prod = self.routes.get('production', {})
+        routes_pt = self.routes.get('pts', {})
+
+        all_keys = list(routes_prod.keys()) + list(routes_pt.keys())
+
+        unique_keys = []
+        for key in all_keys:
+            if key not in unique_keys:
+                unique_keys.append(key)
+
+        return unique_keys
 
 
 class SourceManager:
@@ -58,27 +115,28 @@ class SourceManager:
         self._register_sources()
 
     def _register_sources(self):
-        # 1. 简体中文 (包含 live 和 pt 路由)
+        # 1. 简体中文
         self.add_source(
             source_id="zh_CN",
             name_key="l10n.zh_CN.name",
-            mo_routes_live=MO_ROUTES_CHS_LIVE,
-            mo_routes_pt=MO_ROUTES_CHS_PT,
-            ee_url=EE_PACK_URL
+            routes_live=CHS_LIVE_ROUTES,
+            routes_pt=CHS_PT_ROUTES,
+            mods_url=MODS_URL_CHS  # <-- (新增)
         )
 
-        # 2. 英文 (包含 live 和 pt 路由)
+        # 2. 英文
         self.add_source(
             source_id="en",
             name_key="l10n.en.name",
-            mo_routes_live=MO_ROUTES_EN_LIVE,
-            mo_routes_pt=MO_ROUTES_EN_PT,
-            ee_url=None
+            routes_live=EN_LIVE_ROUTES,
+            routes_pt=EN_PT_ROUTES,
+            mods_url=MODS_URL_EN  # <-- (新增)
         )
 
-    def add_source(self, source_id: str, name_key: str, mo_routes_live: dict, mo_routes_pt: dict,
-                   ee_url: Optional[str]):
-        self.sources[source_id] = LocalizationSource(source_id, name_key, mo_routes_live, mo_routes_pt, ee_url)
+    # (已修改)
+    def add_source(self, source_id: str, name_key: str, routes_live: dict, routes_pt: dict,
+                   mods_url: Optional[str]):
+        self.sources[source_id] = LocalizationSource(source_id, name_key, routes_live, routes_pt, mods_url)
 
     def get_source(self, source_id: str) -> Optional[LocalizationSource]:
         return self.sources.get(source_id)
@@ -98,19 +156,26 @@ class SourceManager:
             name_to_id[display_name] = source_id
         return id_to_name, name_to_id
 
-    # --- (新增) ---
     def get_routes_for_source(self, source_id: str) -> List[str]:
         """获取一个本地化来源可用的下载线路列表 (例如 ['gitee', 'gitlab'])"""
         source = self.get_source(source_id)
         if not source:
-            return ['gitee']  # 安全回退
+            return ['gitee']
 
-        # 假设 production 和 pts 具有相同的路由键 (gitee, gitlab...)
-        routes_dict = source.mo_routes.get('production')
-        if not routes_dict:
-            return ['gitee']  # 安全回退
+        keys = source.get_available_route_ids()
 
-        return list(routes_dict.keys())
+        if not keys:
+            return ['gitee']
+
+        return keys
+
+    # --- (新增) ---
+    def get_mods_url(self, source_id: str) -> Optional[str]:
+        """获取一个本地化来源的 mods 下载 URL"""
+        source = self.get_source(source_id)
+        if source:
+            return source.mods_url
+        return None
     # --- (新增结束) ---
 
 

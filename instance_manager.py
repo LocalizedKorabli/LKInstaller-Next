@@ -45,7 +45,9 @@ class InstanceManager:
                     "default": {
                         "name_key": "lki.preset.default.name",
                         "lang_code": default_lang_code,
-                        "download_route": "gitee",  # <-- (新增)
+                        "download_route": "gitee",
+                        "use_ee": True,
+                        "use_mods": True,
                         "is_default": True
                     }
                 }
@@ -70,6 +72,14 @@ class InstanceManager:
         """按 ID 获取单个实例的数据"""
         return self.instances.get(instance_id)
 
+    # --- (新增) ---
+    def delete_instance(self, instance_id: str):
+        """删除一个实例"""
+        if instance_id in self.instances:
+            del self.instances[instance_id]
+            self.save()
+    # --- (新增结束) ---
+
     def add_instance(self, name: str, path: str, type: str, current_ui_lang: str) -> str:
         """
         添加一个新实例，并为其创建默认预设。
@@ -83,7 +93,9 @@ class InstanceManager:
         default_preset_data = {
             "name_key": "lki.preset.default.name",
             "lang_code": default_lang_code,
-            "download_route": "gitee",  # <-- (新增)
+            "download_route": "gitee",
+            "use_ee": True,
+            "use_mods": True,
             "is_default": True
         }
 
@@ -108,7 +120,8 @@ class InstanceManager:
 
         # --- (已修改：add_preset) ---
 
-    def add_preset(self, instance_id: str, name: str, lang_code: str, download_route: str) -> str:
+    def add_preset(self, instance_id: str, name: str, lang_code: str, download_route: str, use_ee: bool,
+                   use_mods: bool) -> str:
         """为特定实例创建一个新的自定义预设并返回其 ID"""
         if instance_id not in self.instances:
             return None
@@ -119,7 +132,9 @@ class InstanceManager:
         self.instances[instance_id]['presets'][preset_id] = {
             "name": name,
             "lang_code": lang_code,
-            "download_route": download_route,  # <-- (新增)
+            "download_route": download_route,
+            "use_ee": use_ee,
+            "use_mods": use_mods,
             "is_default": False
         }
         self.save()
