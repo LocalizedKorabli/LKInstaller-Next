@@ -16,8 +16,9 @@
   "lki.game.path_label": "路径:",
   "lki.game.type_label": "类型:",
   "lki.game.version_label": "版本:",
-  "lki.game.l10n_status.ok": "正常",
-  "lki.game.l10n_status.corrupted": "已损坏!",
+  "lki.game.l10n_status.ok": "已安装",
+  "lki.game.l10n_status.corrupted": "被篡改",
+  "lki.game.l10n_status.inactive": "非活跃版本",
   "lki.game.l10n_status.not_installed": "未安装",
   "lki.game.version_not_found": "未找到游戏版本",
   "lki.game.version_unknown": "???",
@@ -31,7 +32,7 @@
   "lki.advanced.confirm_type_change": "您确定要将实例类型改为%s吗？\n\n“实例类型”设定不会对您的游戏客户端造成实际影响，但决定了软件将安装适用于何种类型客户端的本地化包。",
 
   "lki.settings.language": "语言:",
-  "lki.settings.language.restart_required": "您需要重启软件以应用更改。",
+  "lki.settings.language.restart_required": "重启软件以应用更改。",
   "lki.settings.theme": "主题:",
   "lki.settings.theme.light": "浅色",
   "lki.settings.theme.dark": "深色",
@@ -152,6 +153,7 @@
   "lki.install.status.cancelled": "已取消",
   "lki.install.error.no_instances_selected": "请至少选择一个要安装的实例。",
   "lki.install.error.no_version_for_instance": "实例 %s 没有找到有效的游戏版本，已跳过。",
+  "lki.install.status.inactive_skip": "跳过非活跃版本: %s",
 
   "l10n.zh_CN.name": "简体中文",
   "l10n.en.name": "英文",

@@ -141,18 +141,24 @@ class AdvancedTab(ttk.Frame):
                 version_text = f"{ver_str}"
 
                 if game_version.l10n_info:
-                    l10n_ver = game_version.l10n_info.version
-                    l10n_lang = game_version.l10n_info.lang_code  # <-- (新增)
+                    l10n_ver_full = game_version.l10n_info.version
+                    l10n_ver_sub = game_version.l10n_info.l10n_sub_version
+                    l10n_lang_code = game_version.l10n_info.lang_code
 
-                    if game_version.verify_files():
-                        l10n_status = _('lki.game.l10n_status.ok')
+                    # (使用完整语言名称)
+                    l10n_lang_name = self.l10n_id_to_name.get(l10n_lang_code, l10n_lang_code)
+                    lang_str = f"{l10n_lang_name}" if l10n_lang_code else ""
+
+                    if l10n_ver_full == "INACTIVE":
+                        l10n_details = f"[{_('lki.game.l10n_status.inactive')}]"
+                    elif game_version.verify_files():
+                        display_ver = l10n_ver_sub if l10n_ver_sub else l10n_ver_full
+                        l10n_details = f"[{lang_str}{display_ver} - {_('lki.game.l10n_status.ok')}]"
                     else:
-                        l10n_status = _('lki.game.l10n_status.corrupted')
+                        display_ver = l10n_ver_sub if l10n_ver_sub else l10n_ver_full
+                        l10n_details = f"[{lang_str}{display_ver} - {_('lki.game.l10n_status.corrupted')}]"
 
-                    # (新增) 如果 lang_code 存在，则构建 [zh_CN] 字符串
-                    lang_str = f"[{l10n_lang}] " if l10n_lang else ""
-
-                    l10n_text = f" ({lang_str}{l10n_ver} - {l10n_status})"
+                    l10n_text = f" {l10n_details}"  # (移除了破折号)
                 else:
                     l10n_text = f" ({_('lki.game.l10n_status.not_installed')})"
 

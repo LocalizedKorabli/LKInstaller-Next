@@ -10,7 +10,7 @@ from localizer import _
 from utils import determine_default_l10n_lang
 from localization_sources import global_source_manager
 
-instances_path: Path = Path('settings/instances.json')
+instances_path: Path = Path('lki/settings/instances.json')
 
 
 class InstanceManager:

@@ -30,10 +30,11 @@ class LocalizationInfo:
     一个数据类，用于保存 installation_info.json 的内容。
     """
 
-    def __init__(self, version: str, files: Dict[str, str], lang_code: Optional[str] = None):
+    def __init__(self, version: str, files: Dict[str, str], lang_code: Optional[str] = None, l10n_sub_version: Optional[str] = None):
         self.version: str = version
         self.files: Dict[str, str] = files
         self.lang_code: Optional[str] = lang_code
+        self.l10n_sub_version: Optional[str] = l10n_sub_version
 
 
 class GameVersion:
@@ -113,7 +114,8 @@ class GameVersion:
             return LocalizationInfo(
                 version=data.get("version"),
                 files=data.get("files", {}),
-                lang_code=data.get("lang_code")
+                lang_code=data.get("lang_code"),
+                l10n_sub_version=data.get("l10n_sub_version")
             )
         except Exception as e:
             print(f"Error loading {info_path}: {e}")
@@ -125,6 +127,9 @@ class GameVersion:
         """
         if not self.l10n_info:
             return False
+
+        if self.l10n_info.version == "INACTIVE":
+            return True
 
         if not self.l10n_info.files:
             return False

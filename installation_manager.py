@@ -488,27 +488,32 @@ class InstallationManager:
                     with open(info_file, 'w', encoding='utf-8') as f:
                         json.dump({
                             "version": f"{mo_job.version_info['main']}.{mo_job.version_info['sub']}",
+                            "l10n_sub_version": mo_job.version_info['sub'],
                             "lang_code": task.lang_code,
                             "files": files_info
                         }, f, indent=2)
 
+
                 else:
-                    # --- (BUG 修复：必须清理陈旧版本) ---
-                    _log_task(task, f"正在清理陈旧版本: {version_folder.bin_folder_name}", 85)
+                    # --- (新增：标记非活跃版本) ---
+                    _log_task(task, _('lki.install.status.inactive_skip') % version_folder.bin_folder_name, 85)
                     try:
-                        # 删除 .mkmod 文件
+                        # 1. 仍然删除 .mkmod 文件
                         if dest_core_mod_path.is_file():
                             os.remove(dest_core_mod_path)
                         if dest_ee_mod_path.is_file():
                             os.remove(dest_ee_mod_path)
-
-                        # 删除 info.json
-                        if info_file.is_file():
-                            os.remove(info_file)
-
+                        # 2. 写入 "INACTIVE" 状态
+                        utils.mkdir(info_json_path)
+                        with open(info_file, 'w', encoding='utf-8') as f:
+                            json.dump({
+                                "version": "INACTIVE",
+                                "l10n_sub_version": None,
+                                "lang_code": None,
+                                "files": {}
+                            }, f, indent=2)
                     except OSError as e:
-                        _log_task(task, f"警告: 无法清理 {version_folder.bin_folder_name} 中的陈旧文件: {e}")
-                    # --- (BUG 修复结束) ---
+                        _log_task(task, f"警告: 无法清理或写入 {version_folder.bin_folder_name} 的非活跃状态: {e}")
 
             _log_task(task, _('lki.install.status.done'), 100)
 

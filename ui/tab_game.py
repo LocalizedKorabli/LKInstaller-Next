@@ -22,6 +22,7 @@ from game_instance import GameInstance
 from ui.dialogs import CustomAskStringDialog
 from instance_detector import find_instances_for_auto_import, get_instance_type_from_path
 from installation_manager import InstallationManager, InstallationTask  # <-- (新增)
+from localization_sources import global_source_manager
 
 
 class GameTab(ttk.Frame):
@@ -33,6 +34,7 @@ class GameTab(ttk.Frame):
         super().__init__(master, padding='10 10 10 10')
 
         self.app_master = master.master
+        self.l10n_id_to_name, _ = global_source_manager.get_display_maps()
         self.icons = icons
         self.type_id_to_name = type_id_to_name
         self.on_instance_select_callback = on_instance_select_callback
@@ -259,20 +261,26 @@ class GameTab(ttk.Frame):
                 status_text = f"{_('lki.game.version_label')} {ver_str}"
 
                 if game_version.l10n_info:
-                    l10n_ver = game_version.l10n_info.version
-                    l10n_lang = game_version.l10n_info.lang_code  # <-- (新增)
+                    l10n_ver_full = game_version.l10n_info.version
+                    l10n_ver_sub = game_version.l10n_info.l10n_sub_version
+                    l10n_lang_code = game_version.l10n_info.lang_code
 
-                    if game_version.verify_files():
-                        l10n_status = _('lki.game.l10n_status.ok')
+                    # (使用完整语言名称)
+                    l10n_lang_name = self.l10n_id_to_name.get(l10n_lang_code, l10n_lang_code)
+                    lang_str = f"{l10n_lang_name} " if l10n_lang_code else ""
+
+                    if l10n_ver_full == "INACTIVE":
+                        l10n_details = f"{_('lki.game.l10n_status.inactive')}"
+                    elif game_version.verify_files():
+                        display_ver = l10n_ver_sub if l10n_ver_sub else l10n_ver_full
+                        l10n_details = f"{lang_str}{display_ver} - {_('lki.game.l10n_status.ok')}"
                     else:
-                        l10n_status = _('lki.game.l10n_status.corrupted')
+                        display_ver = l10n_ver_sub if l10n_ver_sub else l10n_ver_full
+                        l10n_details = f"{lang_str}{display_ver} - {_('lki.game.l10n_status.corrupted')}"
 
-                    # (新增) 如果 lang_code 存在，则构建 [zh_CN] 字符串
-                    lang_str = f"[{l10n_lang}] " if l10n_lang else ""
-
-                    status_text += f" ({lang_str}{l10n_ver} - {l10n_status})"
+                    status_text += f" | {l10n_details}"  # (移除了破折号)
                 else:
-                    status_text += f" ({_('lki.game.l10n_status.not_installed')})"
+                    status_text += f"{_('lki.game.l10n_status.not_installed')}"
 
                 status_label = ttk.Label(text_frame, text=status_text, style="Path.TLabel", cursor="hand2")
                 status_label.pack(anchor='w', fill='x')

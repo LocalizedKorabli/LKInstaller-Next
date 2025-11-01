@@ -16,8 +16,9 @@
   "lki.game.path_label": "Path:",
   "lki.game.type_label": "Type:",
   "lki.game.version_label": "Version:",
-  "lki.game.l10n_status.ok": "OK",
-  "lki.game.l10n_status.corrupted": "Corrupted!",
+  "lki.game.l10n_status.ok": "Installed",
+  "lki.game.l10n_status.corrupted": "Tampered",
+  "lki.game.l10n_status.inactive": "Inactive",
   "lki.game.l10n_status.not_installed": "Not Installed",
   "lki.game.version_not_found": "No game version found",
   "lki.game.version_unknown": "???",
@@ -31,7 +32,7 @@
   "lki.advanced.confirm_type_change": "Are you sure you want to change the instance type to %s?\n\nThis will not affect your game client, but it will determine which localization package is installed for this instance.",
 
   "lki.settings.language": "Language:",
-  "lki.settings.language.restart_required": "You must restart the application to apply this change.",
+  "lki.settings.language.restart_required": "Restart the application to apply the change.",
   "lki.settings.theme": "Theme:",
   "lki.settings.theme.light": "Light",
   "lki.settings.theme.dark": "Dark",
@@ -152,6 +153,7 @@
   "lki.install.status.cancelled": "Cancelled",
   "lki.install.error.no_instances_selected": "Please select at least one instance to install.",
   "lki.install.error.no_version_for_instance": "Instance %s has no valid game versions found, skipping.",
+  "lki.install.status.inactive_skip": "Skipping inactive version: %s",
 
   "l10n.zh_CN.name": "Simplified Chinese",
   "l10n.en.name": "English",

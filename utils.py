@@ -8,7 +8,8 @@ from typing import Optional, Tuple, List, Set, Dict
 base_path: Path = Path(getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__))))
 
 major2exact: Dict[str, str] = {
-    'zh': 'zh_CN'
+    'zh': 'zh_CN',
+    'en': 'en'
 }
 
 
