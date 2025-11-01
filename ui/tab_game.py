@@ -88,13 +88,21 @@ class GameTab(ttk.Frame):
                                wraplength=400)
         hint_label.pack(fill='x', side='bottom', pady=(5, 0))
 
+        # (已修改：使用网格布局并排)
         bottom_frame = ttk.Frame(self)
         bottom_frame.pack(fill='x', side='bottom', pady=(10, 0))
+        bottom_frame.columnconfigure((0, 1), weight=1)  # (新增)
 
-        # (已修改：连接到新命令)
         self.btn_install_selected = ttk.Button(bottom_frame, text=_('lki.game.btn.install_selected'),
                                                command=self._on_install_clicked)
-        self.btn_install_selected.pack(fill='x', expand=True)
+        # (修改：使用 grid)
+        self.btn_install_selected.grid(row=0, column=0, sticky='ew', padx=(0, 5))
+
+        # (新增：卸载按钮)
+        self.btn_uninstall_selected = ttk.Button(bottom_frame, text=_('lki.game.btn.uninstall'),
+                                                 command=self._on_uninstall_clicked,
+                                                 style="danger.TButton")
+        self.btn_uninstall_selected.grid(row=0, column=1, sticky='ew', padx=(5, 0))
 
         instance_actions_frame = ttk.Frame(self)
         instance_actions_frame.pack(fill='x', side='bottom', pady=(5, 0))
@@ -158,14 +166,6 @@ class GameTab(ttk.Frame):
         self.game_instances = self.instance_manager.get_all()
         self._build_client_list_ui(default_checked_ids=default_checked_ids)
         self._update_select_all_state()
-
-    def clear_selection_and_refresh(self):
-        """由 App 调用，在外部事件（如更改类型）后刷新列表"""
-        self.selected_instance_id = None
-        self.selected_client_widget = None
-        self.loaded_game_instances.clear()
-        self._refresh_client_list()
-        self.on_instance_select_callback(None)
 
     def _build_client_list_ui(self, default_checked_ids: Optional[Set[str]] = None):
         """
@@ -259,7 +259,7 @@ class GameTab(ttk.Frame):
 
         if not versions_to_display:
             status_text = _('lki.game.version_not_found')
-            status_label = ttk.Label(text_frame, text=status_text, style="Path.TLabel", cursor="hand2")
+            status_label = ttk.Label(text_frame, text=status_text, style="Path.TLabel", cursor="hand2", justify='left')
             status_label.pack(anchor='w', fill='x')
             status_label.bind("<Button-1>", on_click)
             self._bind_mousewheel(status_label)
@@ -268,29 +268,40 @@ class GameTab(ttk.Frame):
                 ver_str = game_version.exe_version or _('lki.game.version_unknown')
                 status_text = f"{_('lki.game.version_label')} {ver_str}"
 
+                # --- (修改：游戏选项卡的简洁状态) ---
                 if game_version.l10n_info:
                     l10n_ver_full = game_version.l10n_info.version
-                    l10n_ver_sub = game_version.l10n_info.l10n_sub_version
-                    l10n_lang_code = game_version.l10n_info.lang_code
 
-                    # (使用完整语言名称)
-                    l10n_lang_name = self.l10n_id_to_name.get(l10n_lang_code, l10n_lang_code)
-                    lang_str = f"{l10n_lang_name} " if l10n_lang_code else ""
-
+                    # (请求 3) 首先处理“非活跃版本”
                     if l10n_ver_full == "INACTIVE":
                         l10n_details = f"{_('lki.game.l10n_status.inactive')}"
-                    elif game_version.verify_files():
-                        display_ver = l10n_ver_sub if l10n_ver_sub else l10n_ver_full
-                        l10n_details = f"{lang_str}{display_ver} - {_('lki.game.l10n_status.ok')}"
                     else:
-                        display_ver = l10n_ver_sub if l10n_ver_sub else l10n_ver_full
-                        l10n_details = f"{lang_str}{display_ver} - {_('lki.game.l10n_status.corrupted')}"
+                        # (请求 1) 为“游戏”选项卡计算一个总状态
+                        statuses = game_version.get_component_statuses()
 
-                    status_text += f" | {l10n_details}"  # (移除了破折号)
+                        l10n_sub_ver = game_version.l10n_info.l10n_sub_version
+                        l10n_lang_code = game_version.l10n_info.lang_code
+                        l10n_lang_name = self.l10n_id_to_name.get(l10n_lang_code, l10n_lang_code)
+                        lang_str = f"{l10n_lang_name} " if l10n_lang_name else ""
+
+                        # (如果任何组件被篡改或未安装[但在预设中启用了]，则整体视为“已篡改”)
+                        is_ok = True
+                        for status in statuses.values():
+                            if status in ("tampered", "not_installed"):
+                                is_ok = False
+                                break
+
+                        display_ver = l10n_sub_ver if l10n_sub_ver else l10n_ver_full
+                        status_key = 'lki.game.l10n_status.ok' if is_ok else 'lki.game.l10n_status.corrupted'
+                        l10n_details = f"{lang_str}{display_ver} - {_(status_key)}"
+
+                    status_text += f" | {l10n_details}"  # (回到单行)
                 else:
-                    status_text += f"{_('lki.game.l10n_status.not_installed')}"
+                    status_text += f" | {_('lki.game.l10n_status.not_installed')}"
+                # --- (修改结束) ---
 
-                status_label = ttk.Label(text_frame, text=status_text, style="Path.TLabel", cursor="hand2")
+                status_label = ttk.Label(text_frame, text=status_text, style="Path.TLabel", cursor="hand2",
+                                         justify='left')
                 status_label.pack(anchor='w', fill='x')
                 status_label.bind("<Button-1>", on_click)
                 self._bind_mousewheel(status_label)
@@ -397,16 +408,28 @@ class GameTab(ttk.Frame):
 
     def _clear_selection_and_refresh(self, default_checked_ids: Optional[Set[str]] = None):
         """内部助手，用于清除选择、刷新列表并通知 App"""
-        self.selected_instance_id = None
-        self.selected_client_widget = None
-        self.loaded_game_instances.clear()
-        self._refresh_client_list(default_checked_ids=default_checked_ids)
-        self.on_instance_select_callback(None)
+
+        # 1. 在刷新开始前，禁用按钮并清除旧的 UI 引用
+        # (这是必须的，因为旧的UI条目即将被销毁)
         self.btn_rename.config(state='disabled')
         self.btn_remove.config(state='disabled')
         self.btn_move_up.config(state='disabled')
         self.btn_move_down.config(state='disabled')
         self.btn_open_folder.config(state='disabled')
+        self.selected_client_widget = None
+
+        # 2. 清除旧的数据缓存 (GameInstance 对象)
+        self.loaded_game_instances.clear()
+
+        # 3. 刷新列表 (保留 self.selected_instance_id)
+        # 这一步会：
+        #   - 重新从磁盘加载数据 (创建新的 GameInstance 对象)
+        #   - 重建 UI
+        #   - 自动重新选中 self.selected_instance_id 对应的条目
+        #   - 触发 _on_client_select，它会正确启用按钮并更新高级选项卡
+        self._refresh_client_list(default_checked_ids=default_checked_ids)
+
+        # 4. (已删除) 此处不应再有 on_instance_select_callback(None) 或禁用按钮的代码
 
     def _on_auto_import(self, is_initial_run=False):
         """Kicks off the instance detection in a new thread."""
@@ -522,18 +545,11 @@ class GameTab(ttk.Frame):
         tasks_to_run: List[InstallationTask] = []
 
         # 1. 收集勾选的实例
-        checked_instance_ids = []
-        for i, check_var in enumerate(self.client_check_vars):
-            if check_var.get():
-                try:
-                    # (这是一个脆弱的假设，但它是目前最简单的方法)
-                    instance_id = list(self.game_instances.keys())[i]
-                    checked_instance_ids.append(instance_id)
-                except IndexError:
-                    pass  # (不应发生)
+        checked_instance_ids = self._get_checked_instance_ids() # (已修改：复用此逻辑)
 
         if not checked_instance_ids:
-            messagebox.showwarning(_('lki.game.btn.install_selected'), _('lki.install.error.no_instances_selected'))
+            # (已修改：使用正确的标题)
+            messagebox.showwarning(_('lki.install.title'), _('lki.install.error.no_instances_selected'))
             return
 
         # 2. 为每个实例创建任务
@@ -575,7 +591,50 @@ class GameTab(ttk.Frame):
         print("Installation complete. Refreshing game list...")
         checked_ids = self._get_checked_instance_ids()
         # (修改) 传入勾选状态以保留
-        self._clear_selection_and_refresh(default_checked_ids=checked_ids)
+        self.app_master.after(250, lambda: self._clear_selection_and_refresh(default_checked_ids=checked_ids))
+
+    def _on_uninstall_clicked(self):
+        """收集勾选的任务并启动卸载管理器。"""
+        tasks_to_run: List[InstallationTask] = []
+
+        # 1. 收集勾选的实例
+        checked_instance_ids = self._get_checked_instance_ids()
+
+        if not checked_instance_ids:
+            messagebox.showwarning(_('lki.uninstall.title'), _('lki.uninstall.error.no_instances_selected'))
+            return
+
+        # 2. 显示确认对话框
+        confirm_msg = _('lki.uninstall.confirm.message') % len(checked_instance_ids)
+        if not messagebox.askyesno(_('lki.uninstall.confirm.title'), confirm_msg, parent=self.app_master):
+            return
+
+        # 3. 为每个实例创建“虚拟”任务
+        for instance_id in checked_instance_ids:
+            instance = self.loaded_game_instances.get(instance_id)
+
+            if not instance:
+                messagebox.showerror("Error", f"Could not find data for instance {instance_id}")
+                continue
+
+            # 卸载不需要预设数据，但 InstallationTask 结构很方便
+            # 我们传入一个虚拟的 preset_data 来显示任务名称
+            dummy_preset_data = {"name": _('lki.game.btn.uninstall')}
+            tasks_to_run.append(InstallationTask(instance, dummy_preset_data, self.app_master))
+
+        # 4. 启动管理器
+        if tasks_to_run:
+            self.installation_manager.start_uninstallation(tasks_to_run, self._on_uninstallation_complete)
+
+    def _on_uninstallation_complete(self):
+        """
+        由 InstallationManager 在所有卸载任务完成后调用的回调。
+        刷新游戏列表以显示新的（未安装）状态。
+        """
+        print("Uninstallation complete. Refreshing game list...")
+        checked_ids = self._get_checked_instance_ids()
+        # (传入勾选状态以保留)
+        self.app_master.after(250, lambda: self._clear_selection_and_refresh(default_checked_ids=checked_ids))
 
     # --- (回调) ---
     def _open_import_instance_window(self):

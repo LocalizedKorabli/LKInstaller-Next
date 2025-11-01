@@ -5,6 +5,8 @@ import win32api
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
+import instance_manager
+
 
 # 注意：这个模块需要 'pywin32'
 # 请运行: pip install pywin32
@@ -30,9 +32,9 @@ class LocalizationInfo:
     一个数据类，用于保存 installation_info.json 的内容。
     """
 
-    def __init__(self, version: str, files: Dict[str, str], lang_code: Optional[str] = None, l10n_sub_version: Optional[str] = None):
+    def __init__(self, version: str, files: Dict[str, Dict[str, str]], lang_code: Optional[str] = None, l10n_sub_version: Optional[str] = None):
         self.version: str = version
-        self.files: Dict[str, str] = files
+        self.files: Dict[str, Dict[str, str]] = files # <-- (修改)
         self.lang_code: Optional[str] = lang_code
         self.l10n_sub_version: Optional[str] = l10n_sub_version
 
@@ -121,34 +123,52 @@ class GameVersion:
             print(f"Error loading {info_path}: {e}")
             return None
 
-    def verify_files(self) -> bool:
+    def get_component_statuses(self) -> Dict[str, str]:
         """
-        验证 l10n_info 中的所有文件哈希值是否与磁盘上的文件匹配。
+        验证每个组件 (i18n, ee, font) 并返回其状态。
+        返回: {"i18n": "ok", "ee": "tampered", "font": "not_installed"}
         """
+        # (定义预设中跟踪的组件)
+        preset_data = instance_manager.global_instance_manager.get_active_preset(self.game_root_path)
+        tracked_components = ["i18n"]  # i18n 始终被跟踪
+        if preset_data.get("use_ee", False):
+            tracked_components.append("ee")
+        if preset_data.get("use_fonts", False):
+            tracked_components.append("font")
+
         if not self.l10n_info:
-            return False
+            return {comp: "not_installed" for comp in tracked_components}
 
         if self.l10n_info.version == "INACTIVE":
-            return True
+            return {comp: "inactive" for comp in tracked_components}
 
-        if not self.l10n_info.files:
-            return False
+        statuses = {}
+        files_data = self.l10n_info.files
 
-        for relative_path, expected_hash in self.l10n_info.files.items():
+        for component in tracked_components:
+            path_dict = files_data.get(component)
 
-            # --- (这是修复) ---
-            # 验证器必须在 mods 目录中查找文件
-            absolute_path = self.bin_folder_path / "mods" / relative_path
-            # --- (修复结束) ---
+            if not path_dict:
+                # (组件已启用，但 info.json 中没有条目 = 损坏/未安装)
+                statuses[component] = "not_installed"
+                continue
 
-            actual_hash = _calculate_sha256(absolute_path)
+            is_verified = True
+            for relative_path, expected_hash in path_dict.items():
+                # (新逻辑：relative_path 是 "mods/file.mkmod")
+                # (self.bin_folder_path 是 ".../bin/8828504")
+                absolute_path = self.bin_folder_path / relative_path
 
-            if actual_hash != expected_hash:
-                print(f"Verification FAILED for {relative_path}: Hash mismatch.")
-                return False
+                actual_hash = _calculate_sha256(absolute_path)
 
-        print(f"Verification SUCCESS for version {self.exe_version} ({self.bin_folder_name})")
-        return True
+                if actual_hash != expected_hash:
+                    print(f"Verification FAILED for {relative_path}: Hash mismatch.")
+                    is_verified = False
+                    break  # 一个坏文件使该组件失败
+
+            statuses[component] = "ok" if is_verified else "tampered"
+
+        return statuses
 
 
 class GameInstance:

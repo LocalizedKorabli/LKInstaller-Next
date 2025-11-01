@@ -139,32 +139,53 @@ class AdvancedTab(ttk.Frame):
         else:
             for game_version in versions_to_display:
                 ver_str = game_version.exe_version or _('lki.game.version_unknown')
-                version_text = f"{ver_str}"
+                version_text = f"{ver_str}: "
 
+                # --- (修改：高级选项卡的详细状态) ---
                 if game_version.l10n_info:
                     l10n_ver_full = game_version.l10n_info.version
-                    l10n_ver_sub = game_version.l10n_info.l10n_sub_version
-                    l10n_lang_code = game_version.l10n_info.lang_code
 
-                    # (使用完整语言名称)
-                    l10n_lang_name = self.l10n_id_to_name.get(l10n_lang_code, l10n_lang_code)
-                    lang_str = f"{l10n_lang_name} " if l10n_lang_code else ""
-
+                    # (请求 3) 首先处理“非活跃版本”
                     if l10n_ver_full == "INACTIVE":
-                        l10n_details = f"({_('lki.game.l10n_status.inactive')})"
-                    elif game_version.verify_files():
-                        display_ver = l10n_ver_sub if l10n_ver_sub else l10n_ver_full
-                        l10n_details = f"({lang_str}{display_ver} - {_('lki.game.l10n_status.ok')})"
+                        l10n_text = f"{_('lki.game.l10n_status.inactive')}"
                     else:
-                        display_ver = l10n_ver_sub if l10n_ver_sub else l10n_ver_full
-                        l10n_details = f"({lang_str}{display_ver} - {_('lki.game.l10n_status.corrupted')})"
+                        # (请求 2) 构建完整的组件分解
+                        statuses = game_version.get_component_statuses()
 
-                    l10n_text = f" {l10n_details}"  # (移除了破折号)
+                        l10n_sub_ver = game_version.l10n_info.l10n_sub_version
+                        l10n_lang_code = game_version.l10n_info.lang_code
+                        l10n_lang_name = self.l10n_id_to_name.get(l10n_lang_code, l10n_lang_code)
+                        lang_str = f" ({l10n_lang_name})" if l10n_lang_name else ""
+
+                        status_map = {
+                            "ok": "✔️",
+                            "tampered": "❗",
+                            "not_installed": "❌"
+                        }
+
+                        status_lines = []
+                        if "i18n" in statuses:
+                            sub_ver = l10n_sub_ver if (l10n_sub_ver and statuses["i18n"] == "ok") else ""
+                            ver_str = f" {sub_ver}" if statuses["i18n"] == "ok" else ""
+                            status_lines.append(
+                                f"{_('lki.component.i18n')}: {lang_str}{ver_str} {status_map.get(statuses['i18n'])}")
+
+                        if "ee" in statuses:
+                            status_lines.append(f"{_('lki.component.ee')}: {status_map.get(statuses['ee'])}")
+
+                        # (这是你已有的、正确的“字体”行)
+                        if "font" in statuses:
+                            status_lines.append(f"{_('lki.component.font')}: {status_map.get(statuses['font'])}")
+
+                        l10n_text = "\n" + "\n".join(status_lines)
                 else:
-                    l10n_text = f" ({_('lki.game.l10n_status.not_installed')})"
+                    l10n_text = f"{_('lki.game.l10n_status.not_installed')}"
+                # --- (修改结束) ---
 
                 full_version_string = version_text + l10n_text
-                version_label = ttk.Label(instance_details_frame, text=full_version_string, style="Path.TLabel")
+
+                version_label = ttk.Label(instance_details_frame, text=full_version_string, style="Path.TLabel",
+                                          justify='left')
                 version_label.pack(anchor='w', padx=(10, 0))
 
         # --- (2. 预设配置框) ---
@@ -263,15 +284,15 @@ class AdvancedTab(ttk.Frame):
         route_str = ", ".join(route_names)
         self.preset_route_label.config(text=f"{_('lki.preset.manager.route')} {route_str}")
 
-        use_ee = preset_data.get('use_ee', True)
+        use_ee = preset_data.get('use_ee', False)
         ee_text = _('lki.generic.yes') if use_ee else _('lki.generic.no')
         self.preset_ee_label.config(text=f"{_('lki.preset.manager.use_ee')}: {ee_text}")
 
-        use_mods = preset_data.get('use_mods', True)
+        use_mods = preset_data.get('use_mods', False)
         mods_text = _('lki.generic.yes') if use_mods else _('lki.generic.no')
         self.preset_mods_label.config(text=f"{_('lki.preset.manager.use_mods')}: {mods_text}")
 
-        use_fonts = preset_data.get('use_fonts', True)  # <-- (新增)
+        use_fonts = preset_data.get('use_fonts', False)  # <-- (新增)
         fonts_text = _('lki.generic.yes') if use_fonts else _('lki.generic.no')  # <-- (新增)
         self.preset_fonts_label.config(text=f"{_('lki.preset.manager.use_fonts')}: {fonts_text}")  # <-- (新增)
 
@@ -510,7 +531,14 @@ class PresetManagerWindow(BaseDialog):
         default_lang_code = determine_default_l10n_lang(current_ui_lang)
         default_use_ee = True
         default_use_mods = True
-        default_use_fonts = True  # <-- (新增)
+
+        # --- (已修改：不再硬编码 True) ---
+        try:
+            # (查询 localization_sources 获取该语言的默认值)
+            default_use_fonts = global_source_manager.lang_code_requires_fonts(default_lang_code)
+        except Exception:
+            default_use_fonts = True  # (回退)
+        # --- (修改结束) ---
 
         self.active_preset_id = self.instance_manager.add_preset(
             self.instance_id, new_name, default_lang_code, default_use_ee, default_use_mods, default_use_fonts

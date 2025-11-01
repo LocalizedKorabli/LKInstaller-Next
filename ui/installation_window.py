@@ -10,9 +10,10 @@ class InstallProgressWindow(BaseDialog):
     显示多个并行安装任务进度的弹出窗口。
     """
 
-    def __init__(self, parent, task_names: List[str], cancel_callback: Callable):
+    def __init__(self, parent, task_names: List[str], cancel_callback: Callable,
+                 title: str, starting_text: str, pending_text: str):
         super().__init__(parent)
-        self.title(_('lki.install.title'))
+        self.title(title) # (已修改)
         self.resizable(False, False)
 
         self.cancel_callback = cancel_callback
@@ -21,7 +22,7 @@ class InstallProgressWindow(BaseDialog):
         main_frame = ttk.Frame(self, padding=10)
         main_frame.pack(fill='both', expand=True)
 
-        self.overall_status_label = ttk.Label(main_frame, text=_('lki.install.status.starting'), wraplength=450)
+        self.overall_status_label = ttk.Label(main_frame, text=starting_text, wraplength=450) # (已修改)
         self.overall_status_label.pack(fill='x', pady=(0, 10))
 
         # 为每个任务创建 UI 元素
@@ -32,7 +33,7 @@ class InstallProgressWindow(BaseDialog):
             name_label = ttk.Label(task_frame, text=name)
             name_label.pack(fill='x')
 
-            status_label = ttk.Label(task_frame, text=_('lki.install.status.pending'), style="Hint.TLabel")
+            status_label = ttk.Label(task_frame, text=pending_text, style="Hint.TLabel") # (已修改)
             status_label.pack(fill='x')
 
             progress_bar = ttk.Progressbar(task_frame, length=450, mode='determinate')

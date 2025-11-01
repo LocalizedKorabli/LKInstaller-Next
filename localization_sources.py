@@ -78,7 +78,8 @@ class LocalizationSource:
 
     def __init__(self, source_id: str, name_key: str,
                  routes_live: dict, routes_pt: dict,
-                 mods_url: Optional[str]):
+                 mods_url: Optional[str],
+                 requires_fonts: bool):  # <-- (1. 新增参数)
         self.id = source_id
         self.name_key = name_key
 
@@ -87,6 +88,7 @@ class LocalizationSource:
             'pts': routes_pt
         }
         self.mods_url = mods_url
+        self.requires_fonts = requires_fonts  # <-- (2. 新增属性)
 
     def get_routes_for_type(self, instance_type: str = 'production') -> Optional[dict]:
         """获取 'production' 或 'pts' 的下载路由字典"""
@@ -124,7 +126,7 @@ class SourceManager:
 
     def __init__(self):
         self.sources: Dict[str, LocalizationSource] = {}
-        self.global_assets: Dict[str, Dict[str, Dict[str, str]]] = {}  # <-- (新增)
+        self.global_assets: Dict[str, Dict[str, Dict[str, str]]] = {}
         self._register_sources()
 
     def _register_sources(self):
@@ -134,7 +136,8 @@ class SourceManager:
             name_key="l10n.zh_CN.name",
             routes_live=CHS_LIVE_ROUTES,
             routes_pt=CHS_PT_ROUTES,
-            mods_url=MODS_URL_CHS
+            mods_url=MODS_URL_CHS,
+            requires_fonts=True  # <-- (3. 为 'zh_CN' 传入 True)
         )
 
         # 2. 英文
@@ -143,7 +146,8 @@ class SourceManager:
             name_key="l10n.en.name",
             routes_live=EN_LIVE_ROUTES,
             routes_pt=EN_PT_ROUTES,
-            mods_url=MODS_URL_EN
+            mods_url=MODS_URL_EN,
+            requires_fonts=False  # <-- (4. 为 'en' 传入 False)
         )
 
         # --- (新增：定义全局资产) ---
@@ -157,8 +161,9 @@ class SourceManager:
         # --- (新增结束) ---
 
     def add_source(self, source_id: str, name_key: str, routes_live: dict, routes_pt: dict,
-                   mods_url: Optional[str]):
-        self.sources[source_id] = LocalizationSource(source_id, name_key, routes_live, routes_pt, mods_url)
+                   mods_url: Optional[str], requires_fonts: bool):  # <-- (5. 新增参数)
+        self.sources[source_id] = LocalizationSource(source_id, name_key, routes_live, routes_pt, mods_url,
+                                                     requires_fonts)  # <-- (6. 传入参数)
 
     def get_source(self, source_id: str) -> Optional[LocalizationSource]:
         return self.sources.get(source_id)
@@ -221,6 +226,21 @@ class SourceManager:
             # (回退到第一个可用的路由)
             return asset_routes.get(route_id, next(iter(asset_routes.values()), None))
         return None
+
+    # --- (新增结束) ---
+
+    # --- (7. 新增您所请求的方法) ---
+    def lang_code_requires_fonts(self, lang_code: str) -> bool:
+        """
+        检查一个语言代码是否默认需要字体包。
+        """
+        source = self.get_source(lang_code)
+        if source:
+            return source.requires_fonts  # (在步骤 1 & 2 中添加)
+
+        # (安全回退：如果未指定，则假设需要字体)
+        # 这对于迁移旧的、未指定此属性的预设很重要
+        return True
     # --- (新增结束) ---
 
 

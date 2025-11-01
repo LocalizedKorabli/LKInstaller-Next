@@ -85,6 +85,7 @@ class InstallationManager:
         self._cancel_event = threading.Event()
         self._lock = threading.Lock()
         self.on_complete_callback: Optional[Callable] = None
+        self.is_uninstalling: bool = False  # (新增)
 
     def start_installation(self, tasks: List[InstallationTask], on_complete_callback: Optional[Callable] = None):
         from localizer import _  # (为 Messagebox 导入)
@@ -98,9 +99,14 @@ class InstallationManager:
         self._cancel_event.clear()
         self.tasks = tasks
         self.on_complete_callback = on_complete_callback
+        self.is_uninstalling = False  # (新增)
 
         task_names = [t.task_name for t in self.tasks]
-        self.window = InstallProgressWindow(self.root_tk, task_names, self.cancel_installation)
+        # (已修改：传入 title 和 strings)
+        self.window = InstallProgressWindow(self.root_tk, task_names, self.cancel_installation,
+                                            title=_('lki.install.title'),
+                                            starting_text=_('lki.install.status.starting'),
+                                            pending_text=_('lki.install.status.pending'))
 
         # (为每个任务分配 UI 回调)
         for task in self.tasks:
@@ -114,13 +120,54 @@ class InstallationManager:
 
     def cancel_installation(self):
         from localizer import _  # (为日志导入)
-        _log_overall(self, _('lki.install.status.cancelling'))
+        # (已修改：根据状态使用不同的字符串)
+        cancel_key = 'lki.uninstall.status.cancelling' if self.is_uninstalling else 'lki.install.status.cancelling'
+        _log_overall(self, _(cancel_key))
         self._cancel_event.set()
         while not self.download_queue.empty():
             try:
                 self.download_queue.get_nowait()
             except queue.Empty:
                 break
+
+    def start_uninstallation(self, tasks: List[InstallationTask], on_complete_callback: Optional[Callable] = None):
+        from localizer import _
+
+        if self.window and self.window.winfo_exists():
+            messagebox.showwarning(_('lki.uninstall.title'), _('lki.install.error.already_running'))
+            self.window.focus_force()
+            return
+
+        self._cancel_event.clear()
+        self.tasks = tasks
+        self.on_complete_callback = on_complete_callback
+        self.is_uninstalling = True  # (新增)
+
+        task_names = [t.task_name for t in self.tasks]
+        # (新增：使用卸载标题)
+        self.window = InstallProgressWindow(self.root_tk, task_names, self.cancel_installation,
+                                            title=_('lki.uninstall.title'),
+                                            starting_text=_('lki.uninstall.status.starting'),
+                                            pending_text=_('lki.uninstall.status.pending'))
+
+        for task in self.tasks:
+            task.log_callback = lambda msg, p=..., t=task: self.root_tk.after(
+                0, self.window.update_task_progress, t.task_name,
+                p if p is not ... else task.progress_callback(), msg
+            )
+            task.progress_callback = lambda t=task: self.window.widgets[t.task_name]['progress_bar']['value']
+
+        threading.Thread(target=self._uninstall_control_thread, daemon=True).start()
+
+    # (新增：卸载控制线程)
+    def _uninstall_control_thread(self):
+        from localizer import _
+        _log_overall(self, _('lki.uninstall.status.starting'))
+
+        for task in self.tasks:
+            if self._cancel_event.is_set(): return
+            task.status = "running"  # (使用 'running' 状态)
+            threading.Thread(target=self._uninstall_worker, args=(task,), daemon=True).start()
 
     def _control_thread(self):
         from localizer import _  # <-- (修复 UnboundLocalError)
@@ -658,26 +705,26 @@ class InstallationManager:
                     utils.mkdir(mods_dir)
 
                     shutil.copy(core_mkmod_path, dest_core_mod_path)
-                    files_info = {}
-                    files_info["lk_i18n_mod.mkmod"] = utils.get_sha256(dest_core_mod_path)
-                    # --- 关键安装结束 ---
-
-                    # --- (修改) 非关键安装步骤 ---
+                    files_info = {"i18n": {}, "ee": {}, "font": {}}
                     try:
+                        # (修改) 2. 使用相对路径作为键，存储在 "i18n" 下
+                        core_rel_path = f"mods/{dest_core_mod_path.name}"
+                        files_info["i18n"][core_rel_path] = utils.get_sha256(dest_core_mod_path)
+
                         if ee_mkmod_path and ee_mkmod_path.is_file():
                             shutil.copy(ee_mkmod_path, dest_ee_mod_path)
-                            files_info["lk_i18n_ee.mkmod"] = utils.get_sha256(dest_ee_mod_path)
-                    except Exception as e:
-                        _log_task(task, f"EE copy failed: {e}")
-                        non_critical_errors.append("EE Install")
+                            # (修改) 3. 存储在 "ee" 下
+                            ee_rel_path = f"mods/{dest_ee_mod_path.name}"
+                            files_info["ee"][ee_rel_path] = utils.get_sha256(dest_ee_mod_path)
 
-                    try:
                         if fo_mkmod_path and fo_mkmod_path.is_file():
                             shutil.copy(fo_mkmod_path, dest_fo_mod_path)
-                            files_info["srcwagon_mk.mkmod"] = utils.get_sha256(dest_fo_mod_path)
+                            # (修改) 4. 存储在 "font" 下
+                            font_rel_path = f"mods/{dest_fo_mod_path.name}"
+                            files_info["font"][font_rel_path] = utils.get_sha256(dest_fo_mod_path)
+
                     except Exception as e:
-                        _log_task(task, f"Fonts copy failed: {e}")
-                        non_critical_errors.append("Fonts Install")
+                        print(f"[{task.task_name}] 无法计算 mkmod 的哈希值: {e}")
                     # --- 非关键安装结束 ---
 
                     # --- 关键的 Info.json 写入 ---
@@ -730,14 +777,81 @@ class InstallationManager:
             traceback.print_exc()
             self._mark_task_failed(task, str(e))
 
+    def _uninstall_worker(self, task: InstallationTask):
+        """(在线程中) 为单个实例执行文件删除。"""
+        from localizer import _
+        import os
+        import json
+
+        try:
+            instance = task.instance
+            if not instance.versions:
+                _log_task(task, _('lki.install.error.no_version_for_instance') % instance.name, 100)
+                self._mark_task_finished(task, success=True, status_key='lki.uninstall.status.done')
+                return
+
+            total_versions = len(instance.versions)
+            for i, game_version in enumerate(instance.versions):
+                if self._cancel_event.is_set(): return
+
+                progress = (i / total_versions) * 100
+                _log_task(task, _('lki.uninstall.status.removing_files_for') % game_version.bin_folder_name, progress)
+
+                info_file = game_version.game_root_path / "lki" / "info" / game_version.bin_folder_name / "installation_info.json"
+
+                if not info_file.is_file():
+                    _log_task(task, _('lki.uninstall.status.no_info_skip') % game_version.bin_folder_name, progress)
+                    continue
+
+                # 1. 读取 info.json 来获取文件列表
+                files_to_delete: List[Path] = []
+                try:
+                    with open(info_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+
+                    files_data = data.get("files", {})
+                    for component_name, path_dict in files_data.items():
+                        for relative_path in path_dict.keys():
+                            # relative_path 是 "mods/lk_i18n_mod.mkmod"
+                            absolute_path = game_version.bin_folder_path / relative_path
+                            files_to_delete.append(absolute_path)
+
+                except Exception as e:
+                    _log_task(task, f"Error reading {info_file.name}: {e}")
+                    # (即使读取失败，我们仍将尝试删除 info_file)
+
+                # 2. 删除所有引用的文件
+                for file_path in files_to_delete:
+                    try:
+                        if file_path.is_file():
+                            os.remove(file_path)
+                    except OSError as e:
+                        _log_task(task, f"Warn: Could not remove {file_path.name}: {e}")
+
+                # 3. (最后) 删除 info.json 文件本身
+                try:
+                    os.remove(info_file)
+                except OSError as e:
+                    _log_task(task, f"Error: Could not remove {info_file.name}: {e}")
+
+            # (所有版本循环完毕)
+            _log_task(task, _('lki.uninstall.status.done'), 100)
+            self._mark_task_finished(task, success=True, status_key='lki.uninstall.status.done')
+
+        except Exception as e:
+            import traceback
+            print(f"Error in uninstall worker for {task.task_name}: {e}")
+            traceback.print_exc()
+            self._mark_task_failed(task, str(e))
+
     def _mark_task_failed(self, task: InstallationTask, reason: str = ""):
         from localizer import _
         with self._lock:
             task.status = "failed"
-            status_text = f"{_('lki.install.status.failed')}: {reason}"
+            # (已修改：根据状态使用不同的失败字符串)
+            status_key = 'lki.uninstall.status.failed' if self.is_uninstalling else 'lki.install.status.failed'
+            status_text = f"{_(status_key)}: {reason}"
             _log_task(task, status_text, 100)  # (日志现在也使用最终文本)
-            self.root_tk.after(0, self.window.mark_task_complete, task.task_name, False, status_text)
-        self._check_if_all_finished()
 
     def _mark_task_finished(self, task: InstallationTask, success: bool, status_key: str = 'lki.install.status.done'):
         from localizer import _
@@ -752,10 +866,10 @@ class InstallationManager:
         with self._lock:
             all_done = all(t.status in ["done", "failed"] for t in self.tasks)
             if all_done:
-                _log_overall(self, _('lki.install.status.all_done'))
+                # (已修改：根据状态使用不同的完成字符串)
+                all_done_key = 'lki.uninstall.status.all_done' if self.is_uninstalling else 'lki.install.status.all_done'
+                _log_overall(self, _(all_done_key))
                 self.root_tk.after(0, self.window.all_tasks_finished)
-                if self.on_complete_callback:
-                    self.root_tk.after(0, self.on_complete_callback)
 
 
 # --- (日志记录助手) ---

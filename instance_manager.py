@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional, List
 import utils
 from localizer import _
 from utils import determine_default_l10n_lang
-from localization_sources import global_source_manager
+from localization_sources import global_source_manager  # (确保这个导入存在)
 
 instances_path: Path = Path('lki/settings/instances.json')
 
@@ -23,6 +23,35 @@ class InstanceManager:
         normalized_path = os.path.normpath(os.path.abspath(path))
         return hashlib.sha256(normalized_path.encode('utf-8')).hexdigest()
 
+    # --- (已修改：采纳您的建议，使其具有语言依赖性) ---
+    def _get_default_preset_data(self, lang_code: str) -> Dict[str, Any]:
+        """
+        返回一个标准的“默认预设”字典结构。
+        'use_fonts' 的值取决于语言。
+        """
+
+        # (修改：从 localization_sources 查询默认值)
+        # 我们假设 global_source_manager 现在有这个方法
+        try:
+            default_fonts = global_source_manager.lang_code_requires_fonts(lang_code)
+        except AttributeError:
+            print(f"Warning: global_source_manager.lang_code_requires_fonts() not found. Defaulting use_fonts to True.")
+            default_fonts = True  # (回退到旧逻辑)
+        except Exception as e:
+            print(f"Error checking font requirement for {lang_code}: {e}. Defaulting use_fonts to True.")
+            default_fonts = True
+
+        return {
+            "name_key": "lki.preset.default.name",
+            "lang_code": lang_code,
+            "use_ee": True,
+            "use_mods": True,
+            "use_fonts": default_fonts,  # (已修改)
+            "is_default": True
+        }
+
+    # --- (修改结束) ---
+
     def load(self):
         """从 instances.json 加载实例字典并迁移旧数据"""
         if instances_path.is_file():
@@ -36,35 +65,57 @@ class InstanceManager:
             self.instances = {}
 
         needs_save = False
+
+        # (已修改：use_fonts 不再是静态默认值)
+        component_defaults = {
+            "use_ee": True,
+            "use_mods": True
+            # "use_fonts" 将被单独处理
+        }
+
         for instance_id, data in self.instances.items():
-            # (已修改：移除 download_route 和 download_routes)
+            # (1. 移除旧的路由键)
             for preset_id, preset_data in data.get('presets', {}).items():
                 if 'download_route' in preset_data:
-                    print(f"Migrating preset {preset_id} (removing download_route)...")
                     del preset_data['download_route']
                     needs_save = True
                 if 'download_routes' in preset_data:
-                    print(f"Migrating preset {preset_id} (removing download_routes)...")
                     del preset_data['download_routes']
                     needs_save = True
-            # (迁移结束)
 
-            if 'presets' not in data:
-                print(f"Migrating old instance data for {instance_id}...")
+            # (2. 检查 'presets' 键是否存在)
+            if 'presets' in data:
+                # (已修改：迭代检查所有预设)
+                for preset_id, preset_data in data.get('presets', {}).items():
+                    # (a. 补全静态默认键)
+                    for key, default_value in component_defaults.items():
+                        if key not in preset_data:
+                            print(f"Migrating preset {preset_id} for {instance_id} (adding {key}: {default_value})...")
+                            preset_data[key] = default_value
+                            needs_save = True
 
-                default_lang_code = 'zh_CN'
+                    # (b. 补全语言相关的 'use_fonts' 键)
+                    if 'use_fonts' not in preset_data:
+                        # (使用预设中已存的 lang_code 来决定默认值)
+                        lang_code = preset_data.get('lang_code', 'en')  # (回退到 'en')
+                        try:
+                            default_fonts = global_source_manager.lang_code_requires_fonts(lang_code)
+                        except Exception:
+                            default_fonts = True  # (回退)
 
-                data['presets'] = {
-                    "default": {
-                        "name_key": "lki.preset.default.name",
-                        "lang_code": default_lang_code,
-                        # (download_routes 已移除)
-                        "use_ee": True,
-                        "use_mods": True,
-                        "use_fonts": True, # <-- (新增)
-                        "is_default": True
-                    }
-                }
+                        print(
+                            f"Migrating preset {preset_id} for {instance_id} (adding use_fonts: {default_fonts} for lang={lang_code})...")
+                        preset_data['use_fonts'] = default_fonts
+                        needs_save = True
+
+            else:
+                # (3. 'presets' 键完全缺失, 创建全新的默认预设)
+                print(f"Migrating old instance data for {instance_id} (creating default preset)...")
+
+                default_lang_code = 'zh_CN'  # (保持 load 方法中的硬编码回退)
+                default_preset = self._get_default_preset_data(default_lang_code)
+
+                data['presets'] = {"default": default_preset}
                 data['active_preset_id'] = "default"
                 needs_save = True
 
@@ -85,6 +136,21 @@ class InstanceManager:
     def get_instance(self, instance_id: str) -> Optional[Dict[str, Any]]:
         """按 ID 获取单个实例的数据"""
         return self.instances.get(instance_id)
+
+    def get_active_preset(self, game_root_path: Path) -> Dict[str, Any]:
+        """
+        (新增) 辅助函数，用于根据实例路径获取其活动的预设数据。
+        """
+        instance_id = self._generate_id(str(game_root_path))
+        instance_data = self.get_instance(instance_id)
+
+        if not instance_data:
+            return {}
+
+        presets = instance_data.get('presets', {})
+        active_preset_id = instance_data.get('active_preset_id', 'default')
+
+        return presets.get(active_preset_id, {})
 
     def delete_instance(self, instance_id: str):
         """删除一个实例"""
@@ -124,7 +190,7 @@ class InstanceManager:
         """在列表中将实例下移一位"""
         self._move_instance(instance_id, 1)
 
-    # (已修改：移除 download_routes)
+    # (已修改：使用 _get_default_preset_data 辅助方法)
     def add_instance(self, name: str, path: str, type: str, current_ui_lang: str) -> str:
         """
         添加一个新实例，并为其创建默认预设。
@@ -135,15 +201,8 @@ class InstanceManager:
 
         default_lang_code = determine_default_l10n_lang(current_ui_lang)
 
-        default_preset_data = {
-            "name_key": "lki.preset.default.name",
-            "lang_code": default_lang_code,
-            # (download_routes 已移除)
-            "use_ee": True,
-            "use_mods": True,
-            "use_fonts": True, # <-- (新增)
-            "is_default": True
-        }
+        # (已修改：调用辅助方法，自动获取正确的 use_fonts)
+        default_preset_data = self._get_default_preset_data(default_lang_code)
 
         self.instances[instance_id] = {
             "name": name,
@@ -164,7 +223,6 @@ class InstanceManager:
         self.instances[instance_id].update(data)
         self.save()
 
-    # (已修改：签名变更)
     def add_preset(self, instance_id: str, name: str, lang_code: str, use_ee: bool,
                    use_mods: bool, use_fonts: bool) -> str:
         """为特定实例创建一个新的自定义预设并返回其 ID"""
@@ -177,10 +235,9 @@ class InstanceManager:
         self.instances[instance_id]['presets'][preset_id] = {
             "name": name,
             "lang_code": lang_code,
-            # (download_routes 已移除)
             "use_ee": use_ee,
             "use_mods": use_mods,
-            "use_fonts": use_fonts, # <-- (新增)
+            "use_fonts": use_fonts,
             "is_default": False
         }
         self.save()

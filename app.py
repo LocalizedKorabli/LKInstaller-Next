@@ -19,6 +19,7 @@ from game_instance import GameInstance
 class LocalizationInstallerApp:
     def __init__(self, master, initial_theme):
         self.master = master
+        master.geometry('450x616') # 616 just enough to accommodate 3 instances.
         master.title(_('lki.app.title'))
 
         self.icons = IconManager()
