@@ -10,7 +10,7 @@ import instance_manager
 from localizer import _
 from localization_sources import global_source_manager
 from utils import determine_default_l10n_lang
-from ui.dialogs import CustomAskStringDialog
+from ui.dialogs import CustomAskStringDialog, BaseDialog
 from game_instance import GameInstance, GameVersion
 
 try:
@@ -40,7 +40,8 @@ class AdvancedTab(ttk.Frame):
         self.route_id_to_name = {
             'gitee': _('l10n.route.gitee'),
             'gitlab': _('l10n.route.gitlab'),
-            'github': _('l10n.route.github')
+            'github': _('l10n.route.github'),
+            'cloudflare': _('l10n.route.cloudflare')  # <-- (新增)
         }
 
         # 占位符
@@ -147,16 +148,16 @@ class AdvancedTab(ttk.Frame):
 
                     # (使用完整语言名称)
                     l10n_lang_name = self.l10n_id_to_name.get(l10n_lang_code, l10n_lang_code)
-                    lang_str = f"{l10n_lang_name}" if l10n_lang_code else ""
+                    lang_str = f"{l10n_lang_name} " if l10n_lang_code else ""
 
                     if l10n_ver_full == "INACTIVE":
-                        l10n_details = f"[{_('lki.game.l10n_status.inactive')}]"
+                        l10n_details = f"({_('lki.game.l10n_status.inactive')})"
                     elif game_version.verify_files():
                         display_ver = l10n_ver_sub if l10n_ver_sub else l10n_ver_full
-                        l10n_details = f"[{lang_str}{display_ver} - {_('lki.game.l10n_status.ok')}]"
+                        l10n_details = f"({lang_str}{display_ver} - {_('lki.game.l10n_status.ok')})"
                     else:
                         display_ver = l10n_ver_sub if l10n_ver_sub else l10n_ver_full
-                        l10n_details = f"[{lang_str}{display_ver} - {_('lki.game.l10n_status.corrupted')}]"
+                        l10n_details = f"({lang_str}{display_ver} - {_('lki.game.l10n_status.corrupted')})"
 
                     l10n_text = f" {l10n_details}"  # (移除了破折号)
                 else:
@@ -205,6 +206,9 @@ class AdvancedTab(ttk.Frame):
 
         self.preset_mods_label = ttk.Label(preset_config_frame, text="Mods:")
         self.preset_mods_label.grid(row=5, column=0, columnspan=3, sticky='w', padx=5)
+
+        self.preset_fonts_label = ttk.Label(preset_config_frame, text="Fonts:")  # <-- (新增)
+        self.preset_fonts_label.grid(row=6, column=0, columnspan=3, sticky='w', padx=5)  # <-- (新增)
 
         # --- (3. 初始填充) ---
         self._update_preset_combobox()
@@ -267,6 +271,10 @@ class AdvancedTab(ttk.Frame):
         mods_text = _('lki.generic.yes') if use_mods else _('lki.generic.no')
         self.preset_mods_label.config(text=f"{_('lki.preset.manager.use_mods')}: {mods_text}")
 
+        use_fonts = preset_data.get('use_fonts', True)  # <-- (新增)
+        fonts_text = _('lki.generic.yes') if use_fonts else _('lki.generic.no')  # <-- (新增)
+        self.preset_fonts_label.config(text=f"{_('lki.preset.manager.use_fonts')}: {fonts_text}")  # <-- (新增)
+
     def _open_preset_manager(self):
         """打开预设管理器窗口"""
         if not self.current_instance:
@@ -289,7 +297,7 @@ class AdvancedTab(ttk.Frame):
 
 
 # --- (PresetManagerWindow 已重构：移除了路由排序) ---
-class PresetManagerWindow(tk.Toplevel):
+class PresetManagerWindow(BaseDialog):
     """一个用于管理（CRUD）预设的弹出窗口。"""
 
     def __init__(self, parent_tk, parent_app: AdvancedTab, instance_id, on_close_callback):
@@ -301,8 +309,6 @@ class PresetManagerWindow(tk.Toplevel):
         self.icons = self.parent_app.icons
 
         self.title(_('lki.preset.manager.title'))
-        self.transient(parent_tk)
-        self.grab_set()
 
         self.instance_manager = instance_manager.global_instance_manager
         self.instance_data = self.instance_manager.get_instance(self.instance_id)
@@ -312,6 +318,7 @@ class PresetManagerWindow(tk.Toplevel):
 
         self.use_ee_var = tk.BooleanVar()
         self.use_mods_var = tk.BooleanVar()
+        self.use_fonts_var = tk.BooleanVar()  # <-- (新增)
 
         main_frame = ttk.Frame(self, padding=10)
         main_frame.pack(fill='both', expand=True)
@@ -365,6 +372,10 @@ class PresetManagerWindow(tk.Toplevel):
         if ToolTip:
             ToolTip(self.btn_open_mods_dir, _('lki.preset.manager.tooltip_open_mods_dir'))
             ToolTip(self.btn_download_mods, _('lki.preset.manager.tooltip_download_mods'))
+
+        self.cb_use_fonts = ttk.Checkbutton(self.details_frame, text=_('lki.preset.manager.use_fonts'),  # <-- (新增)
+                                            variable=self.use_fonts_var)
+        self.cb_use_fonts.grid(row=4, column=0, columnspan=2, sticky='w', pady=(5, 0))  # <-- (新增)
 
         button_frame = ttk.Frame(main_frame)
         button_frame.grid(row=1, column=0, columnspan=2, sticky='ew', pady=(10, 0))
@@ -454,11 +465,14 @@ class PresetManagerWindow(tk.Toplevel):
 
         use_ee = preset_data.get('use_ee', True)
         use_mods = preset_data.get('use_mods', True)
+        use_fonts = preset_data.get('use_fonts', True)  # <-- (新增)
         self.use_ee_var.set(use_ee)
         self.use_mods_var.set(use_mods)
+        self.use_fonts_var.set(use_fonts)  # <-- (新增)
 
         self.cb_use_ee.config(state='normal')
         self.cb_use_mods.config(state='normal')
+        self.cb_use_fonts.config(state='normal')  # <-- (新增)
 
         self.btn_rename.config(state=btn_state)
         self.btn_delete.config(state=btn_state)
@@ -496,9 +510,10 @@ class PresetManagerWindow(tk.Toplevel):
         default_lang_code = determine_default_l10n_lang(current_ui_lang)
         default_use_ee = True
         default_use_mods = True
+        default_use_fonts = True  # <-- (新增)
 
         self.active_preset_id = self.instance_manager.add_preset(
-            self.instance_id, new_name, default_lang_code, default_use_ee, default_use_mods
+            self.instance_id, new_name, default_lang_code, default_use_ee, default_use_mods, default_use_fonts
         )
         self._populate_listbox_and_select()
 
@@ -518,9 +533,10 @@ class PresetManagerWindow(tk.Toplevel):
         current_lang_code = self.l10n_name_to_id.get(current_lang_name, 'en')
         current_use_ee = self.use_ee_var.get()
         current_use_mods = self.use_mods_var.get()
+        current_use_fonts = self.use_fonts_var.get()  # <-- (新增)
 
         self.active_preset_id = self.instance_manager.add_preset(
-            self.instance_id, new_name, current_lang_code, current_use_ee, current_use_mods
+            self.instance_id, new_name, current_lang_code, current_use_ee, current_use_mods, current_use_fonts
         )
         self._populate_listbox_and_select()
 
@@ -540,11 +556,13 @@ class PresetManagerWindow(tk.Toplevel):
         new_lang_code = self.l10n_name_to_id.get(new_lang_name)
         new_use_ee = self.use_ee_var.get()
         new_use_mods = self.use_mods_var.get()
+        new_use_fonts = self.use_fonts_var.get()  # <-- (新增)
 
         data_to_save = {
             "lang_code": new_lang_code,
             "use_ee": new_use_ee,
-            "use_mods": new_use_mods
+            "use_mods": new_use_mods,
+            "use_fonts": new_use_fonts  # <-- (新增)
         }
 
         if not is_default:

@@ -5,7 +5,7 @@ from typing import List
 import settings
 from localizer import _, get_available_languages
 from localization_sources import global_source_manager
-from ui.dialogs import RoutePriorityWindow
+from ui.dialogs import RoutePriorityWindow, BaseDialog
 
 
 class SettingsTab(ttk.Frame):
@@ -35,7 +35,8 @@ class SettingsTab(ttk.Frame):
         self.route_id_to_name = {
             'gitee': _('l10n.route.gitee'),
             'gitlab': _('l10n.route.gitlab'),
-            'github': _('l10n.route.github')
+            'github': _('l10n.route.github'),
+            'cloudflare': _('l10n.route.cloudflare') # <-- (新增)
         }
 
         self._create_settings_tab_widgets()
@@ -194,15 +195,13 @@ class SettingsTab(ttk.Frame):
 
 
 # (ProxyConfigWindow 保持不变)
-class ProxyConfigWindow(tk.Toplevel):
+class ProxyConfigWindow(BaseDialog):
     # (此类代码未更改)
     def __init__(self, parent, on_save_callback):
         super().__init__(parent)
         self.on_save_callback = on_save_callback
 
         self.title(_('lki.proxy.title'))
-        self.transient(parent)
-        self.grab_set()
 
         self.mode_var = tk.StringVar(value=settings.global_settings.get('proxy.mode', 'disabled'))
         self.host_var = tk.StringVar(value=settings.global_settings.get('proxy.host', ''))

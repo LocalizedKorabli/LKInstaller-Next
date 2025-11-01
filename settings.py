@@ -29,23 +29,15 @@ class GlobalSettings:
             'language': select_locale_by_system_lang_code(),
             'theme': 'light',
             'proxy': {
-                'mode': 'disabled',
+                'mode': 'system',
                 'host': '',
                 'port': '',
                 'user': '',
                 'password': ''
             },
-            'presets': {  # (此预设仅用于 settings.py，现已废弃，但保留以防万一)
-                "default": {
-                    "name_key": "lki.preset.default.name",
-                    "lang_code": "en",
-                    "use_ee": True,
-                    "use_mods": True,
-                    "is_default": True
-                }
-            },
             'ever_launched': False,
-            'download_routes_priority': default_route_priority  # <-- (已修改)
+            'download_routes_priority': default_route_priority,  # <-- (已修改)
+            'checked_instance_ids': []
         }
 
         saved_data: Dict[str, Any] = {}
@@ -71,6 +63,9 @@ class GlobalSettings:
 
         if 'download_routes_priority' in saved_data:
             self.data['download_routes_priority'] = saved_data['download_routes_priority']
+
+        if 'checked_instance_ids' in saved_data:
+            self.data['checked_instance_ids'] = saved_data['checked_instance_ids']
 
     @property
     def language(self):

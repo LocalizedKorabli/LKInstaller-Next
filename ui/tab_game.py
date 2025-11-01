@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Set
 import os
 import xml.etree.ElementTree as Et
 import threading
@@ -19,7 +19,7 @@ import settings
 import instance_manager
 from localizer import _
 from game_instance import GameInstance
-from ui.dialogs import CustomAskStringDialog
+from ui.dialogs import CustomAskStringDialog, BaseDialog
 from instance_detector import find_instances_for_auto_import, get_instance_type_from_path
 from installation_manager import InstallationManager, InstallationTask  # <-- (新增)
 from localization_sources import global_source_manager
@@ -146,7 +146,7 @@ class GameTab(ttk.Frame):
         """从管理器加载实例数据。"""
         self.game_instances = self.instance_manager.get_all()
 
-    def _refresh_client_list(self):
+    def _refresh_client_list(self, default_checked_ids: Optional[Set[str]] = None):
         """清除、重新加载并重新构建客户端列表 UI。"""
         for widget in self.client_list_frame.winfo_children():
             widget.destroy()
@@ -156,8 +156,8 @@ class GameTab(ttk.Frame):
         self.check_all_btn.state(['!alternate'])
 
         self.game_instances = self.instance_manager.get_all()
-
-        self._build_client_list_ui()
+        self._build_client_list_ui(default_checked_ids=default_checked_ids)
+        self._update_select_all_state()
 
     def clear_selection_and_refresh(self):
         """由 App 调用，在外部事件（如更改类型）后刷新列表"""
@@ -167,12 +167,17 @@ class GameTab(ttk.Frame):
         self._refresh_client_list()
         self.on_instance_select_callback(None)
 
-    def _build_client_list_ui(self):
+    def _build_client_list_ui(self, default_checked_ids: Optional[Set[str]] = None):
         """
         使用 self.game_instances 中的数据填充客户端列表 UI。
         """
         self.loaded_game_instances.clear()
         loaded_instances: List[GameInstance] = []
+
+        if default_checked_ids is None:
+            # 没有覆盖状态, 从 settings 加载
+            saved_ids = settings.global_settings.get('checked_instance_ids', [])
+            default_checked_ids = set(saved_ids)
 
         for instance_id, data in self.game_instances.items():
             try:
@@ -191,24 +196,27 @@ class GameTab(ttk.Frame):
         id_to_select: Optional[str] = self.selected_instance_id
 
         for instance in loaded_instances:
-            item_frame = self._add_client_entry(instance)
+            is_checked = default_checked_ids is not None and instance.instance_id in default_checked_ids
+            item_frame = self._add_client_entry(instance, is_checked=is_checked)
             if instance.instance_id == id_to_select:
                 frame_to_select = item_frame
 
         if frame_to_select and id_to_select:
             self._on_client_select(frame_to_select, id_to_select)
 
+        self._update_select_all_state()
+
     def get_selected_game_instance(self) -> Optional[GameInstance]:
         if not self.selected_instance_id:
             return None
         return self.loaded_game_instances.get(self.selected_instance_id)
 
-    def _add_client_entry(self, instance: GameInstance) -> ttk.Frame:
+    def _add_client_entry(self, instance: GameInstance, is_checked: bool = False) -> ttk.Frame:
         """向可滚动框架中添加一个客户端条目"""
         item_frame = ttk.Frame(self.client_list_frame, padding=(5, 5), style="TFrame")
         item_frame.pack(fill='x', expand=True)
 
-        check_var = tk.BooleanVar()
+        check_var = tk.BooleanVar(value=is_checked)
         checkbutton = ttk.Checkbutton(item_frame, variable=check_var, command=self._update_select_all_state)
         checkbutton.pack(side='left', padx=(0, 10), anchor='center')
 
@@ -353,8 +361,9 @@ class GameTab(ttk.Frame):
         self.check_all_btn.state(['!alternate'])
         for var in self.client_check_vars:
             var.set(new_state)
+        self._save_checked_state_to_settings()
 
-    def _update_select_all_state(self):
+    def _update_select_all_state(self, *args):
         if not self.client_check_vars:
             return
         states = [var.get() for var in self.client_check_vars]
@@ -367,6 +376,8 @@ class GameTab(ttk.Frame):
         else:
             self.select_all_var.set(False)
             self.check_all_btn.state(['alternate'])
+
+        self._save_checked_state_to_settings()
 
     def _on_mousewheel(self, event):
         self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
@@ -384,12 +395,12 @@ class GameTab(ttk.Frame):
         self.btn_move_down.config(image=self.icons.down)
         self.btn_open_folder.config(image=self.icons.folder)
 
-    def _clear_selection_and_refresh(self):
+    def _clear_selection_and_refresh(self, default_checked_ids: Optional[Set[str]] = None):
         """内部助手，用于清除选择、刷新列表并通知 App"""
         self.selected_instance_id = None
         self.selected_client_widget = None
         self.loaded_game_instances.clear()
-        self._refresh_client_list()
+        self._refresh_client_list(default_checked_ids=default_checked_ids)
         self.on_instance_select_callback(None)
         self.btn_rename.config(state='disabled')
         self.btn_remove.config(state='disabled')
@@ -408,6 +419,7 @@ class GameTab(ttk.Frame):
 
     def _run_auto_import_thread(self, is_initial_run):
         """在单独的线程中运行以避免冻结 UI。"""
+        new_ids = []
         try:
             found_instances = find_instances_for_auto_import()
             new_count = 0
@@ -455,9 +467,11 @@ class GameTab(ttk.Frame):
                         pt_counter += 1
 
                     self.instance_manager.add_instance(name, path, type_code, current_ui_lang)
+                    new_id = self.instance_manager.add_instance(name, path, type_code, current_ui_lang)
+                    new_ids.append(new_id)
                     new_count += 1
 
-            self.app_master.after(0, self._auto_import_finished, new_count, is_initial_run)
+            self.app_master.after(0, self._auto_import_finished, new_count, new_ids, is_initial_run)
 
         except Exception as e:
             print(f"Error during instance detection thread: {e}")
@@ -467,7 +481,7 @@ class GameTab(ttk.Frame):
                                       f"An error occurred: {e}")
             self.app_master.after(0, self.btn_auto_import.config, {'state': 'normal'})
 
-    def _auto_import_finished(self, new_count: int, is_initial_run: bool):
+    def _auto_import_finished(self, new_count: int, new_ids: List[str], is_initial_run: bool):
         """在检测线程完成后由主线程调用。"""
         self.btn_auto_import.config(state='normal')
 
@@ -483,7 +497,24 @@ class GameTab(ttk.Frame):
                     _('lki.detect.no_new')
                 )
 
-        self._clear_selection_and_refresh()
+        self._clear_selection_and_refresh(default_checked_ids=set(new_ids))
+
+    def _get_checked_instance_ids(self) -> Set[str]:
+        """遍历 UI 并返回所有当前勾选的实例 ID。"""
+        checked_ids = set()
+        instance_ids = list(self.game_instances.keys())
+        for i, check_var in enumerate(self.client_check_vars):
+            if check_var.get():
+                try:
+                    checked_ids.add(instance_ids[i])
+                except IndexError:
+                    pass  # 应该不会发生
+        return checked_ids
+
+    def _save_checked_state_to_settings(self):
+        """(新增) 将当前复选框状态保存到全局设置。"""
+        checked_ids = self._get_checked_instance_ids()
+        settings.global_settings.set('checked_instance_ids', list(checked_ids))
 
     # --- (新增：安装逻辑) ---
     def _on_install_clicked(self):
@@ -542,7 +573,9 @@ class GameTab(ttk.Frame):
         刷新游戏列表以显示新的安装状态。
         """
         print("Installation complete. Refreshing game list...")
-        self._clear_selection_and_refresh()
+        checked_ids = self._get_checked_instance_ids()
+        # (修改) 传入勾选状态以保留
+        self._clear_selection_and_refresh(default_checked_ids=checked_ids)
 
     # --- (回调) ---
     def _open_import_instance_window(self):
@@ -559,7 +592,7 @@ class GameTab(ttk.Frame):
             _('lki.add_instance.success') % name,
             parent=self.app_master
         )
-        self._clear_selection_and_refresh()
+        self._clear_selection_and_refresh(default_checked_ids={new_id})
 
     def _open_edit_instance_window(self):
         """打开“编辑实例”窗口"""
@@ -670,14 +703,12 @@ class GameTab(ttk.Frame):
 
 # --- (从 ui_windows.py 移来的类) ---
 
-class ImportInstanceWindow(tk.Toplevel):
+class ImportInstanceWindow(BaseDialog):
     """一个用于导入新游戏实例的弹出窗口。"""
 
     def __init__(self, parent, type_map, on_save_callback):
         super().__init__(parent)
         self.title(_('lki.add_instance.title'))
-        self.transient(parent)
-        self.grab_set()
         self.resizable(False, False)
 
         self.type_map = type_map
@@ -790,15 +821,13 @@ class ImportInstanceWindow(tk.Toplevel):
         self.destroy()
 
 
-class EditInstanceWindow(tk.Toplevel):
+class EditInstanceWindow(BaseDialog):
     """一个用于编辑实例名称、类型和活动预设的弹出窗口。"""
 
     def __init__(self, parent, instance_id, current_name, current_type, current_preset_id,
                  type_map, preset_map, on_save_callback):
         super().__init__(parent)
         self.title(_('lki.edit_instance.title'))
-        self.transient(parent)
-        self.grab_set()
         self.resizable(False, False)
 
         self.instance_id = instance_id
@@ -880,14 +909,12 @@ class EditInstanceWindow(tk.Toplevel):
         self.destroy()
 
 
-class DeleteInstanceWindow(tk.Toplevel):
+class DeleteInstanceWindow(BaseDialog):
     """一个要求输入名称以确认删除的弹出窗口。"""
 
     def __init__(self, parent, instance_id, instance_name, icons, on_delete_callback):
         super().__init__(parent)
         self.title(_('lki.delete_instance.title'))
-        self.transient(parent)
-        self.grab_set()
         self.resizable(False, False)
 
         self.instance_id = instance_id

@@ -61,6 +61,7 @@ class InstanceManager:
                         # (download_routes 已移除)
                         "use_ee": True,
                         "use_mods": True,
+                        "use_fonts": True, # <-- (新增)
                         "is_default": True
                     }
                 }
@@ -140,6 +141,7 @@ class InstanceManager:
             # (download_routes 已移除)
             "use_ee": True,
             "use_mods": True,
+            "use_fonts": True, # <-- (新增)
             "is_default": True
         }
 
@@ -164,7 +166,7 @@ class InstanceManager:
 
     # (已修改：签名变更)
     def add_preset(self, instance_id: str, name: str, lang_code: str, use_ee: bool,
-                   use_mods: bool) -> str:
+                   use_mods: bool, use_fonts: bool) -> str:
         """为特定实例创建一个新的自定义预设并返回其 ID"""
         if instance_id not in self.instances:
             return None
@@ -178,6 +180,7 @@ class InstanceManager:
             # (download_routes 已移除)
             "use_ee": use_ee,
             "use_mods": use_mods,
+            "use_fonts": use_fonts, # <-- (新增)
             "is_default": False
         }
         self.save()

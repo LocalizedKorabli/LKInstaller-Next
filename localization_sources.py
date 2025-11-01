@@ -124,6 +124,7 @@ class SourceManager:
 
     def __init__(self):
         self.sources: Dict[str, LocalizationSource] = {}
+        self.global_assets: Dict[str, Dict[str, Dict[str, str]]] = {}  # <-- (新增)
         self._register_sources()
 
     def _register_sources(self):
@@ -144,6 +145,16 @@ class SourceManager:
             routes_pt=EN_PT_ROUTES,
             mods_url=MODS_URL_EN
         )
+
+        # --- (新增：定义全局资产) ---
+        self.global_assets["fonts_srcwagon"] = {
+            "cloudflare": {
+                "zip": "https://dl.localizedkorabli.org/fonts/srcwagon/SrcWagon-MK.zip",
+                "version": "https://dl.localizedkorabli.org/fonts/srcwagon/version_info.json"
+            }
+            # (你将来可以在这里添加 'gitee', 'gitlab' 等)
+        }
+        # --- (新增结束) ---
 
     def add_source(self, source_id: str, name_key: str, routes_live: dict, routes_pt: dict,
                    mods_url: Optional[str]):
@@ -187,6 +198,10 @@ class SourceManager:
             for route_dict in source.routes.values():
                 all_keys.update(route_dict.keys())
 
+        # (新增) 也包括全局资产的路由
+        for asset in self.global_assets.values():
+            all_keys.update(asset.keys())
+
         return sorted(list(all_keys))
 
     def get_mods_url(self, source_id: str) -> Optional[str]:
@@ -195,6 +210,18 @@ class SourceManager:
         if source:
             return source.mods_url
         return None
+
+    # --- (新增：获取全局资产 URL) ---
+    def get_global_asset_urls(self, asset_id: str, route_id: str) -> Optional[Dict[str, str]]:
+        """
+        获取一个全局资产（如字体）的 URL 字典。
+        """
+        asset_routes = self.global_assets.get(asset_id)
+        if asset_routes:
+            # (回退到第一个可用的路由)
+            return asset_routes.get(route_id, next(iter(asset_routes.values()), None))
+        return None
+    # --- (新增结束) ---
 
 
 # 全局实例

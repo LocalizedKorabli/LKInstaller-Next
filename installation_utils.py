@@ -26,7 +26,8 @@ L10N_CACHE = CACHE_DIR / 'i18n'
 EE_CACHE = CACHE_DIR / 'ee'
 LOCALE_CONFIG_TEMP = TEMP_DIR / 'locale_config'
 EE_UNPACK_TEMP = TEMP_DIR / 'ee'
-
+FONTS_CACHE = CACHE_DIR / 'fonts'
+FONTS_UNPACK_TEMP = TEMP_DIR / 'fonts'
 
 # (来自 installer_gui.py)
 def mkdir(t_dir: Any):

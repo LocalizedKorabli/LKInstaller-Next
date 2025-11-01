@@ -10,16 +10,47 @@ except ImportError:
     ToolTip = None
 
 
-class CustomAskStringDialog(tk.Toplevel):
+class BaseDialog(tk.Toplevel):
     """
-    一个自定义的、支持 ttkbootstrap 主题的 askstring() 弹窗。
+    一个会自动在屏幕上居中的 Toplevel 弹窗基类。
     """
 
-    def __init__(self, parent, title, prompt, initialvalue=""):
+    def __init__(self, parent):
         super().__init__(parent)
+        self.withdraw() # 防止在左上角闪烁
+        self.transient(parent)  # 保持在父窗口之上
+        self.grab_set()  # 设为模态窗口
+
+        # 我们使用 .after() 来确保窗口大小已被计算
+        self.after(50, self._center_on_screen)
+
+    def _center_on_screen(self):
+        """将窗口移动到屏幕中央。"""
+        try:
+            self.update_idletasks()  # 确保 winfo_width/height 是准确的
+
+            # 屏幕尺寸
+            screen_width = self.winfo_screenwidth()
+            screen_height = self.winfo_screenheight()
+
+            # 窗口尺寸
+            window_width = self.winfo_width()
+            window_height = self.winfo_height()
+
+            # 计算位置
+            x = (screen_width // 2) - (window_width // 2)
+            y = (screen_height // 2) - (window_height // 2)
+
+            self.geometry(f"+{x}+{y}")
+            self.deiconify()
+        except tk.TclError:
+            pass  # 窗口可能在居中之前被销毁
+
+
+class CustomAskStringDialog(BaseDialog): # <-- 继承 BaseDialog
+    def __init__(self, parent, title, prompt, initialvalue=""):
+        super().__init__(parent) # <-- 调用 BaseDialog 的 __init__
         self.title(title)
-        self.transient(parent)
-        self.grab_set()
 
         self.result = None
 
@@ -41,19 +72,6 @@ class CustomAskStringDialog(tk.Toplevel):
 
         self.entry.bind("<Return>", self._on_save)
         self.bind("<Escape>", self._on_cancel)
-
-        self.update_idletasks()
-
-        parent.update_idletasks()
-        parent_x = parent.winfo_x()
-        parent_y = parent.winfo_y()
-        parent_w = parent.winfo_width()
-        parent_h = parent.winfo_height()
-        self_w = self.winfo_width()
-        self_h = self.winfo_height()
-        x = parent_x + (parent_w - self_w) // 2
-        y = parent_y + (parent_h - self_h) // 2
-        self.geometry(f"+{x}+{y}")
         self.resizable(False, False)
 
     def _on_save(self, event=None):
@@ -73,9 +91,7 @@ class CustomAskStringDialog(tk.Toplevel):
 
 
 # --- (新增：全局路由排序窗口) ---
-class RoutePriorityWindow(tk.Toplevel):
-    """一个用于排序全局下载线路优先级的弹出窗口。"""
-
+class RoutePriorityWindow(BaseDialog): # <-- 继承 BaseDialog
     def __init__(self, parent, icons,
                  current_routes_ids: List[str],
                  all_routes_masterlist: List[str],
@@ -83,8 +99,6 @@ class RoutePriorityWindow(tk.Toplevel):
 
         super().__init__(parent)
         self.title(_('lki.routes.title'))
-        self.transient(parent)
-        self.grab_set()
         self.resizable(False, False)
 
         self.icons = icons
@@ -94,7 +108,8 @@ class RoutePriorityWindow(tk.Toplevel):
         self.route_id_to_name = {
             'gitee': _('l10n.route.gitee'),
             'gitlab': _('l10n.route.gitlab'),
-            'github': _('l10n.route.github')
+            'github': _('l10n.route.github'),
+            'cloudflare': _('l10n.route.cloudflare') # <-- (新增)
         }
         self.route_name_to_id = {v: k for k, v in self.route_id_to_name.items()}
 

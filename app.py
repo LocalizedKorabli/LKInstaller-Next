@@ -50,6 +50,8 @@ class LocalizationInstallerApp:
 
         self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
 
+        self._center_main_window()
+
         self.master.after(100, self.run_initial_detection)
 
     def _setup_styles(self):
@@ -75,6 +77,28 @@ class LocalizationInstallerApp:
         # (新增：安装进度条样式)
         self.style.configure("success.TProgressbar", background="#0078d4")
         self.style.configure("danger.TProgressbar", background="#d13438")
+
+    def _center_main_window(self):
+        """计算并将主窗口居中到屏幕上。"""
+        try:
+            self.master.update_idletasks()  # 强制 Tkinter 计算窗口的实际大小
+
+            screen_width = self.master.winfo_screenwidth()
+            screen_height = self.master.winfo_screenheight()
+
+            window_width = self.master.winfo_width()
+            window_height = self.master.winfo_height()
+
+            # (如果大小仍为1, 可能是 update_idletasks() 不够, 但我们先尝试)
+            if window_width < 100 or window_height < 100:
+                print("Warning: Window size not fully calculated, centering may be inaccurate.")
+
+            x = (screen_width // 2) - (window_width // 2)
+            y = (screen_height // 2) - (window_height // 2)
+
+            self.master.geometry(f"+{x}+{y}")
+        except tk.TclError as e:
+            print(f"Error centering main window: {e}")
 
     def run_initial_detection(self):
         """在启动时*仅一次*触发自动检测。"""

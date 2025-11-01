@@ -2,9 +2,10 @@ import tkinter as tk
 from tkinter import ttk
 from typing import List, Callable, Dict, Any
 from localizer import _
+from ui.dialogs import BaseDialog
 
 
-class InstallProgressWindow(tk.Toplevel):
+class InstallProgressWindow(BaseDialog):
     """
     显示多个并行安装任务进度的弹出窗口。
     """
@@ -12,8 +13,6 @@ class InstallProgressWindow(tk.Toplevel):
     def __init__(self, parent, task_names: List[str], cancel_callback: Callable):
         super().__init__(parent)
         self.title(_('lki.install.title'))
-        self.transient(parent)
-        self.grab_set()
         self.resizable(False, False)
 
         self.cancel_callback = cancel_callback
@@ -68,12 +67,11 @@ class InstallProgressWindow(tk.Toplevel):
         """更新顶部的总体状态标签。"""
         self.overall_status_label.config(text=status)
 
-    def mark_task_complete(self, task_name: str, success: bool):
-        """将任务标记为完成（绿色）或失败（红色）。"""
+    def mark_task_complete(self, task_name: str, success: bool, status_text: str):
         if task_name in self.widgets:
             self.widgets[task_name]['progress_bar'].config(value=100)
-            status = _('lki.install.status.done') if success else _('lki.install.status.failed')
-            self.widgets[task_name]['status_label'].config(text=status)
+            # (状态文本现在由管理器直接提供)
+            self.widgets[task_name]['status_label'].config(text=status_text)
 
     def all_tasks_finished(self):
         """所有任务完成后，将“取消”按钮更改为“关闭”。"""
