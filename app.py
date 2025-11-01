@@ -1,19 +1,18 @@
+import os
+import sys
 import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import Dict, Optional
-import sys
-import os
 
-import settings
 import instance_manager
-from localizer import _, get_available_languages
-from ui_manager import IconManager
-
-from ui.tab_game import GameTab
-from ui.tab_advanced import AdvancedTab
-from ui.tab_settings import SettingsTab
-from ui.tab_about import AboutTab
+import settings
 from game_instance import GameInstance
+from localizer import _
+from ui.tab_about import AboutTab
+from ui.tab_advanced import AdvancedTab
+from ui.tab_game import GameTab
+from ui.tab_settings import SettingsTab
+from ui_manager import IconManager
 
 
 class LocalizationInstallerApp:

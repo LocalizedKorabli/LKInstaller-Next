@@ -1,13 +1,11 @@
-import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
-from pathlib import Path
-from typing import List, Dict, Optional, Set
 import os
-import xml.etree.ElementTree as Et
-import threading
-import re
 import subprocess
+import threading
+import tkinter as tk
 import webbrowser
+from pathlib import Path
+from tkinter import ttk, messagebox, filedialog
+from typing import List, Dict, Optional, Set
 
 try:
     from tktooltip import ToolTip
@@ -19,7 +17,7 @@ import settings
 import instance_manager
 from localizer import _
 from game_instance import GameInstance
-from ui.dialogs import CustomAskStringDialog, BaseDialog
+from ui.dialogs import BaseDialog
 from instance_detector import find_instances_for_auto_import, get_instance_type_from_path
 from installation_manager import InstallationManager, InstallationTask  # <-- (新增)
 from localization_sources import global_source_manager
@@ -590,8 +588,9 @@ class GameTab(ttk.Frame):
         """
         print("Installation complete. Refreshing game list...")
         checked_ids = self._get_checked_instance_ids()
-        # (修改) 传入勾选状态以保留
-        self.app_master.after(250, lambda: self._clear_selection_and_refresh(default_checked_ids=checked_ids))
+
+        # (修改) 延迟刷新以等待文件系统I/O完成
+        self._clear_selection_and_refresh(default_checked_ids=checked_ids)
 
     def _on_uninstall_clicked(self):
         """收集勾选的任务并启动卸载管理器。"""
@@ -628,14 +627,14 @@ class GameTab(ttk.Frame):
 
     def _on_uninstallation_complete(self):
         """
-        由 InstallationManager 在所有卸载任务完成后调用的回调。
+        由 InstallationManager 在所有任务完成后调用的回调。
         刷新游戏列表以显示新的（未安装）状态。
         """
         print("Uninstallation complete. Refreshing game list...")
         checked_ids = self._get_checked_instance_ids()
-        # (传入勾选状态以保留)
-        self.app_master.after(250, lambda: self._clear_selection_and_refresh(default_checked_ids=checked_ids))
 
+        # (修改) 延迟刷新以等待文件系统I/O完成
+        self._clear_selection_and_refresh(default_checked_ids=checked_ids)
     # --- (回调) ---
     def _open_import_instance_window(self):
         """打开“导入实例”窗口"""

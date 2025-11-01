@@ -870,6 +870,8 @@ class InstallationManager:
                 all_done_key = 'lki.uninstall.status.all_done' if self.is_uninstalling else 'lki.install.status.all_done'
                 _log_overall(self, _(all_done_key))
                 self.root_tk.after(0, self.window.all_tasks_finished)
+                if self.on_complete_callback:
+                    self.root_tk.after(0, self.on_complete_callback)
 
 
 # --- (日志记录助手) ---
