@@ -150,7 +150,7 @@ class RoutePriorityWindow(BaseDialog): # <-- 继承 BaseDialog
             ToolTip(self.btn_route_up, _('lki.tooltip.route_up'))
             ToolTip(self.btn_route_down, _('lki.tooltip.route_down'))
 
-        ttk.Label(route_frame, text=_('lki.routes.hint'), style="Hint.TLabel", wraplength=utils.scale_dpi(self, 200)) \
+        ttk.Label(route_frame, text=_('lki.routes.hint'), style="Hint.TLabel", wraplength=utils.scale_dpi(self, 220)) \
             .grid(row=1, column=0, columnspan=3, sticky='w', padx=5, pady=(5, 0))
 
         # --- (按钮) ---

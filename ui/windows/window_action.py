@@ -1,4 +1,3 @@
-import tkinter as tk
 from tkinter import ttk
 from typing import List, Callable, Dict, Any
 
@@ -7,7 +6,7 @@ from localizer import _
 from ui.dialogs import BaseDialog
 
 
-class InstallProgressWindow(BaseDialog):
+class ActionProgressWindow(BaseDialog):
     """
     显示多个并行安装任务进度的弹出窗口。
     """
@@ -79,7 +78,7 @@ class InstallProgressWindow(BaseDialog):
     def all_tasks_finished(self):
         """所有任务完成后，将“取消”按钮更改为“关闭”。"""
         self.cancel_callback = None  # 禁用取消功能
-        self.overall_status_label.config(text=_('lki.install.status.all_done'))
+        self.overall_status_label.config(text=_('lki.action.status.all_done'))
         close_btn = ttk.Button(self, text=_('lki.btn.close'), command=self.destroy, style="success.TButton")
         # (这会替换旧按钮，但我们需要找到它... 简单起见，我们只更改文本)
         for child in self.winfo_children():  # -> main_frame

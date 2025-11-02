@@ -1,19 +1,18 @@
-import os
 import sys
 import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import Dict, Optional
 
-import instance_manager
+from instance import instance_manager
 import settings
 import utils
-from game_instance import GameInstance
+from instance.game_instance import GameInstance
 from localizer import _, global_translator
-from ui.tab_about import AboutTab
-from ui.tab_advanced import AdvancedTab
-from ui.tab_game import GameTab
-from ui.tab_settings import SettingsTab
-from ui_manager import IconManager
+from ui import AboutTab
+from ui.tabs.tab_advanced import AdvancedTab
+from ui import GameTab
+from ui import SettingsTab
+from ui.ui_manager import IconManager
 
 
 class LocalizationInstallerApp:
@@ -83,10 +82,6 @@ class LocalizationInstallerApp:
         self.style.map("Link.TButton",
                        foreground=[('active', self.select_bg), ('disabled', 'gray')],
                        underline=[('active', 1)])
-
-        # (新增：安装进度条样式)
-        self.style.configure("success.TProgressbar", background="#0078d4")
-        self.style.configure("danger.TProgressbar", background="#d13438")
 
     def _center_main_window(self):
         """计算并将主窗口居中到屏幕上。"""

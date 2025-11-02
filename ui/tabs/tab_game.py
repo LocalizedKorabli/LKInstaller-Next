@@ -8,7 +8,7 @@ from tkinter import ttk, messagebox, filedialog
 from typing import List, Dict, Optional, Set
 
 import utils
-from ui.tab_base import BaseTab
+from ui.tabs.tab_base import BaseTab
 
 try:
     from tktooltip import ToolTip
@@ -17,12 +17,12 @@ except ImportError:
     ToolTip = None
 
 import settings
-import instance_manager
+from instance import instance_manager
 from localizer import _
-from game_instance import GameInstance
+from instance.game_instance import GameInstance
 from ui.dialogs import BaseDialog
-from instance_detector import find_instances_for_auto_import, get_instance_type_from_path
-from installation_manager import InstallationManager, InstallationTask  # <-- (新增)
+from instance.instance_detector import find_instances_for_auto_import, get_instance_type_from_path
+from installation.installation_manager import InstallationManager, InstallationTask  # <-- (新增)
 from localization_sources import global_source_manager
 
 

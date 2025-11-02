@@ -3,17 +3,17 @@ from tkinter import ttk, messagebox
 import os
 import subprocess
 import webbrowser
-from typing import Optional, List
+from typing import Optional
 
 import settings
-import instance_manager
+from instance import instance_manager
 import utils
 from localizer import _
 from localization_sources import global_source_manager
-from ui.tab_base import BaseTab
+from ui.tabs.tab_base import BaseTab
 from utils import determine_default_l10n_lang
 from ui.dialogs import CustomAskStringDialog, BaseDialog
-from game_instance import GameInstance, GameVersion
+from instance.game_instance import GameInstance
 
 try:
     from tktooltip import ToolTip

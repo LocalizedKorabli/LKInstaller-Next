@@ -4,7 +4,6 @@ import json
 import zipfile
 import threading
 import queue
-import time
 from pathlib import Path
 import tkinter as tk
 from tkinter import messagebox
@@ -12,12 +11,11 @@ from typing import List, Dict, Callable, Optional, Set, Tuple
 
 import requests
 import settings
-import instance_manager
-from game_instance import GameInstance, GameVersion
+from instance.game_instance import GameInstance
 from localization_sources import global_source_manager
 # (移除 _ 的顶层导入)
 import installation_utils as utils
-from ui.installation_window import InstallProgressWindow
+from ui.windows.installation_window import ActionProgressWindow
 
 # (从 utils 导入常量)
 L10N_CACHE = utils.L10N_CACHE
@@ -81,7 +79,7 @@ class InstallationManager:
         self.tasks: List[InstallationTask] = []
         self.download_queue: queue.Queue = queue.Queue()
         self.download_jobs: Dict[str, DownloadJob] = {}
-        self.window: Optional[InstallProgressWindow] = None
+        self.window: Optional[ActionProgressWindow] = None
 
         self.download_routes_priority: List[str] = settings.global_settings.get('download_routes_priority')
 
@@ -106,10 +104,10 @@ class InstallationManager:
 
         task_names = [t.task_name for t in self.tasks]
         # (已修改：传入 title 和 strings)
-        self.window = InstallProgressWindow(self.root_tk, task_names, self.cancel_installation,
-                                            title=_('lki.install.title'),
-                                            starting_text=_('lki.install.status.starting'),
-                                            pending_text=_('lki.install.status.pending'))
+        self.window = ActionProgressWindow(self.root_tk, task_names, self.cancel_installation,
+                                           title=_('lki.install.title'),
+                                           starting_text=_('lki.install.status.starting'),
+                                           pending_text=_('lki.install.status.pending'))
 
         # (为每个任务分配 UI 回调)
         for task in self.tasks:
@@ -148,10 +146,10 @@ class InstallationManager:
 
         task_names = [t.task_name for t in self.tasks]
         # (新增：使用卸载标题)
-        self.window = InstallProgressWindow(self.root_tk, task_names, self.cancel_installation,
-                                            title=_('lki.uninstall.title'),
-                                            starting_text=_('lki.uninstall.status.starting'),
-                                            pending_text=_('lki.uninstall.status.pending'))
+        self.window = ActionProgressWindow(self.root_tk, task_names, self.cancel_installation,
+                                           title=_('lki.uninstall.title'),
+                                           starting_text=_('lki.uninstall.status.starting'),
+                                           pending_text=_('lki.uninstall.status.pending'))
 
         for task in self.tasks:
             task.log_callback = lambda msg, p=..., t=task: self.root_tk.after(
@@ -982,7 +980,7 @@ class InstallationManager:
             all_done = all(t.status in ["done", "failed"] for t in self.tasks)
             if all_done:
                 # (已修改：根据状态使用不同的完成字符串)
-                all_done_key = 'lki.uninstall.status.all_done' if self.is_uninstalling else 'lki.install.status.all_done'
+                all_done_key = 'lki.uninstall.status.all_done' if self.is_uninstalling else 'lki.action.status.all_done'
                 _log_overall(self, _(all_done_key))
                 self.root_tk.after(0, self.window.all_tasks_finished)
                 if self.on_complete_callback:

@@ -22,7 +22,7 @@
   "lki.advanced.please_select": "To configure an instance, click its name in the 'Game' tab.",
   "lki.advanced.preset_details": "Preset Configuration",
   "lki.advanced.preset_label": "Install Preset:",
-  "lki.app.title": "LK I18n Installer",
+  "lki.app.title": "LocalizedKorabli I18n Installer",
   "lki.btn.cancel": "Cancel",
   "lki.btn.close": "Close",
   "lki.btn.configure": "Configure",
@@ -84,7 +84,7 @@
   "lki.install.error.no_source": "Error: No source found for lang '%s'",
   "lki.install.error.no_version_for_instance": "Instance %s has no valid game versions found, skipping.",
   "lki.install.error.no_version_url": "Error: No version.info URL defined for %s",
-  "lki.install.status.all_done": "All tasks finished.",
+  "lki.action.status.all_done": "All tasks finished.",
   "lki.install.status.cancelled": "Cancelled",
   "lki.install.status.cancelling": "Cancelling...",
   "lki.install.status.connecting": "Connecting to %s ...",
@@ -153,7 +153,7 @@
   "lki.reload.error.failed_to_reload": "Failed to reload application UI: %s\nPlease reload the application manually.",
   "lki.reload.confirm": "Are you sure you want to reload the application?\n(Language changes will take effect after reload.)",
   "lki.reload.title": "Reload Application",
-  "lki.routes.hint": "(Routes at the top of the list will be tried first.)",
+  "lki.routes.hint": "Routes at the top of the list will be tried first.",
   "lki.routes.not_configured": "Not Configured",
   "lki.routes.saved": "Download route order saved.",
   "lki.routes.title": "Configure Download Routes",
@@ -199,5 +199,7 @@
   "lki.uninstall.status.removing_files_for": "Removing files for %s...",
   "lki.uninstall.status.starting": "Starting uninstall...",
   "lki.uninstall.title": "Uninstall Progress",
-  "lki.uninstall.warn.remove_failed": "Warn: Could not remove %s: %s"
+  "lki.uninstall.warn.remove_failed": "Warn: Could not remove %s: %s",
+  "lki.version.label": "App Version",
+  "lki.version.check_update": "Check for Update"
 }
