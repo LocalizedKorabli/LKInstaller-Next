@@ -207,8 +207,8 @@ def _extract_zip_mods(zip_path: Path, temp_target_dir: Path):
                             continue  # 文件未找到, 跳过
                         extracted_file_path = file_found
 
-                    # 创建唯一文件名
-                    unique_filename = f"{safe_member.stem}@{uuid.uuid4()}{extracted_file_path.suffix}"
+                    # 创建唯一文件名，且防止带空格的文件不被mkmod加载系统读取
+                    unique_filename = f"{safe_member.stem}@{uuid.uuid4()}{extracted_file_path.suffix}".replace(' ', '_')
                     final_path = temp_target_dir / unique_filename
 
                     # 移动到最终临时目录
@@ -306,7 +306,7 @@ def process_json_mod_entries(source_mo: polib.MOFile,
     return modified_entries
 
 
-def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file_path: Path) -> Tuple[
+def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file_path: Path, lang_code: str) -> Tuple[
     Optional[Path], Optional[Path]]:
     """
     1. 收集本地 Mods 文件 (.mo, .l10nmod, .i18nmod).
@@ -315,7 +315,7 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
     4. 总是生成 mkmod (包含占位符).
     返回: (mo_mkmod_path, json_mkmod_path)
     """
-    MODS_SOURCE_DIR = instance_path / 'lki' / 'i18n_mods'
+    MODS_SOURCE_DIR = instance_path / 'lki' / 'i18n_mods' / lang_code
     TEMP_PROCESS_DIR = MODS_TEMP / instance_id
 
     # 关键修改: 为当前实例创建唯一的占位符路径

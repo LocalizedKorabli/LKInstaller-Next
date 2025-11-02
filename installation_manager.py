@@ -50,9 +50,9 @@ class InstallationTask:
         self.task_name = f"{instance.name} ({preset_data.get('name', _('lki.preset.default.name'))})"
 
         self.lang_code: str = preset_data.get('lang_code', 'en')
-        self.use_ee: bool = preset_data.get('use_ee', True)
-        self.use_fonts: bool = preset_data.get('use_fonts', True)
-        self.use_mods: bool = preset_data.get('use_mods', True)
+        self.use_ee: bool = preset_data.get('use_ee', False)
+        self.use_fonts: bool = preset_data.get('use_fonts', False)
+        self.use_mods: bool = preset_data.get('use_mods', False)
 
         # 跟踪依赖
         self.mo_job_id: Optional[str] = None
@@ -668,7 +668,7 @@ class InstallationManager:
                 _log_task(task, _('lki.install.status.packing_mods'), 20)
                 try:
                     mods_mo_mkmod_path, mods_json_mkmod_path = utils.process_mods_for_installation(
-                        task.instance.instance_id, task.instance.path, mo_file_path
+                        task.instance.instance_id, task.instance.path, mo_file_path, task.lang_code
                     )
                 except Exception as e:
                     _log_task(task, _('lki.install.status.mods_failed_skip') % e)
