@@ -51,7 +51,8 @@ class InstallationTask:
 
         self.lang_code: str = preset_data.get('lang_code', 'en')
         self.use_ee: bool = preset_data.get('use_ee', True)
-        self.use_fonts: bool = preset_data.get('use_fonts', True)  # <-- (新增)
+        self.use_fonts: bool = preset_data.get('use_fonts', True)
+        self.use_mods: bool = preset_data.get('use_mods', True)
 
         # 跟踪依赖
         self.mo_job_id: Optional[str] = None
@@ -632,6 +633,8 @@ class InstallationManager:
 
             ee_zip_path: Optional[Path] = None
             fo_mkmod_path: Optional[Path] = None
+            mods_mo_mkmod_path: Optional[Path] = None
+            mods_json_mkmod_path: Optional[Path] = None
 
             if task.use_ee:
                 ee_job = self.download_jobs[task.ee_job_id]
@@ -660,6 +663,18 @@ class InstallationManager:
                 non_critical_errors.append(_('lki.component.font'))
                 fo_mkmod_path = None  # 确保后续步骤跳过它
             # --- 非关键检查结束 ---
+
+            if task.use_mods:
+                _log_task(task, _('lki.install.status.packing_mods'), 20)
+                try:
+                    mods_mo_mkmod_path, mods_json_mkmod_path = utils.process_mods_for_installation(
+                        task.instance.instance_id, task.instance.path
+                    )
+                except Exception as e:
+                    _log_task(task, _('lki.install.status.mods_failed_skip') % e)
+                    non_critical_errors.append(_('lki.component.mods'))
+                    mods_mo_mkmod_path = None
+                    mods_json_mkmod_path = None
 
             _log_task(task, _('lki.install.status.writing_config'), 25)
             locale_config_path = utils.write_locale_config_to_temp(task.lang_code)
@@ -721,6 +736,9 @@ class InstallationManager:
                 dest_core_mod_path = mods_dir / "lk_i18n_pack.mkmod"
                 dest_ee_mod_path = mods_dir / "lk_i18n_ee.mkmod"
                 dest_fo_mod_path = mods_dir / "srcwagon_mk.mkmod"
+                dest_mo_mod_path = mods_dir / "lk_i18n_mo_mod.mkmod"
+                dest_json_mod_path = mods_dir / "lk_i18n_json_mod.mkmod"
+
                 info_json_path = task.instance.path / "lki" / "info" / version_folder.bin_folder_name
                 info_file = info_json_path / "installation_info.json"
 
@@ -763,23 +781,34 @@ class InstallationManager:
                     utils.mkdir(mods_dir)
 
                     shutil.copy(core_mkmod_path, dest_core_mod_path)
-                    files_info = {"i18n": {}, "ee": {}, "font": {}}
+                    files_info = {"i18n": {}, "ee": {}, "font": {}, "mods": {}}
                     try:
                         # (修改) 2. 使用相对路径作为键，存储在 "i18n" 下
                         core_rel_path = f"mods/{dest_core_mod_path.name}"
                         files_info["i18n"][core_rel_path] = utils.get_sha256(dest_core_mod_path)
 
+                        # EE
                         if ee_mkmod_path and ee_mkmod_path.is_file():
                             shutil.copy(ee_mkmod_path, dest_ee_mod_path)
                             # (修改) 3. 存储在 "ee" 下
                             ee_rel_path = f"mods/{dest_ee_mod_path.name}"
                             files_info["ee"][ee_rel_path] = utils.get_sha256(dest_ee_mod_path)
-
+                        # Font
                         if fo_mkmod_path and fo_mkmod_path.is_file():
                             shutil.copy(fo_mkmod_path, dest_fo_mod_path)
-                            # (修改) 4. 存储在 "font" 下
                             font_rel_path = f"mods/{dest_fo_mod_path.name}"
                             files_info["font"][font_rel_path] = utils.get_sha256(dest_fo_mod_path)
+                        # MO mods
+                        if mods_mo_mkmod_path and mods_mo_mkmod_path.is_file():
+                            shutil.copy(mods_mo_mkmod_path, dest_mo_mod_path)
+                            mods_mo_rel_path = f"mods/{dest_mo_mod_path.name}"
+                            files_info["mods"][mods_mo_rel_path] = utils.get_sha256(dest_mo_mod_path)
+                        # Json Mods
+                        if mods_json_mkmod_path and mods_json_mkmod_path.is_file():
+                            shutil.copy(mods_json_mkmod_path, dest_json_mod_path)
+                            mods_json_rel_path = f"mods/{dest_json_mod_path.name}"
+                            files_info["mods"][mods_json_rel_path] = utils.get_sha256(dest_json_mod_path)
+
 
                     except Exception as e:
                         # (已修改：本地化)
@@ -807,6 +836,10 @@ class InstallationManager:
                             os.remove(dest_ee_mod_path)
                         if dest_fo_mod_path.is_file():
                             os.remove(dest_fo_mod_path)
+                        if dest_mo_mod_path.is_file():
+                            os.remove(dest_mo_mod_path)
+                        if dest_json_mod_path.is_file():
+                            os.remove(dest_json_mod_path)
 
                         utils.mkdir(info_json_path)
                         with open(info_file, 'w', encoding='utf-8') as f:

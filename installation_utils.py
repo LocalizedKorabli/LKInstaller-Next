@@ -4,6 +4,7 @@ import hashlib
 import zipfile
 import json
 import polib
+import uuid  # <-- (新增)
 from pathlib import Path
 from typing import Dict, List, Union, Any, Optional, Tuple
 import xml.etree.ElementTree as Et
@@ -28,6 +29,8 @@ LOCALE_CONFIG_TEMP = TEMP_DIR / 'locale_config'
 EE_UNPACK_TEMP = TEMP_DIR / 'ee'
 FONTS_CACHE = CACHE_DIR / 'fonts'
 FONTS_UNPACK_TEMP = TEMP_DIR / 'fonts'
+MODS_TEMP = TEMP_DIR / 'mods'  # <-- (新增: mods 临时目录)
+
 
 # (来自 installer_gui.py)
 def mkdir(t_dir: Any):
@@ -162,5 +165,136 @@ def create_mkmod(output_path: Path, files_to_add: Dict[str, Path]):
         print(f"Created {output_path}")
     except Exception as e:
         print(f"Failed to create {output_path}: {e}")
+
+
+# (新增: Mods 助手函数 - 提取 zip 中的 mod 文件)
+def _extract_zip_mods(zip_path: Path, temp_target_dir: Path):
+    """从 ZIP 文件中提取 .mo/.l10mod/.i18nmod 文件到临时目录。"""
+
+    # 允许的文件后缀
+    ALLOWED_EXTENSIONS = ('.mo', '.l10mod', '.i18nmod')
+
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as zf:
+            # 尝试处理可能的 GBK 编码
+            zf = process_possible_gbk_zip(zf)
+
+            for member in zf.namelist():
+                # 只处理允许的后缀
+                if member.lower().endswith(ALLOWED_EXTENSIONS):
+                    safe_member = Path(member)
+                    if safe_member.is_absolute() or ".." in member:
+                        continue  # 跳过不安全路径
+
+                    # 为每个文件创建一个临时子目录来解压
+                    temp_sub_dir = TEMP_DIR / str(uuid.uuid4())
+                    mkdir(temp_sub_dir)
+
+                    # 解压到临时子目录
+                    zf.extract(member, path=str(temp_sub_dir))
+
+                    # 查找提取的文件
+                    extracted_file_path = temp_sub_dir / safe_member
+
+                    # 查找 extracted_file_path 的实际位置 (以防 zip 内部路径包含目录)
+                    if not extracted_file_path.is_file():
+                        # 尝试在解压的根目录或其子目录中查找
+                        found_files = list(Path(temp_sub_dir).glob('**/*'))
+                        file_found = next((f for f in found_files if f.name == safe_member.name and f.is_file()), None)
+
+                        if not file_found:
+                            shutil.rmtree(temp_sub_dir)
+                            continue  # 文件未找到，跳过
+                        extracted_file_path = file_found
+
+                    # 创建唯一文件名
+                    unique_filename = f"{uuid.uuid4()}{extracted_file_path.suffix}"
+                    final_path = temp_target_dir / unique_filename
+
+                    # 移动到最终临时目录
+                    shutil.move(extracted_file_path, final_path)
+
+                    # 清理临时解压目录
+                    shutil.rmtree(temp_sub_dir)
+
+    except Exception as e:
+        print(f"Warning: Failed to process zip file {zip_path}: {e}")
+
+
+# (新增: Mods 处理函数 - 核心逻辑)
+def process_mods_for_installation(instance_id: str, instance_path: Path) -> Tuple[Optional[Path], Optional[Path]]:
+    """
+    扫描实例的本地 mods 文件夹，处理文件和 zip，并将它们打包成两个 mkmod。
+    返回: (mo_mkmod_path, json_mkmod_path)
+    """
+    MODS_SOURCE_DIR = instance_path / 'lki' / 'i18n_mods'
+    TEMP_PROCESS_DIR = MODS_TEMP / instance_id  # 临时存储所有解压/复制的文件
+
+    # 目标 mkmod 文件路径
+    MO_MKMOD_PATH = MODS_TEMP / f"{instance_id}_mo_mod.mkmod"
+    JSON_MKMOD_PATH = MODS_TEMP / f"{instance_id}_json_mod.mkmod"
+
+    # 清理和创建临时目录
+    if TEMP_PROCESS_DIR.is_dir():
+        shutil.rmtree(TEMP_PROCESS_DIR)
+    mkdir(TEMP_PROCESS_DIR)
+
+    # 确保清理旧的 mkmod 文件
+    if MO_MKMOD_PATH.is_file():
+        os.remove(MO_MKMOD_PATH)
+    if JSON_MKMOD_PATH.is_file():
+        os.remove(JSON_MKMOD_PATH)
+
+    # 1. 遍历源文件夹
+    if not MODS_SOURCE_DIR.is_dir():
+        print(f"Mods source directory not found: {MODS_SOURCE_DIR}")
+        # 如果目录不存在，返回 None, None (非致命错误)
+        return None, None
+
+    for item in os.listdir(MODS_SOURCE_DIR):
+        item_path = MODS_SOURCE_DIR / item
+        if item_path.is_file():
+            # a. 处理 zip 文件
+            if item.lower().endswith('.zip'):
+                _extract_zip_mods(item_path, TEMP_PROCESS_DIR)
+
+            # b. 处理 mods 文件 (.mo, .l10mod, .i18nmod)
+            elif item.lower().endswith(('.mo', '.l10mod', '.i18nmod')):
+                # 移动文件到临时目录，并重命名为唯一名称以避免冲突
+                unique_filename = f"{uuid.uuid4()}{item_path.suffix}"
+                final_path = TEMP_PROCESS_DIR / unique_filename
+                shutil.copy(item_path, final_path)  # 使用 copy 以防用户需要保留源文件
+
+    # 2. 将收集到的文件打包
+    mo_files_to_add: Dict[str, Path] = {}
+    json_files_to_add: Dict[str, Path] = {}
+
+    for file in os.listdir(TEMP_PROCESS_DIR):
+        file_path = TEMP_PROCESS_DIR / file
+        if file.lower().endswith('.mo'):
+            # zip 内部的路径: texts/ru/LC_MESSAGES/文件名.mo
+            arcname = f"texts/ru/LC_MESSAGES/{file}"
+            mo_files_to_add[arcname] = file_path
+
+        elif file.lower().endswith(('.l10mod', '.i18nmod')):
+            # zip 内部的路径: json_mods/文件名.l10mod
+            arcname = f"json_mods/{file}"
+            json_files_to_add[arcname] = file_path
+
+    mo_mkmod_path = None
+    if mo_files_to_add:
+        create_mkmod(MO_MKMOD_PATH, mo_files_to_add)
+        mo_mkmod_path = MO_MKMOD_PATH
+
+    json_mkmod_path = None
+    if json_files_to_add:
+        create_mkmod(JSON_MKMOD_PATH, json_files_to_add)
+        json_mkmod_path = JSON_MKMOD_PATH
+
+    # 3. 清理临时处理目录
+    if TEMP_PROCESS_DIR.is_dir():
+        shutil.rmtree(TEMP_PROCESS_DIR)
+
+    return mo_mkmod_path, json_mkmod_path
 
 # --- (Mod 处理逻辑已根据您的文件移除) ---

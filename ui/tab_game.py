@@ -303,6 +303,7 @@ class GameTab(BaseTab):
                         preset_data = instance_data.get('presets', {}).get(active_preset_id, {})
                         preset_use_ee = preset_data.get("use_ee", False)
                         preset_use_fonts = preset_data.get("use_fonts", False)
+                        preset_use_mods = preset_data.get("use_mods", False)
 
                         is_ok = True
                         for component, status in statuses.items():
@@ -318,6 +319,9 @@ class GameTab(BaseTab):
                                     is_ok = False
                                     break
                                 if component == "font" and preset_use_fonts:  # 它被需要，但未安装
+                                    is_ok = False
+                                    break
+                                if component == "mods" and preset_use_mods:  # <-- (新增)
                                     is_ok = False
                                     break
                                 # 如果执行到这里, 意味着 status 是 "not_installed"

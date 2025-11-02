@@ -161,6 +161,7 @@ class AdvancedTab(BaseTab):
 
             preset_use_ee = preset_data.get("use_ee", False)
             preset_use_fonts = preset_data.get("use_fonts", False)
+            preset_use_mods = preset_data.get("use_mods", False)
 
             for game_version in versions_to_display:
                 ver_str = game_version.exe_version or _('lki.game.version_unknown')
@@ -211,6 +212,12 @@ class AdvancedTab(BaseTab):
                                 font_status = "not_required"  # (覆盖)
                             status_lines.append(f"{_('lki.component.font')}: {status_map.get(font_status)}")
 
+                        if "mods" in statuses:
+                            mods_status = statuses['mods']
+                            if not preset_use_mods and mods_status == "not_installed":
+                                mods_status = "not_required"  # (覆盖)
+                            status_lines.append(f"{_('lki.component.mods')}: {status_map.get(mods_status)}")
+
                         l10n_text = "\n" + "\n".join(status_lines)
                 else:
                     # (l10n_info 为 None，即从未安装过)
@@ -228,6 +235,10 @@ class AdvancedTab(BaseTab):
                     # 3. 字体优化包 (根据预设决定显示 ❌ 还是 ⭕)
                     font_status_key = "not_installed" if preset_use_fonts else "not_required"
                     status_lines.append(f"{_('lki.component.font')}: {status_map_alt.get(font_status_key)}")
+
+                    # 4. 本地化修改包 (根据预设决定显示 ❌ 还是 ⭕)
+                    mods_status_key = "not_installed" if preset_use_mods else "not_required"
+                    status_lines.append(f"{_('lki.component.mods')}: {status_map_alt.get(mods_status_key)}")
 
                     l10n_text += "\n".join(status_lines)
                     # --- (修改结束) ---

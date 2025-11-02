@@ -129,7 +129,7 @@ class GameVersion:
         返回: {"i18n": "ok", "ee": "tampered", "font": "not_installed"}
         """
         # (已修改：不再检查预设，始终检查所有组件)
-        all_components = ["i18n", "ee", "font"]
+        all_components = ["i18n", "ee", "font", "mods"]
 
         if not self.l10n_info:
             return {comp: "not_installed" for comp in all_components}
