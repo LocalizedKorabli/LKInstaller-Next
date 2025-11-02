@@ -7,9 +7,10 @@ import xml.etree.ElementTree as Et
 import zipfile
 from pathlib import Path
 from typing import Dict, List, Union, Any, Optional, Tuple
-from utils import CACHE_DIR, TEMP_DIR
 
 import polib
+
+from utils import CACHE_DIR, TEMP_DIR
 
 # (来自 installer_gui.py, 已重命名)
 BUILTIN_LOCALE_CONFIG_ZH_CN = '''<locale_config>

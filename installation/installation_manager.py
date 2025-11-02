@@ -13,7 +13,8 @@ import requests
 
 # (移除 _ 的顶层导入)
 import installation.installation_utils as utils
-import settings, utils as root_utils
+import settings
+import utils as root_utils
 from instance.game_instance import GameInstance
 from localization_sources import global_source_manager
 from ui.windows.window_action import ActionProgressWindow
@@ -88,6 +89,7 @@ class InstallationManager:
         self._lock = threading.Lock()
         self.on_complete_callback: Optional[Callable] = None
         self.is_uninstalling: bool = False  # (新增)
+        self._install_phase_started = False  # <-- (修改 1: 新增标志)
 
     def start_installation(self, tasks: List[InstallationTask], on_complete_callback: Optional[Callable] = None):
         from localizer import _  # (为 Messagebox 导入)
@@ -102,6 +104,7 @@ class InstallationManager:
         self.tasks = tasks
         self.on_complete_callback = on_complete_callback
         self.is_uninstalling = False  # (新增)
+        self._install_phase_started = False  # <-- (修改 2: 重置标志)
 
         task_names = [t.task_name for t in self.tasks]
         # (已修改：传入 title 和 strings)
@@ -117,8 +120,8 @@ class InstallationManager:
                     if self.window and self.window.winfo_exists():
                         return self.window.widgets[t.task_name]['progress_bar']['value']
                 except (tk.TclError, KeyError):
-                    pass # 窗口已销毁，返回默认值
-                return 0.0 # 默认值
+                    pass  # 窗口已销毁，返回默认值
+                return 0.0  # 默认值
 
             task.log_callback = lambda msg, p=..., t=task: self.root_tk.after(
                 0, self.window.update_task_progress, t.task_name,
@@ -211,7 +214,9 @@ class InstallationManager:
             self.download_queue.put(job)
 
         if self.download_queue.empty():
-            _log_overall(self, _('lki.install.status.no_downloads'))
+            # (修改 3: 使用新键并设置标志)
+            _log_overall(self, _('lki.install.status.install_phase'))
+            self._install_phase_started = True
             self.root_tk.after(0, self._on_download_complete, None, True)
             return
 
@@ -319,10 +324,18 @@ class InstallationManager:
                 self.download_queue.task_done()
                 continue
 
+            # (新增) 为下载函数选择一个“代表性”任务以进行日志记录
+            # 这对于 _log_task 来说是必需的
+            try:
+                representative_task = next(iter(job.dependent_tasks))
+            except StopIteration:
+                self.download_queue.task_done()
+                continue  # 没有任务依赖此作业
+
             for task in job.dependent_tasks:
                 _log_task(task, _('lki.install.status.downloading_file') % job.job_id)
 
-            success, result_path = self._perform_download(job, task)
+            success, result_path = self._perform_download(job, representative_task)
 
             if self._cancel_event.is_set():
                 self.download_queue.task_done()
@@ -420,12 +433,12 @@ class InstallationManager:
                 urls = global_source_manager.get_global_asset_urls(asset_id, route_id)
                 if urls and urls.get('zip') and urls.get('version'):
                     # (已修改：本地化)
-                    _log_overall(self, _('lki.install.status.fonts_route') % route_id)
+                    _log_task(task, _('lki.install.status.fonts_route') % route_id)  # <-- *** 修改点 1 ***
                     break
 
             if not urls:
                 # (已修改：本地化)
-                _log_overall(self, _('lki.install.error.fonts_no_url'))
+                _log_task(task, _('lki.install.error.fonts_no_url'))  # <-- *** 修改点 2 ***
                 return False, None
 
             VER_URL = urls.get('version')
@@ -448,12 +461,12 @@ class InstallationManager:
                 remote_version = remote_info.get('version')
             except Exception as e:
                 # (已修改：本地化)
-                _log_overall(self, _('lki.install.error.fonts_version_check') % e)
+                _log_task(task, _('lki.install.error.fonts_version_check') % e)  # <-- *** 修改点 3 ***
                 return False, None  # (继续尝试其他路由可能更健壮, 但目前保持简单)
 
             if not remote_version:
                 # (已修改：本地化)
-                _log_overall(self, _('lki.install.error.fonts_version_invalid'))
+                _log_task(task, _('lki.install.error.fonts_version_invalid'))  # <-- *** 修改点 4 ***
                 return False, None
 
             # 3. 检查缓存
@@ -475,7 +488,7 @@ class InstallationManager:
                     print(_('lki.install.debug.cache_check_failed') % e)
 
             # 4. 缓存未命中 - 下载并重新打包
-            _log_overall(self, _('lki.install.status.packing_fonts'))
+            _log_task(task, _('lki.install.status.packing_fonts'))  # <-- *** 修改点 5 ***
 
             temp_zip_path = utils.TEMP_DIR / "fonts.zip"
             # (注意：我们在这里使用已配置的代理)
@@ -499,7 +512,7 @@ class InstallationManager:
 
             if not files_to_add:
                 # (已修改：本地化)
-                _log_overall(self, _('lki.install.error.fonts_zip_empty'))
+                _log_task(task, _('lki.install.error.fonts_zip_empty'))  # <-- *** 修改点 6 ***
                 return False, None
 
             utils.create_mkmod(mkmod_path, files_to_add)
@@ -581,11 +594,21 @@ class InstallationManager:
         elif not job and success:
             tasks_to_check = self.tasks
 
+        # (修改 4: 跟踪此回调是否启动了任何安装)
+        did_start_install = False
         for task in tasks_to_check:
             if task.is_ready_for_install():
                 task.status = "installing"
                 _log_task(task, _('lki.install.status.starting_install'), 0)
                 threading.Thread(target=self._install_worker, args=(task,), daemon=True).start()
+                did_start_install = True
+
+        # (修改 5: 如果这是第一个启动的安装任务，则更新全局状态)
+        if did_start_install and not self._install_phase_started:
+            with self._lock:
+                if not self._install_phase_started:  # (双重检查)
+                    self._install_phase_started = True
+                    _log_overall(self, _('lki.install.status.install_phase'))
 
         self._check_if_all_finished()
 
@@ -978,7 +1001,10 @@ def _log_task(task: InstallationTask, message: str, progress: Optional[float] = 
     """安全地记录到任务的 UI。"""
     print(f"[{task.task_name}] {message}")
     if progress is None:
-        progress = task.progress_callback()
+        if task.progress_callback:
+            progress = task.progress_callback()
+        else:
+            progress = 0.0  # (回退)
     if task.log_callback:
         # (使用 ... 来表示“无变化”)
         task.root_tk.after(0, task.log_callback, message, progress if progress is not None else ...)

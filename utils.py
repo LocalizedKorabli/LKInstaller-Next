@@ -8,9 +8,11 @@ from typing import Optional, Tuple, Set, Dict
 
 base_path: Path = Path(getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__))))
 
+from ui.windows.window_action import ActionProgressWindow
+
 try:
     # Use LocalAppData for settings/cache if available
-    APP_DATA_PATH = Path(os.getenv('LOCALAPPDATA', '')) / 'LKInstallerNext'
+    APP_DATA_PATH = Path(os.getenv('LOCALAPPDATA', '')) / 'LocalizedKorabli' / 'LKInstallerNext'
     if not os.access(os.getenv('LOCALAPPDATA', ''), os.W_OK):
         raise Exception("LocalAppData not writable")
     os.makedirs(APP_DATA_PATH, exist_ok=True)
@@ -113,6 +115,7 @@ def scale_dpi(widget: tk.Misc, value: int) -> int:
     """
     try:
         # 获取存储在根窗口上的 scaling_factor
+
         scaling_factor = widget.winfo_toplevel().scaling_factor
         return int(value * scaling_factor)
     except Exception:
@@ -133,7 +136,7 @@ def get_configured_proxies() -> Optional[Dict[str, str]]:
     proxy_mode = settings.global_settings.get('proxy.mode', 'disabled')
 
     if proxy_mode == 'disabled':
-        return {'http': None, 'https': None}
+        return {'http': '', 'https': ''}
 
     if proxy_mode == 'system':
         return None  # requests 库会自动处理
@@ -146,7 +149,7 @@ def get_configured_proxies() -> Optional[Dict[str, str]]:
 
         if not host or not port:
             print(_('lki.proxy.warn.manual_no_host'))
-            return {'http': None, 'https': None}
+            return {'http': '', 'https': ''}
 
         if user and password:
             proxy_url = f"http://{user}:{password}@{host}:{port}"
@@ -161,11 +164,11 @@ def get_configured_proxies() -> Optional[Dict[str, str]]:
             'https': proxy_url
         }
 
-    return {'http': None, 'https': None}  # (默认禁用)
+    return {'http': '', 'https': ''}  # (默认禁用)
 
 
 # --- (NEW) Update Logic ---
-def update_worker(window: 'ActionProgressWindow', root_tk: tk.Tk):
+def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
     """
     在工作线程中执行更新检查和下载。
     通过检查 window.is_cancelled() 来支持取消。
@@ -174,8 +177,6 @@ def update_worker(window: 'ActionProgressWindow', root_tk: tk.Tk):
     import semver
     import constants
     import subprocess
-    import sys
-    import shutil
     import threading
     from localizer import _  # 局部导入
     from tkinter import messagebox  # 局部导入
@@ -257,7 +258,7 @@ def update_worker(window: 'ActionProgressWindow', root_tk: tk.Tk):
             data = resp.json()
             remote_version = data.get('version')
 
-            if not remote_version or not semver.VersionInfo.isvalid(remote_version):
+            if not remote_version or not semver.VersionInfo.is_valid(remote_version):
                 log(_('lki.update.error.invalid_version'), 100)
                 root_tk.after(0, window.mark_task_complete, _('lki.update.title'), False,
                               _('lki.update.error.invalid_version'))
