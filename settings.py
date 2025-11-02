@@ -12,17 +12,24 @@ settings_path: Path = Path('lki/settings/global.json')
 
 class GlobalSettings:
     def __init__(self):
-
+        from localization_sources import global_source_manager
+        all_available_routes = global_source_manager.get_all_available_route_ids()
         # --- (新增：首次启动时的区域设置) ---
         exact_lang, _ = get_system_language_codes()
         is_gmt8 = is_system_gmt8_timezone()
 
         if exact_lang == 'zh_CN' and is_gmt8:
-            # 位于中国大陆
-            default_route_priority = ['gitee', 'gitlab', 'github']
+            # 位于中国大陆 (首选)
+            preferred_routes = ['cloudflare', 'gitee', 'gitlab']
         else:
-            # 位于其他地区
-            default_route_priority = ['gitlab', 'github', 'gitee']
+            # 位于其他地区 (首选)
+            preferred_routes = ['cloudflare', 'gitlab', 'github']
+
+            # (新增) 合并首选路由和剩余路由
+        default_route_priority = list(preferred_routes)
+        for route in all_available_routes:
+            if route not in default_route_priority:
+                default_route_priority.append(route)
         # --- (新增结束) ---
 
         defaults = {
@@ -66,6 +73,18 @@ class GlobalSettings:
 
         if 'checked_instance_ids' in saved_data:
             self.data['checked_instance_ids'] = saved_data['checked_instance_ids']
+
+        migration_needs_save = False
+        current_routes = self.data['download_routes_priority']
+        for route in all_available_routes:
+            if route not in current_routes:
+                print(f"Migrating settings: adding new route '{route}'")
+                current_routes.append(route)
+                migration_needs_save = True
+
+        if migration_needs_save:
+            print("Saving migrated settings...")
+            self.save()
 
     @property
     def language(self):

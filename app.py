@@ -67,7 +67,7 @@ class LocalizationInstallerApp:
         self.style.configure("Selected.Path.TLabel", font=("TkDefaultFont", 9), background=self.select_bg,
                              foreground=self.select_fg)
         self.style.configure("Hint.TLabel", font=("TkDefaultFont", 9), foreground='gray')
-        self.style.configure("danger.TButton", foreground="white", background="#d13438")
+        self.style.configure("danger.TButton", foreground="red", background="#d13438")
 
         self.style.configure("Link.TButton", foreground=self.select_bg, borderwidth=0, padding=0)
         self.style.map("Link.TButton",

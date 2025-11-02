@@ -125,27 +125,22 @@ class GameVersion:
 
     def get_component_statuses(self) -> Dict[str, str]:
         """
-        验证每个组件 (i18n, ee, font) 并返回其状态。
+        验证所有已知组件 (i18n, ee, font) 并返回其状态。
         返回: {"i18n": "ok", "ee": "tampered", "font": "not_installed"}
         """
-        # (定义预设中跟踪的组件)
-        preset_data = instance_manager.global_instance_manager.get_active_preset(self.game_root_path)
-        tracked_components = ["i18n"]  # i18n 始终被跟踪
-        if preset_data.get("use_ee", False):
-            tracked_components.append("ee")
-        if preset_data.get("use_fonts", False):
-            tracked_components.append("font")
+        # (已修改：不再检查预设，始终检查所有组件)
+        all_components = ["i18n", "ee", "font"]
 
         if not self.l10n_info:
-            return {comp: "not_installed" for comp in tracked_components}
+            return {comp: "not_installed" for comp in all_components}
 
         if self.l10n_info.version == "INACTIVE":
-            return {comp: "inactive" for comp in tracked_components}
+            return {comp: "inactive" for comp in all_components}
 
         statuses = {}
         files_data = self.l10n_info.files
 
-        for component in tracked_components:
+        for component in all_components:
             path_dict = files_data.get(component)
 
             if not path_dict:

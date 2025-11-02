@@ -4,6 +4,8 @@ import utils
 import instance_manager
 import localization_sources  # <-- 确保在 app 之前加载
 
+from localizer import global_translator
+global_translator.load_language(settings.global_settings.language)
 # (已修改：导入新的 app 位置)
 from app import LocalizationInstallerApp
 

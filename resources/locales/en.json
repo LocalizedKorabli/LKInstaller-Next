@@ -53,7 +53,7 @@
   "lki.game.client_type.production": "Mir Korabley Live",
   "lki.game.client_type.pts": "Mir Korabley PT",
   "lki.game.detected_clients": "Game Instances",
-  "lki.game.install_hint": "You can use the checkboxes to select one or more instances for installation, then click the button above to install the localization package for them.",
+  "lki.game.actions_hint": "You can use the checkboxes to select one or more instances for installation or uninstallation, then click the button above to install or uninstall the localization package for them.",
   "lki.game.l10n_status.corrupted": "Tampered",
   "lki.game.l10n_status.inactive": "Inactive",
   "lki.game.l10n_status.not_installed": "Not Installed",

@@ -688,6 +688,8 @@ class InstallationManager:
 
             if self._cancel_event.is_set(): return
 
+            if self._cancel_event.is_set(): return
+
             for version_folder in task.instance.versions:
                 exe_version = version_folder.exe_version or ""
                 major_version = ".".join(exe_version.split('.')[:2])
@@ -698,6 +700,36 @@ class InstallationManager:
                 dest_fo_mod_path = mods_dir / "srcwagon_mk.mkmod"
                 info_json_path = task.instance.path / "lki" / "info" / version_folder.bin_folder_name
                 info_file = info_json_path / "installation_info.json"
+
+                # --- (新增：来自 _uninstall_worker 的清理逻辑) ---
+                _log_task(task, _('lki.uninstall.status.removing_files_for') % version_folder.bin_folder_name, 5)
+
+                if info_file.is_file():  # (使用 is_file() 没问题，因为我们还没写入)
+                    files_to_delete: List[Path] = []
+                    try:
+                        with open(info_file, 'r', encoding='utf-8') as f:
+                            data = json.load(f)
+                        files_data = data.get("files", {})
+                        for component_name, path_dict in files_data.items():
+                            for relative_path in path_dict.keys():
+                                absolute_path = version_folder.bin_folder_path / relative_path
+                                files_to_delete.append(absolute_path)
+                    except Exception as e:
+                        _log_task(task, f"Warn: Could not read {info_file.name} for cleanup: {e}")
+
+                    for file_path in files_to_delete:
+                        try:
+                            if file_path.is_file():
+                                os.remove(file_path)
+                        except OSError as e:
+                            _log_task(task, f"Warn: Could not remove {file_path.name}: {e}")
+
+                    try:
+                        os.remove(info_file)
+                    except OSError as e:
+                        # (重要) 清理失败不应停止安装
+                        _log_task(task, f"Warn: Could not remove {info_file.name}: {e}")
+                # --- (清理逻辑结束) ---
 
                 if major_version == mo_job.version_info['main']:
                     # --- 关键安装步骤 ---

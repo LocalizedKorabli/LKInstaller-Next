@@ -53,7 +53,7 @@
   "lki.game.client_type.production": "Mir Korabley正式服",
   "lki.game.client_type.pts": "Mir Korabley测试服",
   "lki.game.detected_clients": "游戏实例",
-  "lki.game.install_hint": "您可以使用左侧复选框来勾选一个或多个需要安装本地化的实例，\n然后单击上面的按钮为其安装本地化包",
+  "lki.game.actions_hint": "您可以使用左侧复选框来勾选一个或多个需要安装/卸载本地化包的实例，然后单击上面的按钮为其安装/卸载本地化包",
   "lki.game.l10n_status.corrupted": "被篡改",
   "lki.game.l10n_status.inactive": "非活跃版本",
   "lki.game.l10n_status.not_installed": "未安装",

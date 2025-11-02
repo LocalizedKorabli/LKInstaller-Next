@@ -137,6 +137,13 @@ class AdvancedTab(ttk.Frame):
             status_label = ttk.Label(instance_details_frame, text=status_text, style="Path.TLabel")
             status_label.pack(anchor='w', padx=(10, 0))
         else:
+            # (新增) 获取活动预设，以检查 'use' 标志
+            active_preset_id = instance_data.get('active_preset_id', 'default')
+            preset_data = instance_data.get('presets', {}).get(active_preset_id, {})
+
+            preset_use_ee = preset_data.get("use_ee", False)
+            preset_use_fonts = preset_data.get("use_fonts", False)
+
             for game_version in versions_to_display:
                 ver_str = game_version.exe_version or _('lki.game.version_unknown')
                 version_text = f"{ver_str}: "
@@ -145,11 +152,10 @@ class AdvancedTab(ttk.Frame):
                 if game_version.l10n_info:
                     l10n_ver_full = game_version.l10n_info.version
 
-                    # (请求 3) 首先处理“非活跃版本”
                     if l10n_ver_full == "INACTIVE":
                         l10n_text = f"{_('lki.game.l10n_status.inactive')}"
                     else:
-                        # (请求 2) 构建完整的组件分解
+                        # (已修改：现在包含所有 3 个组件)
                         statuses = game_version.get_component_statuses()
 
                         l10n_sub_ver = game_version.l10n_info.l10n_sub_version
@@ -160,27 +166,53 @@ class AdvancedTab(ttk.Frame):
                         status_map = {
                             "ok": "✔️",
                             "tampered": "❗",
-                            "not_installed": "❌"
+                            "not_installed": "❌",
+                            "not_required": "⭕"  # (新增)
                         }
 
                         status_lines = []
+
+                        # 1. 本地化包 (始终被跟踪)
                         if "i18n" in statuses:
                             sub_ver = l10n_sub_ver if (l10n_sub_ver and statuses["i18n"] == "ok") else ""
                             ver_str = f" {sub_ver}" if statuses["i18n"] == "ok" else ""
                             status_lines.append(
                                 f"{_('lki.component.i18n')}: {lang_str}{ver_str} {status_map.get(statuses['i18n'])}")
 
+                        # 2. 体验增强包 (检查预设)
                         if "ee" in statuses:
-                            status_lines.append(f"{_('lki.component.ee')}: {status_map.get(statuses['ee'])}")
+                            ee_status = statuses['ee']
+                            if not preset_use_ee and ee_status == "not_installed":
+                                ee_status = "not_required"  # (覆盖)
+                            status_lines.append(f"{_('lki.component.ee')}: {status_map.get(ee_status)}")
 
-                        # (这是你已有的、正确的“字体”行)
+                        # 3. 字体优化包 (检查预设)
                         if "font" in statuses:
-                            status_lines.append(f"{_('lki.component.font')}: {status_map.get(statuses['font'])}")
+                            font_status = statuses['font']
+                            if not preset_use_fonts and font_status == "not_installed":
+                                font_status = "not_required"  # (覆盖)
+                            status_lines.append(f"{_('lki.component.font')}: {status_map.get(font_status)}")
 
                         l10n_text = "\n" + "\n".join(status_lines)
                 else:
-                    l10n_text = f"{_('lki.game.l10n_status.not_installed')}"
-                # --- (修改结束) ---
+                    # (l10n_info 为 None，即从未安装过)
+                    l10n_text = "\n"
+
+                    status_map_alt = {"not_installed": "❌", "not_required": "⭕"}
+
+                    # 1. 本地化包
+                    status_lines = [f"{_('lki.component.i18n')}: {status_map_alt.get('not_installed')}"]
+
+                    # 2. 体验增强包 (根据预设决定显示 ❌ 还是 ⭕)
+                    ee_status_key = "not_installed" if preset_use_ee else "not_required"
+                    status_lines.append(f"{_('lki.component.ee')}: {status_map_alt.get(ee_status_key)}")
+
+                    # 3. 字体优化包 (根据预设决定显示 ❌ 还是 ⭕)
+                    font_status_key = "not_installed" if preset_use_fonts else "not_required"
+                    status_lines.append(f"{_('lki.component.font')}: {status_map_alt.get(font_status_key)}")
+
+                    l10n_text += "\n".join(status_lines)
+                    # --- (修改结束) ---
 
                 full_version_string = version_text + l10n_text
 
@@ -256,7 +288,7 @@ class AdvancedTab(ttk.Frame):
                 {'active_preset_id': selected_id}
             )
 
-            self._update_preset_details_display()
+            self.update_content(self.current_instance)
 
     # (已修改：从 global_settings 获取路由)
     def _update_preset_details_display(self):
@@ -310,6 +342,7 @@ class AdvancedTab(ttk.Frame):
         self._build_preset_maps()
         self._update_preset_combobox()
         self._update_preset_details_display()
+        self.update_content(self.current_instance)
 
     def update_icons(self):
         """当主题更改时更新此选项卡上的图标"""
@@ -568,7 +601,7 @@ class PresetManagerWindow(BaseDialog):
         )
         self._populate_listbox_and_select()
 
-    def _save_preset(self):
+    def _save_preset(self, show_popup=True):
         """保存对当前所选预设的更改"""
         preset_id = self._get_selected_listbox_id()
         if not preset_id:
@@ -597,9 +630,9 @@ class PresetManagerWindow(BaseDialog):
             data_to_save["name"] = preset_data.get('name')
 
         self.instance_manager.update_preset_data(self.instance_id, preset_id, data_to_save)
-        messagebox.showinfo(_('lki.btn.save_changes'), _('lki.preset.manager.saved'), parent=self)
-
-        self.parent_app.update_content(self.parent_app.current_instance)
+        if show_popup:
+            messagebox.showinfo(_('lki.btn.save_changes'), _('lki.preset.manager.saved'), parent=self)
+            self.parent_app.update_content(self.parent_app.current_instance)
 
     def _rename_preset(self):
         preset_id = self._get_selected_listbox_id()
@@ -641,7 +674,8 @@ class PresetManagerWindow(BaseDialog):
             self._populate_listbox_and_select()
 
     def _select_and_close(self):
-        """将列表框中选中的预设应用到实例，并关闭窗口"""
+        """将列表框中选中的预设保存并应用到实例，并关闭窗口"""
+        self._save_preset(show_popup=False)
         selected_id = self._get_selected_listbox_id()
         if selected_id and selected_id != self.active_preset_id:
             self.instance_manager.update_instance_data(self.instance_id, {'active_preset_id': selected_id})

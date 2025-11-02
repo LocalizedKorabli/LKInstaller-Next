@@ -82,7 +82,7 @@ class GameTab(ttk.Frame):
                                           command=self._on_auto_import)
         self.btn_auto_import.pack(side='left', padx=(2, 0))
 
-        hint_label = ttk.Label(self, text=_('lki.game.install_hint'), style="Hint.TLabel", anchor='center',
+        hint_label = ttk.Label(self, text=_('lki.game.actions_hint'), style="Hint.TLabel", anchor='center',
                                wraplength=400)
         hint_label.pack(fill='x', side='bottom', pady=(5, 0))
 
@@ -275,6 +275,7 @@ class GameTab(ttk.Frame):
                         l10n_details = f"{_('lki.game.l10n_status.inactive')}"
                     else:
                         # (请求 1) 为“游戏”选项卡计算一个总状态
+                        # (已修改：为“游戏”选项卡计算总状态时检查预设)
                         statuses = game_version.get_component_statuses()
 
                         l10n_sub_ver = game_version.l10n_info.l10n_sub_version
@@ -282,12 +283,31 @@ class GameTab(ttk.Frame):
                         l10n_lang_name = self.l10n_id_to_name.get(l10n_lang_code, l10n_lang_code)
                         lang_str = f"{l10n_lang_name} " if l10n_lang_name else ""
 
-                        # (如果任何组件被篡改或未安装[但在预设中启用了]，则整体视为“已篡改”)
+                        # (新增) 加载预设以进行智能检查
+                        instance_data = self.instance_manager.get_instance(instance.instance_id)
+                        active_preset_id = instance_data.get('active_preset_id', 'default')
+                        preset_data = instance_data.get('presets', {}).get(active_preset_id, {})
+                        preset_use_ee = preset_data.get("use_ee", False)
+                        preset_use_fonts = preset_data.get("use_fonts", False)
+
                         is_ok = True
-                        for status in statuses.values():
-                            if status in ("tampered", "not_installed"):
+                        for component, status in statuses.items():
+                            if status == "tampered":
                                 is_ok = False
                                 break
+                            if status == "not_installed":
+                                # 检查这个“未安装”的组件是否被预设所需要
+                                if component == "i18n":  # i18n 始终是必需的
+                                    is_ok = False
+                                    break
+                                if component == "ee" and preset_use_ee:  # 它被需要，但未安装
+                                    is_ok = False
+                                    break
+                                if component == "font" and preset_use_fonts:  # 它被需要，但未安装
+                                    is_ok = False
+                                    break
+                                # 如果执行到这里, 意味着 status 是 "not_installed"
+                                # 但预设为 False (例如 ee=False)，所以这是 OK 的 (⭕)
 
                         display_ver = l10n_sub_ver if l10n_sub_ver else l10n_ver_full
                         status_key = 'lki.game.l10n_status.ok' if is_ok else 'lki.game.l10n_status.corrupted'
@@ -518,7 +538,13 @@ class GameTab(ttk.Frame):
                     _('lki.detect.no_new')
                 )
 
-        self._clear_selection_and_refresh(default_checked_ids=set(new_ids))
+        current_checked_ids = set(settings.global_settings.get('checked_instance_ids', []))
+
+        # (新增) 将新导入的ID添加到该集合中
+        current_checked_ids.update(new_ids)
+
+        # (修改) 使用合并后的ID集合来刷新
+        self._clear_selection_and_refresh(default_checked_ids=current_checked_ids)
 
     def _get_checked_instance_ids(self) -> Set[str]:
         """遍历 UI 并返回所有当前勾选的实例 ID。"""
@@ -577,7 +603,6 @@ class GameTab(ttk.Frame):
 
             tasks_to_run.append(InstallationTask(instance, preset_data, self.app_master))
 
-        # 3. 启动管理器
         if tasks_to_run:
             self.installation_manager.start_installation(tasks_to_run, self._on_installation_complete)
 
