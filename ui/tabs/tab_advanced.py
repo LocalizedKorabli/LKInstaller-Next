@@ -484,7 +484,7 @@ class PresetManagerWindow(BaseDialog):
 
         select_frame = ttk.Frame(main_frame)
         select_frame.grid(row=2, column=0, columnspan=2, sticky='ew', pady=(10, 0))
-        self.btn_select = ttk.Button(select_frame, text=_('lki.preset.btn.select'), command=self._select_and_close)
+        self.btn_select = ttk.Button(select_frame, text=_('lki.preset.btn.save_select'), command=self._select_and_close)
         self.btn_select.pack(fill='x', expand=True)
 
         self._populate_listbox_and_select()
