@@ -19,7 +19,7 @@
   "lki.advanced.confirm_type_change": "您确定要将实例类型改为%s吗？\n\n“实例类型”设定不会对您的游戏客户端造成实际影响，但决定了软件将安装适用于何种类型客户端的本地化包。",
   "lki.advanced.instance_details": "实例详情",
   "lki.advanced.instance_type_label": "实例类型:",
-  "lki.advanced.please_select": "如需配置实例，请在“游戏”选项卡中点击其实例名称。AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "lki.advanced.please_select": "如需配置实例，请在“游戏”选项卡中点击其实例名称。",
   "lki.advanced.preset_details": "预设配置",
   "lki.advanced.preset_label": "安装预设:",
   "lki.app.title": "澪刻本地化安装器",

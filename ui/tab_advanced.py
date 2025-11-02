@@ -47,7 +47,7 @@ class AdvancedTab(BaseTab):
         }
 
         self.advanced_tab_placeholder = self._create_placeholder_label(_('lki.advanced.please_select'))
-        self.advanced_tab_placeholder.pack(pady=20, padx=20, fill='x')
+        self.advanced_tab_placeholder.pack(pady=20, padx=20)
 
         # 实际内容的框架
         self.advanced_tab_frame = ttk.Frame(self, padding=10)
