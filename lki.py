@@ -87,9 +87,26 @@ def run_auto_execute(root, arg, run_client):
 
     # 启动安装
     manager = InstallationManager(root)
-    manager.start_installation([task], _on_auto_install_complete)
+    def deferred_start_installation():
+        """这个函数将在 mainloop 启动后被调用。"""
+        print("Mainloop is running. Starting installation...")
+        try:
+            # 在这里启动安装
+            manager.start_installation([task], _on_auto_install_complete)
+        except Exception as e:
+            # 确保我们能捕获到安装过程中的任何启动错误
+            print(f"CRITICAL ERROR during installation start: {e}")
+            import traceback
+            traceback.print_exc()
+            root.quit()
 
-    # 运行事件循环 (这将只显示 ActionProgressWindow)
+    # 安排安装任务在 mainloop 启动后 (例如 100 毫秒后) 再开始
+    # 这给了 Tkinter 足够的时间来准备就绪
+    root.after(100, deferred_start_installation)
+
+    # 现在，我们立即启动 mainloop
+    # 它会等待 100ms，然后执行 deferred_start_installation
+    print("Starting mainloop, waiting for deferred start...")
     root.mainloop()
 
 

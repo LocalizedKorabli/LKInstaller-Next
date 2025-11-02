@@ -20,7 +20,8 @@ class BaseDialog(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.withdraw()  # 防止在左上角闪烁
-        self.transient(parent)  # 保持在父窗口之上
+        if parent and parent.winfo_exists() and parent.state() == 'normal':
+            self.transient(parent)  # 保持在父窗口之上
         self.grab_set()  # 设为模态窗口
 
         # 我们使用 .after() 来确保窗口大小已被计算
