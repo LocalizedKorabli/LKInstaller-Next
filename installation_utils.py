@@ -258,7 +258,7 @@ def process_json_mod_entries(source_mo: polib.MOFile,
         if not entry.msgid:
             continue
 
-        modified_entry = entry.__copy__()
+        modified_entry = entry
 
         # --- Words Replacement (m_replace) ---
         original_msgstr = modified_entry.msgstr
@@ -370,10 +370,6 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
         elif file.lower().endswith(('.l10nmod', '.i18nmod')):
             json_mods_to_process.append(file_path)
 
-    # 6. 清理 Mods 临时处理目录
-    if TEMP_PROCESS_DIR.is_dir():
-        shutil.rmtree(TEMP_PROCESS_DIR)
-
     # --- 7. JSON Mod 编译 (生成多个 MO 文件) ---
     json_converted_mo_files: Dict[str, Path] = {}
 
@@ -403,12 +399,17 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
                         new_po = polib.POFile()
                         new_po.metadata = base_mo.metadata
                         for entry in modified_entries:
-                            new_po.append(entry)
+                            po_entry = polib.POEntry()
+                            po_entry.msgid = entry.msgid
+                            po_entry.msgid_plural = entry.msgid_plural
+                            po_entry.msgstr = entry.msgstr
+                            po_entry.msgstr_plural = entry.msgstr_plural
+                            new_po.append(po_entry)
 
                         # Save the converted MO file to a unique temp path
                         mo_filename = json_path.stem + ".mo"
                         temp_mo_path = TEMP_DIR / f"compiled_json_{uuid.uuid4()}_{mo_filename}"
-                        new_po.save_as_mo(str(temp_mo_path))
+                        new_po.save_as_mofile(str(temp_mo_path))
 
                         # Store the converted MO file for JSON MKMOD packaging
                         json_converted_mo_files[f"texts/ru/LC_MESSAGES/{mo_filename}"] = temp_mo_path
@@ -440,6 +441,8 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
     except Exception as e:
         print(f"FATAL: Failed to create JSON MO mkmod file: {e}")
 
+    if TEMP_PROCESS_DIR.is_dir():
+        shutil.rmtree(TEMP_PROCESS_DIR)
     # 9. 清理所有临时文件
     # 清理占位符源文件
     if PLACEHOLDER_SOURCE_PATH.is_file():
