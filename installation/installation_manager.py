@@ -1,21 +1,22 @@
-import os
-import shutil
 import json
-import zipfile
-import threading
+import os
 import queue
-from pathlib import Path
+import shutil
+import threading
 import tkinter as tk
+import zipfile
+from pathlib import Path
 from tkinter import messagebox
 from typing import List, Dict, Callable, Optional, Set, Tuple
 
 import requests
+
+# (移除 _ 的顶层导入)
+import installation.installation_utils as utils
 import settings
 from instance.game_instance import GameInstance
 from localization_sources import global_source_manager
-# (移除 _ 的顶层导入)
-import installation_utils as utils
-from ui.windows.installation_window import ActionProgressWindow
+from ui.windows.window_action import ActionProgressWindow
 
 # (从 utils 导入常量)
 L10N_CACHE = utils.L10N_CACHE
@@ -324,7 +325,7 @@ class InstallationManager:
         - 'system':   返回 None (requests 会自动检测)
         - 'manual':   返回 {'http': '...', 'https': '...'}
         """
-        from localizer import _ # (新增局部导入)
+        from localizer import _  # (新增局部导入)
         proxy_mode = settings.global_settings.get('proxy.mode', 'disabled')
 
         if proxy_mode == 'disabled':
@@ -865,7 +866,8 @@ class InstallationManager:
                             }, f, indent=2)
                     except OSError as e:
                         # (已修改：本地化)
-                        _log_task(task, _('lki.install.warn.inactive_cleanup_failed') % (version_folder.bin_folder_name, e))
+                        _log_task(task,
+                                  _('lki.install.warn.inactive_cleanup_failed') % (version_folder.bin_folder_name, e))
                     # --- 非关键清理结束 ---
 
             # --- (修改) 检查最终状态 ---
@@ -991,7 +993,7 @@ class InstallationManager:
 
 def _log_overall(manager: InstallationManager, message: str):
     """安全地记录到主 UI。"""
-    from localizer import _ # (新增局部导入)
+    from localizer import _  # (新增局部导入)
     # (已修改：本地化)
     print(f"[{_('lki.log.overall')}] {message}")
     if manager.window:

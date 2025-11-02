@@ -1,14 +1,12 @@
+import hashlib
 import json
 import os
-import hashlib
 import uuid
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 
-import utils
-from localizer import _
-from utils import determine_default_l10n_lang
 from localization_sources import global_source_manager  # (确保这个导入存在)
+from utils import determine_default_l10n_lang
 
 instances_path: Path = Path('../lki/settings/instances.json')
 

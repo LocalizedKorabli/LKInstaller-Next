@@ -1,10 +1,10 @@
 import locale
 import os
 import sys
-import tkinter
 import time
+import tkinter
 from pathlib import Path
-from typing import Optional, Tuple, List, Set, Dict
+from typing import Optional, Tuple, Set, Dict
 
 base_path: Path = Path(getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__))))
 
@@ -91,6 +91,7 @@ def determine_default_l10n_lang(ui_lang: str) -> str:
 
     # 回退到 'en'
     return mapping.get(ui_lang, 'en')
+
 
 def scale_dpi(widget: tkinter.Misc, value: int) -> int:
     """

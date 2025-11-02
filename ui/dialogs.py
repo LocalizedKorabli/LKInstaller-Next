@@ -1,6 +1,6 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
-from typing import List, Callable, Dict
+from tkinter import ttk
+from typing import List, Callable
 
 import utils
 from localizer import _
@@ -19,7 +19,7 @@ class BaseDialog(tk.Toplevel):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.withdraw() # 防止在左上角闪烁
+        self.withdraw()  # 防止在左上角闪烁
         self.transient(parent)  # 保持在父窗口之上
         self.grab_set()  # 设为模态窗口
 
@@ -49,9 +49,9 @@ class BaseDialog(tk.Toplevel):
             pass  # 窗口可能在居中之前被销毁
 
 
-class CustomAskStringDialog(BaseDialog): # <-- 继承 BaseDialog
+class CustomAskStringDialog(BaseDialog):  # <-- 继承 BaseDialog
     def __init__(self, parent, title, prompt, initialvalue=""):
-        super().__init__(parent) # <-- 调用 BaseDialog 的 __init__
+        super().__init__(parent)  # <-- 调用 BaseDialog 的 __init__
         self.title(title)
 
         self.result = None
@@ -93,7 +93,7 @@ class CustomAskStringDialog(BaseDialog): # <-- 继承 BaseDialog
 
 
 # --- (新增：全局路由排序窗口) ---
-class RoutePriorityWindow(BaseDialog): # <-- 继承 BaseDialog
+class RoutePriorityWindow(BaseDialog):  # <-- 继承 BaseDialog
     def __init__(self, parent, icons,
                  current_routes_ids: List[str],
                  all_routes_masterlist: List[str],
@@ -111,7 +111,7 @@ class RoutePriorityWindow(BaseDialog): # <-- 继承 BaseDialog
             'gitee': _('l10n.route.gitee'),
             'gitlab': _('l10n.route.gitlab'),
             'github': _('l10n.route.github'),
-            'cloudflare': _('l10n.route.cloudflare') # <-- (新增)
+            'cloudflare': _('l10n.route.cloudflare')  # <-- (新增)
         }
         self.route_name_to_id = {v: k for k, v in self.route_id_to_name.items()}
 

@@ -3,8 +3,8 @@ from tkinter import ttk, messagebox
 from typing import List
 
 import settings
-from localizer import _, get_available_languages
 from localization_sources import global_source_manager
+from localizer import _, get_available_languages
 from ui.dialogs import RoutePriorityWindow, BaseDialog
 from ui.tabs.tab_base import BaseTab
 
@@ -37,7 +37,7 @@ class SettingsTab(BaseTab):
             'gitee': _('l10n.route.gitee'),
             'gitlab': _('l10n.route.gitlab'),
             'github': _('l10n.route.github'),
-            'cloudflare': _('l10n.route.cloudflare') # <-- (新增)
+            'cloudflare': _('l10n.route.cloudflare')  # <-- (新增)
         }
 
         self._create_settings_tab_widgets()
@@ -109,7 +109,7 @@ class SettingsTab(BaseTab):
         reload_frame.grid(row=7, column=0, columnspan=2, sticky='se', pady=(20, 0))
 
         self.reload_btn = ttk.Button(reload_frame, text=_('lki.settings.btn.reload'),
-                                      command=self._on_reload_click, style="Link.TButton")
+                                     command=self._on_reload_click, style="Link.TButton")
         self.reload_btn.pack(side='right')
 
         # (新增：初始化摘要)

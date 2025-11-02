@@ -3,15 +3,15 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import Dict, Optional
 
-from instance import instance_manager
 import settings
 import utils
+from instance import instance_manager
 from instance.game_instance import GameInstance
 from localizer import _, global_translator
-from ui import AboutTab
+from ui.tabs.tab_about import AboutTab
 from ui.tabs.tab_advanced import AdvancedTab
-from ui import GameTab
-from ui import SettingsTab
+from ui.tabs.tab_game import GameTab
+from ui.tabs.tab_settings import SettingsTab
 from ui.ui_manager import IconManager
 
 

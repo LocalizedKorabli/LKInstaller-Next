@@ -1,9 +1,10 @@
 import tkinter as tk
 from tkinter import ttk, PhotoImage
-from localizer import _
-from ui.tabs.tab_base import BaseTab
+
 import constants
 import utils
+from localizer import _
+from ui.tabs.tab_base import BaseTab
 
 
 class AboutTab(BaseTab):

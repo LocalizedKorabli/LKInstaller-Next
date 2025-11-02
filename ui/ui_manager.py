@@ -1,5 +1,3 @@
-import tkinter as tk
-from tkinter import PhotoImage
 import utils
 
 
@@ -13,10 +11,10 @@ class IconManager:
         self._load_icon_set('light')
         self._load_icon_set('dark')
 
-        self.import_icon = None      # <-- (重命名自 self.add)
+        self.import_icon = None  # <-- (重命名自 self.add)
         self.rename = None
         self.remove = None
-        self.auto_import_icon = None # <-- (重命名自 self.detect)
+        self.auto_import_icon = None  # <-- (重命名自 self.detect)
         self.manage = None
         self.folder = None
         self.download = None

@@ -591,7 +591,7 @@ class GameTab(BaseTab):
         tasks_to_run: List[InstallationTask] = []
 
         # 1. 收集勾选的实例
-        checked_instance_ids = self._get_checked_instance_ids() # (已修改：复用此逻辑)
+        checked_instance_ids = self._get_checked_instance_ids()  # (已修改：复用此逻辑)
 
         if not checked_instance_ids:
             # (已修改：使用正确的标题)
@@ -682,6 +682,7 @@ class GameTab(BaseTab):
 
         # (修改) 延迟刷新以等待文件系统I/O完成
         self._clear_selection_and_refresh(default_checked_ids=checked_ids)
+
     # --- (回调) ---
     def _open_import_instance_window(self):
         """打开“导入实例”窗口"""
@@ -1082,7 +1083,8 @@ class DeleteInstanceWindow(BaseDialog):
         main_frame.pack(fill='both', expand=True)
         main_frame.columnconfigure(0, weight=1)
 
-        prompt_label = ttk.Label(main_frame, text=_('lki.delete_instance.prompt'), wraplength=utils.scale_dpi(self, 350))
+        prompt_label = ttk.Label(main_frame, text=_('lki.delete_instance.prompt'),
+                                 wraplength=utils.scale_dpi(self, 350))
         prompt_label.grid(row=0, column=0, sticky='w', pady=(0, 10))
 
         name_frame = ttk.Frame(main_frame)

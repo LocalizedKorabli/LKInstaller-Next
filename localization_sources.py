@@ -1,6 +1,6 @@
-import utils
-from localizer import _
 from typing import Dict, Optional, List
+
+from localizer import _
 
 # --- (链接定义) ---
 MODS_URL_CHS = 'https://tapio.lanzn.com/b0nxzso2b'

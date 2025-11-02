@@ -1,11 +1,10 @@
-import os
-import json
 import hashlib
-import win32api
+import json
+import os
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Optional, List
 
-import instance_manager
+import win32api
 
 
 # 注意：这个模块需要 'pywin32'
@@ -32,9 +31,10 @@ class LocalizationInfo:
     一个数据类，用于保存 installation_info.json 的内容。
     """
 
-    def __init__(self, version: str, files: Dict[str, Dict[str, str]], lang_code: Optional[str] = None, l10n_sub_version: Optional[str] = None):
+    def __init__(self, version: str, files: Dict[str, Dict[str, str]], lang_code: Optional[str] = None,
+                 l10n_sub_version: Optional[str] = None):
         self.version: str = version
-        self.files: Dict[str, Dict[str, str]] = files # <-- (修改)
+        self.files: Dict[str, Dict[str, str]] = files  # <-- (修改)
         self.lang_code: Optional[str] = lang_code
         self.l10n_sub_version: Optional[str] = l10n_sub_version
 

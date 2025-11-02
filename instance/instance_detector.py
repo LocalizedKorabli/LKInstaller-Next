@@ -4,7 +4,6 @@ import winreg
 import xml.etree.ElementTree as Et
 from pathlib import Path
 from typing import List, Optional, Tuple, Set
-from localizer import _
 
 
 # --- (逻辑从 installer_gui.py 移植而来) ---

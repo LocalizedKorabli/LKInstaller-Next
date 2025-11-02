@@ -1,19 +1,19 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
 import os
 import subprocess
+import tkinter as tk
 import webbrowser
+from tkinter import ttk, messagebox
 from typing import Optional
 
 import settings
-from instance import instance_manager
 import utils
-from localizer import _
+from instance import instance_manager
+from instance.game_instance import GameInstance
 from localization_sources import global_source_manager
+from localizer import _
+from ui.dialogs import CustomAskStringDialog, BaseDialog
 from ui.tabs.tab_base import BaseTab
 from utils import determine_default_l10n_lang
-from ui.dialogs import CustomAskStringDialog, BaseDialog
-from instance.game_instance import GameInstance
 
 try:
     from tktooltip import ToolTip
@@ -141,7 +141,8 @@ class AdvancedTab(BaseTab):
         type_label.pack(anchor='w')
 
         path_text = f"{_('lki.game.path_label')} {self.current_instance.path}"
-        path_label = ttk.Label(instance_details_frame, text=path_text, style="Path.TLabel", wraplength=utils.scale_dpi(self, 500))
+        path_label = ttk.Label(instance_details_frame, text=path_text, style="Path.TLabel",
+                               wraplength=utils.scale_dpi(self, 500))
         path_label.pack(anchor='w')
 
         version_main_label = ttk.Label(instance_details_frame, text=f"{_('lki.game.version_label')}",
@@ -568,7 +569,8 @@ class PresetManagerWindow(BaseDialog):
         if self.mods_dir_tooltip:
             lang_name = self.l10n_id_to_name.get(lang_code, lang_code)
             tooltip_text = _('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name
-            self.mods_dir_tooltip = ToolTip(self.btn_open_mods_dir, _('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name)
+            self.mods_dir_tooltip = ToolTip(self.btn_open_mods_dir,
+                                            _('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name)
 
     def _on_lang_select_changed(self, event=None):
         """当语言下拉框更改时，动态更新下载线路下拉框"""

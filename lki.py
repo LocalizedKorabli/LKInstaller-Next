@@ -1,10 +1,10 @@
+import ctypes
+import platform
 import tkinter as tk
+
 import settings
 import utils
 from instance import instance_manager
-
-import ctypes
-import platform
 
 # (新增) --- 步骤 1: 设置 HiDPI 感知 ---
 try:
@@ -19,6 +19,7 @@ except AttributeError:
         print(f"Warning: Could not set DPI awareness: {e}")
 
 from localizer import global_translator
+
 global_translator.load_language(settings.global_settings.language)
 # (已修改：导入新的 app 位置)
 from app import LocalizationInstallerApp
@@ -52,10 +53,13 @@ if __name__ == '__main__':
     root.call('set_theme', theme)
 
     app = LocalizationInstallerApp(root, initial_theme=theme, scaling_factor=scaling_factor)
+    root.iconbitmap(utils.base_path.joinpath('resources/logo/logo.ico'))
     root.mainloop()
 
     try:
         settings.global_settings.save()
         instance_manager.global_instance_manager.save()
-    except Exception: # (捕捉更广泛的异常，因为 settings 可能未完全加载)
+    except Exception:  # (捕捉更广泛的异常，因为 settings 可能未完全加载)
         print("Settings module not fully loaded or failed, skipping save.")
+
+# pyinstaller -w lki.py --add-data "resources\*;resources" -i resources\logo\logo.ico --version-file=assets\version_file.txt --clean --uac-admin

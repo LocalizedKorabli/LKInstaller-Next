@@ -1,10 +1,11 @@
+import glob
 import json
 import os
-import glob
-import settings
+
 import utils
 
 locales_dir = utils.base_path.joinpath('resources/locales')
+
 
 class Localizer:
     def __init__(self, lang='en'):
@@ -31,6 +32,7 @@ class Localizer:
 
     def gettext(self, text):
         return self.translations.get(text, text)
+
 
 # 立即使用 'en' 初始化以打破循环导入。
 # main.py 将在 settings 加载后立即调用 load_language() 来设置正确的语言。

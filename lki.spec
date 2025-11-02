@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['main.py'],
+    ['lki.py'],
     pathex=[],
     binaries=[],
     datas=[('resources\\*', 'resources')],
@@ -21,7 +21,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='main',
+    name='lki',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -33,7 +33,8 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     version='assets\\version_file.txt',
-    icon=['assets\\logo.ico'],
+    uac_admin=True,
+    icon=['resources\\logo\\logo.ico'],
 )
 coll = COLLECT(
     exe,
@@ -42,5 +43,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='main',
+    name='lki',
 )

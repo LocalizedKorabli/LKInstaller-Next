@@ -1,13 +1,14 @@
+import hashlib
+import json
 import os
 import shutil
-import hashlib
-import zipfile
-import json
-import polib
 import uuid
+import xml.etree.ElementTree as Et
+import zipfile
 from pathlib import Path
 from typing import Dict, List, Union, Any, Optional, Tuple
-import xml.etree.ElementTree as Et
+
+import polib
 
 # (来自 installer_gui.py, 已重命名)
 BUILTIN_LOCALE_CONFIG_ZH_CN = '''<locale_config>
@@ -116,7 +117,7 @@ def fix_paths_xml(build_dir: Path):
                 paths_element.insert(0, element)
             tree.write(xml_path, encoding='utf-8', xml_declaration=True)
             print(f"Updated '{xml_path}'.")
-# (其他辅助函数如 fix_paths_xml, get_locale_config_content, write_locale_config_to_temp 保持不变)
+    # (其他辅助函数如 fix_paths_xml, get_locale_config_content, write_locale_config_to_temp 保持不变)
     except Exception as e:
         print(f"Error modifying XML {xml_path}: {e}")
 
@@ -144,6 +145,7 @@ def write_locale_config_to_temp(lang_code: str) -> Optional[Path]:
     with open(config_path, 'w', encoding='utf-8') as f:
         f.write(content)
     return config_path
+
 
 def create_mkmod(output_path: Path, files_to_add: Dict[str, Path]):
     """
@@ -421,7 +423,7 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
 
     # A. 打包原生 MO 文件 (lk_i18n_mo_mod.mkmod)
     # 强制添加占位符
-    #native_mo_files['texts/ru/LC_MESSAGES/.placeholder'] = PLACEHOLDER_SOURCE_PATH
+    # native_mo_files['texts/ru/LC_MESSAGES/.placeholder'] = PLACEHOLDER_SOURCE_PATH
 
     mo_mkmod_path = None
     try:
@@ -432,7 +434,7 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
 
     # B. 打包编译后的 JSON MO 文件 (lk_i18n_json_mod.mkmod)
     # 强制添加占位符
-    #json_converted_mo_files['texts/ru/LC_MESSAGES/.placeholder'] = PLACEHOLDER_SOURCE_PATH
+    # json_converted_mo_files['texts/ru/LC_MESSAGES/.placeholder'] = PLACEHOLDER_SOURCE_PATH
 
     json_mkmod_path = None
     try:

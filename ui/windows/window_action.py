@@ -14,7 +14,7 @@ class ActionProgressWindow(BaseDialog):
     def __init__(self, parent, task_names: List[str], cancel_callback: Callable,
                  title: str, starting_text: str, pending_text: str):
         super().__init__(parent)
-        self.title(title) # (已修改)
+        self.title(title)  # (已修改)
         self.resizable(False, False)
 
         self.cancel_callback = cancel_callback
@@ -23,7 +23,8 @@ class ActionProgressWindow(BaseDialog):
         main_frame = ttk.Frame(self, padding=10)
         main_frame.pack(fill='both', expand=True)
 
-        self.overall_status_label = ttk.Label(main_frame, text=starting_text, wraplength=utils.scale_dpi(self, 450)) # (已修改)
+        self.overall_status_label = ttk.Label(main_frame, text=starting_text,
+                                              wraplength=utils.scale_dpi(self, 450))  # (已修改)
         self.overall_status_label.pack(fill='x', pady=(0, 10))
 
         # 为每个任务创建 UI 元素
@@ -34,7 +35,7 @@ class ActionProgressWindow(BaseDialog):
             name_label = ttk.Label(task_frame, text=name)
             name_label.pack(fill='x')
 
-            status_label = ttk.Label(task_frame, text=pending_text, style="Hint.TLabel") # (已修改)
+            status_label = ttk.Label(task_frame, text=pending_text, style="Hint.TLabel")  # (已修改)
             status_label.pack(fill='x')
 
             progress_bar = ttk.Progressbar(task_frame, length=450, mode='determinate')
