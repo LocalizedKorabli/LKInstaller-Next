@@ -1094,6 +1094,11 @@ class DeleteInstanceWindow(BaseDialog):
         copy_btn = ttk.Button(name_frame, image=self.icons.copy, style="Toolbutton", command=self._copy_name)
         copy_btn.pack(side='left', padx=(5, 0))
 
+        self.copy_feedback_label = ttk.Label(name_frame, text="", style="Hint.TLabel", foreground='green')
+        self.copy_feedback_label.pack(side='left', padx=5)
+
+        confirm_label = ttk.Label(main_frame, text=_('lki.delete_instance.confirm_label'))
+
         confirm_label = ttk.Label(main_frame, text=_('lki.delete_instance.confirm_label'))
         confirm_label.grid(row=2, column=0, sticky='w', pady=(10, 5))
 
@@ -1125,8 +1130,12 @@ class DeleteInstanceWindow(BaseDialog):
         try:
             self.clipboard_clear()
             self.clipboard_append(self.instance_name)
+            self.copy_feedback_label.config(text=_('lki.generic.copied'), foreground='green')
+            self.after(2000, lambda: self.copy_feedback_label.config(text=""))
         except Exception as e:
             print(f"Clipboard error: {e}")
+            self.copy_feedback_label.config(text=f"{_('lki.install.status.failed')}", foreground='red')
+            self.after(2000, lambda: self.copy_feedback_label.config(text=""))
 
     def _on_delete(self, event=None):
         if self.delete_btn.cget('state') == 'disabled':

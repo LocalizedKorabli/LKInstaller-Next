@@ -1,3 +1,8 @@
-/lki/settings/
+/.idea/
 /.venv/
+
+/build/
+/dist/
+
+/lki/settings/
 /lki/

@@ -14,13 +14,13 @@ class SettingsTab(BaseTab):
     “设置”选项卡 UI。
     """
 
-    def __init__(self, master, icons, on_theme_change_callback, on_language_change_callback, on_restart_callback):
+    def __init__(self, master, icons, on_theme_change_callback, on_language_change_callback, on_reload_callback):
         super().__init__(master, padding='10 10 10 10')
 
         self.icons = icons
         self.on_theme_change_callback = on_theme_change_callback
         self.on_language_change_callback = on_language_change_callback
-        self.on_restart_callback = on_restart_callback
+        self.on_reload_callback = on_reload_callback
 
         self.theme_var = tk.StringVar(value=settings.global_settings.get('theme', 'light'))
 
@@ -59,8 +59,8 @@ class SettingsTab(BaseTab):
 
         self.lang_combobox.bind("<<ComboboxSelected>>", self._on_language_select)
 
-        self.lang_restart_label = ttk.Label(self, text="", foreground='gray')
-        self.lang_restart_label.grid(row=1, column=1, sticky='w', padx=5, pady=(0, 10))
+        self.lang_reload_label = ttk.Label(self, text="", foreground='gray')
+        self.lang_reload_label.grid(row=1, column=1, sticky='w', padx=5, pady=(0, 10))
 
         theme_label = ttk.Label(self, text=_('lki.settings.theme'))
         theme_label.grid(row=2, column=0, sticky='e', padx=(0, 10), pady=(10, 0))
@@ -105,12 +105,12 @@ class SettingsTab(BaseTab):
 
         self.rowconfigure(6, weight=1)
 
-        restart_frame = ttk.Frame(self)
-        restart_frame.grid(row=7, column=0, columnspan=2, sticky='se', pady=(20, 0))
+        reload_frame = ttk.Frame(self)
+        reload_frame.grid(row=7, column=0, columnspan=2, sticky='se', pady=(20, 0))
 
-        self.restart_btn = ttk.Button(restart_frame, text=_('lki.settings.btn.restart'),
-                                      command=self._on_restart_click, style="Link.TButton")
-        self.restart_btn.pack(side='right')
+        self.reload_btn = ttk.Button(reload_frame, text=_('lki.settings.btn.reload'),
+                                      command=self._on_reload_click, style="Link.TButton")
+        self.reload_btn.pack(side='right')
 
         # (新增：初始化摘要)
         self._update_route_priority_display()
@@ -121,7 +121,7 @@ class SettingsTab(BaseTab):
 
         if selected_code and selected_code != settings.global_settings.language:
             settings.global_settings.language = selected_code
-            self.lang_restart_label.config(text=_('lki.settings.language.restart_required'))
+            self.lang_reload_label.config(text=_('lki.settings.language.reload_required'))
             self.on_language_change_callback()
 
     def _on_theme_select(self):
@@ -186,13 +186,13 @@ class SettingsTab(BaseTab):
         self._update_route_priority_display()  # <-- (新增)
         messagebox.showinfo(_('lki.routes.title'), _('lki.routes.saved'), parent=self)
 
-    def _on_restart_click(self):
+    def _on_reload_click(self):
         if messagebox.askyesno(
-                _('lki.restart.title'),
-                _('lki.restart.confirm'),
+                _('lki.reload.title'),
+                _('lki.reload.confirm'),
                 parent=self
         ):
-            self.on_restart_callback()
+            self.on_reload_callback()
 
 
 # (ProxyConfigWindow 保持不变)

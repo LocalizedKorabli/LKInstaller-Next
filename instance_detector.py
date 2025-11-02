@@ -50,11 +50,12 @@ def get_instance_type_from_path(path: Path) -> Optional[str]:
     return None
 
 
-def _find_from_registry() -> Set[Tuple[str, str]]:
+def _find_from_registry() -> List[Tuple[str, str]]:
     """
-    通过 Lesta Game Center 注册表和 preferences.xml 查找实例。
+    通过 Lesta Game Center 注册表和 preferences.xml 查找实例，并按发现顺序返回列表。
     """
-    found = set()
+    found_list: List[Tuple[str, str]] = []  # <-- (使用列表而非集合来保留发现顺序)
+    seen_paths: Set[str] = set()  # <-- (使用集合进行去重)
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Classes\lgc\DefaultIcon') as key:
             lgc_dir_str, _ = winreg.QueryValueEx(key, '')
@@ -64,34 +65,39 @@ def _find_from_registry() -> Set[Tuple[str, str]]:
 
         preferences_path = Path(lgc_dir_str).parent / 'preferences.xml'
         if not preferences_path.is_file():
-            return found
+            return found_list
 
         pref_root = Et.parse(preferences_path).getroot()
         games_block = pref_root.find('.//application/games_manager/games')
         if games_block is None:
-            return found
+            return found_list
 
         for game in games_block.findall('.//game'):
             wd_elem = game.find('working_dir')
             if wd_elem is not None:
                 path_str = wd_elem.text
-                # (已修改：调用重命名后的函数)
-                type_code = get_instance_type_from_path(Path(path_str))
-                if type_code:
-                    found.add((os.path.normpath(path_str), type_code))
+                path = Path(path_str)
+                type_code = get_instance_type_from_path(path)
+                normalized_path = os.path.normpath(path_str)
+
+                if type_code and normalized_path not in seen_paths:
+                    found_list.append((normalized_path, type_code))
+                    seen_paths.add(normalized_path)  # <-- (在找到时去重)
 
     except FileNotFoundError:
         print("LGC registry key or preferences.xml not found. Skipping registry scan.")
     except Exception as e:
         print(f"Error scanning registry: {e}")
-    return found
+    return found_list
 
 
-def _find_from_common_paths() -> Set[Tuple[str, str]]:
+# 修改返回类型：不再需要 mtime，返回 List[Tuple[str, str]]
+def _find_from_common_paths() -> List[Tuple[str, str]]:
     """
-    扫描所有驱动器中的常见安装路径。
+    扫描所有驱动器中的常见安装路径，并按硬编码扫描顺序返回列表。
     """
-    found = set()
+    found_list: List[Tuple[str, str]] = []
+    seen_paths: Set[str] = set()  # <-- (使用集合进行去重)
     drives = _find_all_drives()
 
     common_suffixes = [
@@ -110,22 +116,46 @@ def _find_from_common_paths() -> Set[Tuple[str, str]]:
     for drive in drives:
         for suffix in common_suffixes:
             path = Path(drive) / suffix
-            if path.is_dir():
-                # (已修改：调用重命名后的函数)
+            normalized_path = os.path.normpath(str(path))
+
+            if path.is_dir() and normalized_path not in seen_paths:
                 type_code = get_instance_type_from_path(path)
                 if type_code:
-                    found.add((os.path.normpath(str(path)), type_code))
-    return found
+                    found_list.append((normalized_path, type_code))
+                    seen_paths.add(normalized_path)  # <-- (在找到时去重)
+
+    # 结果已根据 "drive" -> "suffix" 的顺序自然排序
+    return found_list
 
 
 # (已重命名)
 def find_instances_for_auto_import() -> List[Tuple[str, str]]:
     """
-    检测所有游戏实例（来自注册表和常见路径）。
+    检测所有游戏实例（来自注册表和常见路径），并按发现顺序返回列表。
     返回: (path, type_code) 元组的列表。
     """
     print("Starting instance detection...")
-    all_found = _find_from_registry()
-    all_found.update(_find_from_common_paths())
-    print(f"Detection finished. Found {len(all_found)} potential instances.")
-    return list(all_found)
+
+    # 1. 获取通用路径结果 (List, 按扫描顺序排序)
+    common_found_sorted: List[Tuple[str, str]] = _find_from_common_paths()
+
+    # 2. 获取注册表结果 (List, 按 LGC preferences.xml 顺序排序)
+    registry_found_sorted: List[Tuple[str, str]] = _find_from_registry()
+
+    final_list: List[Tuple[str, str]] = []
+    seen_paths: Set[str] = set()
+
+    # 3. 将通用路径的结果添加到最终列表（优先）
+    for path, type_code in common_found_sorted:
+        if path not in seen_paths:
+            final_list.append((path, type_code))
+            seen_paths.add(path)
+
+    # 4. 将注册表的结果添加到最终列表（次之）
+    for path, type_code in registry_found_sorted:
+        if path not in seen_paths:
+            final_list.append((path, type_code))
+            seen_paths.add(path)
+
+    print(f"Detection finished. Found {len(final_list)} potential instances.")
+    return final_list

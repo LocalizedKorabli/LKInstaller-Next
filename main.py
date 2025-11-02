@@ -1,3 +1,5 @@
+import os
+import sys
 import tkinter as tk
 import settings
 import utils
@@ -49,7 +51,7 @@ if __name__ == '__main__':
         print(f"Could not load settings, defaulting theme. Error: {e}")
         theme = 'light'
 
-    root.call('source', utils.base_path.joinpath('azure/azure.tcl'))
+    root.call('source', utils.base_path.joinpath('resources/theme/azure/azure.tcl'))
     root.call('set_theme', theme)
 
     app = LocalizationInstallerApp(root, initial_theme=theme, scaling_factor=scaling_factor)

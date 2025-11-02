@@ -8,7 +8,7 @@ import instance_manager
 import settings
 import utils
 from game_instance import GameInstance
-from localizer import _
+from localizer import _, global_translator
 from ui.tab_about import AboutTab
 from ui.tab_advanced import AdvancedTab
 from ui.tab_game import GameTab
@@ -49,7 +49,7 @@ class LocalizationInstallerApp:
         self.tab_advanced = AdvancedTab(self.notebook, self.icons, self.type_id_to_name)
 
         self.tab_settings = SettingsTab(self.notebook, self.icons, self._on_theme_select,
-                                        self._on_language_select, self.restart_app)
+                                        self._on_language_select, self.reload_app)
 
         self.tab_about = AboutTab(self.notebook)
 
@@ -125,7 +125,7 @@ class LocalizationInstallerApp:
         """由 SettingsTab 调用的回调。"""
         messagebox.showinfo(
             _('lki.app.title'),
-            _('lki.settings.language.restart_required')
+            _('lki.settings.language.reload_required')
         )
 
     def _on_theme_select(self, selected_theme: str):
@@ -160,18 +160,39 @@ class LocalizationInstallerApp:
             current_instance = self.tab_game.get_selected_game_instance()
             self.tab_advanced.update_content(current_instance)
 
-    def restart_app(self):
-        """保存所有内容并重启应用程序。"""
-        print("Restarting application...")
+    def reload_app(self):
+        """
+        保存所有内容，清除当前 UI 元素，并重建整个应用程序界面，
+        以应用语言和主题更改（不关闭进程）。
+        """
+        print(_('lki.reload.status.reloading_ui'))  # <-- 本地化
 
         try:
             settings.global_settings.save()
             instance_manager.global_instance_manager.save()
-        except Exception as e:
-            print(f"Error saving settings on restart: {e}")
 
-        try:
-            os.execl(sys.executable, *([sys.executable] + sys.argv))
+            # 1. 重新加载语言环境（必须在重建 UI 之前完成）
+            global_translator.load_language(settings.global_settings.language)
+
+            # 2. 销毁所有主要 UI 元素
+            for widget in self.master.winfo_children():
+                # 销毁除根窗口外的所有子部件
+                widget.destroy()
+
+            # 4. 获取当前主题并重新设置
+            current_theme = settings.global_settings.get('theme', 'light')
+            self.master.call('set_theme', current_theme)
+
+            # 5. 重建整个应用 UI
+            LocalizationInstallerApp(self.master, initial_theme=current_theme,
+                                     scaling_factor=self.master.scaling_factor)
+
         except Exception as e:
-            print(f"Failed to restart: {e}")
-            messagebox.showerror(_('lki.restart.title'), f"Failed to restart: {e}")
+            # 严重错误: 重新加载失败，提醒用户手动重启
+            import traceback
+            traceback.print_exc()
+            # 关键修改: 使用本地化字符串
+            error_message = _('lki.reload.error.failed_to_reload') % e
+            messagebox.showerror(_('lki.reload.title'), error_message)
+            # 确保程序退出，因为状态已损坏
+            sys.exit(1)
