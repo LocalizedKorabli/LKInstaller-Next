@@ -7,8 +7,10 @@ from typing import Optional, List
 
 import settings  # <-- (新增导入)
 import instance_manager
+import utils
 from localizer import _
 from localization_sources import global_source_manager
+from ui.tab_base import BaseTab
 from utils import determine_default_l10n_lang
 from ui.dialogs import CustomAskStringDialog, BaseDialog
 from game_instance import GameInstance, GameVersion
@@ -20,7 +22,7 @@ except ImportError:
     ToolTip = None
 
 
-class AdvancedTab(ttk.Frame):
+class AdvancedTab(BaseTab):
     """
     “高级”选项卡 UI。
     """
@@ -44,13 +46,7 @@ class AdvancedTab(ttk.Frame):
             'cloudflare': _('l10n.route.cloudflare')  # <-- (新增)
         }
 
-        # 占位符
-        self.advanced_tab_placeholder = ttk.Label(
-            self,
-            text=_('lki.advanced.please_select'),
-            wraplength=320,
-            justify='center'
-        )
+        self.advanced_tab_placeholder = self._create_placeholder_label(_('lki.advanced.please_select'))
         self.advanced_tab_placeholder.pack(pady=20, padx=20, fill='x')
 
         # 实际内容的框架
@@ -73,7 +69,29 @@ class AdvancedTab(ttk.Frame):
             self.advanced_tab_frame.pack(fill='both', expand=True, anchor='n')
         else:
             self.advanced_tab_frame.pack_forget()
-            self.advanced_tab_placeholder.pack(pady=20, padx=20, fill='x')
+            self.advanced_tab_placeholder.pack(pady=20, padx=20)
+
+    def _on_tab_configure(self, event):
+        """当 'AdvancedTab' 框架的大小改变时，动态更新占位符的 wraplength。"""
+
+        # event.width 是 AdvancedTab 的内容区域宽度 (已减去其自身的 padding)
+
+        # 我们只需要减去 placeholder 自己的水平 padding
+        # (padx=20, 左右各 20)
+        # 总计 = 40
+        base_padding = 40
+
+        scaled_padding = utils.scale_dpi(self, base_padding)
+
+        new_wraplength = event.width - scaled_padding
+
+        if new_wraplength < 1:
+            new_wraplength = 1
+
+        try:
+            self.advanced_tab_placeholder.config(wraplength=new_wraplength)
+        except tk.TclError:
+            pass  # 窗口可能正在销毁中
 
     def _build_preset_maps(self):
         """从 *当前选定的实例* 加载预设并构建查找字典"""
@@ -123,7 +141,7 @@ class AdvancedTab(ttk.Frame):
         type_label.pack(anchor='w')
 
         path_text = f"{_('lki.game.path_label')} {self.current_instance.path}"
-        path_label = ttk.Label(instance_details_frame, text=path_text, style="Path.TLabel", wraplength=500)
+        path_label = ttk.Label(instance_details_frame, text=path_text, style="Path.TLabel", wraplength=utils.scale_dpi(self, 500))
         path_label.pack(anchor='w')
 
         version_main_label = ttk.Label(instance_details_frame, text=f"{_('lki.game.version_label')}",

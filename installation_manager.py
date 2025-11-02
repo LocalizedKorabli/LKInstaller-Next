@@ -42,10 +42,12 @@ class InstallationTask:
     """代表一个要安装到单个实例的完整任务。"""
 
     def __init__(self, instance: GameInstance, preset_data: dict, root_tk: tk.Tk):
+        from localizer import _  # (新增局部导入)
         self.instance = instance
         self.preset = preset_data
         self.root_tk = root_tk  # (新增)
-        self.task_name = f"{instance.name} ({preset_data.get('name', 'Default')})"  # (使用 'Default' 作为硬编码回退)
+        # (已修改：使用本地化键回退)
+        self.task_name = f"{instance.name} ({preset_data.get('name', _('lki.preset.default.name'))})"
 
         self.lang_code: str = preset_data.get('lang_code', 'en')
         self.use_ee: bool = preset_data.get('use_ee', True)
@@ -172,7 +174,7 @@ class InstallationManager:
     def _control_thread(self):
         from localizer import _  # <-- (修复 UnboundLocalError)
 
-        _log_overall(self, _('lki.install.status.preparing'))
+        _log_overall(self, _('lki.install.status.preparing_files'))
         utils.clear_temp_dir()
         self.download_jobs = {}
 
@@ -218,13 +220,15 @@ class InstallationManager:
 
         source = global_source_manager.get_source(task.lang_code)
         if not source:
-            _log_task(task, f"Error: No source found for lang '{task.lang_code}'")
+            # (已修改：本地化)
+            _log_task(task, _('lki.install.error.no_source') % task.lang_code)
             self._mark_task_failed(task)
             return
 
         version_info_url_map = source.get_urls(task.instance.type, 'gitee')  # (Gitee 仅用于获取结构)
         if not version_info_url_map or 'version' not in version_info_url_map:
-            _log_task(task, f"Error: No version.info URL defined for {task.lang_code}")
+            # (已修改：本地化)
+            _log_task(task, _('lki.install.error.no_version_url') % task.lang_code)
             self._mark_task_failed(task)
             return
 
@@ -321,6 +325,7 @@ class InstallationManager:
         - 'system':   返回 None (requests 会自动检测)
         - 'manual':   返回 {'http': '...', 'https': '...'}
         """
+        from localizer import _ # (新增局部导入)
         proxy_mode = settings.global_settings.get('proxy.mode', 'disabled')
 
         if proxy_mode == 'disabled':
@@ -336,7 +341,8 @@ class InstallationManager:
             password = settings.global_settings.get('proxy.password', '')
 
             if not host or not port:
-                print("警告: 代理模式为 'manual'，但未配置主机或端口。")
+                # (已修改：本地化)
+                print(_('lki.proxy.warn.manual_no_host'))
                 return {'http': None, 'https': None}
 
             if user and password:
@@ -374,10 +380,12 @@ class InstallationManager:
                     actual_hash = utils.get_sha256(mo_path)
 
                     if expected_hash and actual_hash == expected_hash:
-                        print(f"Cache HIT for {job.job_id}")
+                        # (已修改：本地化)
+                        print(_('lki.install.debug.cache_hit') % job.job_id)
                         return True, mo_path
                 except Exception as e:
-                    print(f"Cache check failed for {job.job_id}: {e}")
+                    # (已修改：本地化)
+                    print(_('lki.install.debug.cache_check_failed') % e)
 
             utils.mkdir(cache_path)
 
@@ -407,7 +415,8 @@ class InstallationManager:
 
             # (新增: 检查 ee.zip 是否已下载)
             if ee_zip_path.is_file() and ee_zip_path.stat().st_size > 0:
-                print(f"Cache HIT for {job.job_id} (ee.zip)")
+                # (已修改：本地化)
+                print(_('lki.install.debug.cache_hit_ee') % job.job_id)
                 return True, ee_zip_path
 
             for route_id in self.download_routes_priority:
@@ -436,11 +445,13 @@ class InstallationManager:
 
                 urls = global_source_manager.get_global_asset_urls(asset_id, route_id)
                 if urls and urls.get('zip') and urls.get('version'):
-                    _log_overall(self, f"Fonts: Using route {route_id}")
+                    # (已修改：本地化)
+                    _log_overall(self, _('lki.install.status.fonts_route') % route_id)
                     break
 
             if not urls:
-                _log_overall(self, "Fonts: No valid download URLs found.")
+                # (已修改：本地化)
+                _log_overall(self, _('lki.install.error.fonts_no_url'))
                 return False, None
 
             VER_URL = urls.get('version')
@@ -462,11 +473,13 @@ class InstallationManager:
                 remote_info = resp.json()
                 remote_version = remote_info.get('version')
             except Exception as e:
-                _log_overall(self, f"Font version check failed: {e}")
+                # (已修改：本地化)
+                _log_overall(self, _('lki.install.error.fonts_version_check') % e)
                 return False, None  # (继续尝试其他路由可能更健壮, 但目前保持简单)
 
             if not remote_version:
-                _log_overall(self, "Font version info invalid.")
+                # (已修改：本地化)
+                _log_overall(self, _('lki.install.error.fonts_version_invalid'))
                 return False, None
 
             # 3. 检查缓存
@@ -480,10 +493,12 @@ class InstallationManager:
                     if local_version == remote_version:
                         actual_hash = utils.get_sha256(mkmod_path)
                         if actual_hash == expected_hash:
-                            print(f"Cache HIT for {job.job_id}")
+                            # (已修改：本地化)
+                            print(_('lki.install.debug.cache_hit') % job.job_id)
                             return True, mkmod_path
                 except Exception as e:
-                    print(f"Font cache check failed: {e}")
+                    # (已修改：本地化)
+                    print(_('lki.install.debug.cache_check_failed') % e)
 
             # 4. 缓存未命中 - 下载并重新打包
             _log_overall(self, _('lki.install.status.packing_fonts'))
@@ -509,7 +524,8 @@ class InstallationManager:
                     files_to_add[arcname] = local_path
 
             if not files_to_add:
-                _log_overall(self, "Font zip was empty.")
+                # (已修改：本地化)
+                _log_overall(self, _('lki.install.error.fonts_zip_empty'))
                 return False, None
 
             utils.create_mkmod(mkmod_path, files_to_add)
@@ -520,7 +536,8 @@ class InstallationManager:
                 with open(info_path, 'w', encoding='utf-8') as f:
                     json.dump({'version': remote_version, 'file_sha256': new_hash}, f)
             except Exception as e:
-                print(f"Error writing font cache info: {e}")
+                # (已修改：本地化)
+                print(_('lki.install.error.fonts_cache_write') % e)
 
             return True, mkmod_path
         # --- (新增结束) ---
@@ -531,7 +548,8 @@ class InstallationManager:
         """使用 requests 下载文件。"""
         from localizer import _  # <-- (修复 UnboundLocalError)
         try:
-            _log_overall(self, f"{log_prefix}: {_('lki.install.status.connecting')} {url}")
+            # (已修改：修复 %s 格式化)
+            _log_overall(self, f"{log_prefix}: {_('lki.install.status.connecting') % url}")
             proxies = self._get_configured_proxies()
 
             response = requests.get(url, stream=True, proxies=proxies, timeout=timeout)
@@ -625,18 +643,21 @@ class InstallationManager:
 
             # --- 关键检查 ---
             if not mo_file_path or not mo_file_path.is_file():
-                raise Exception(f"MO file {mo_file_path} not found!")
+                # (已修改：本地化)
+                raise Exception(_('lki.install.error.mo_file_not_found') % mo_file_path)
             # --- 关键检查结束 ---
 
             # --- (修改) 非关键检查 ---
             if task.use_ee and (not ee_zip_path or not ee_zip_path.is_file()):
                 _log_task(task, _('lki.install.status.ee_failed_skip') % task.ee_job_id)
-                non_critical_errors.append("EE")
+                # (已修改：本地化)
+                non_critical_errors.append(_('lki.component.ee'))
                 ee_zip_path = None  # 确保后续步骤跳过它
 
             if task.use_fonts and (not fo_mkmod_path or not fo_mkmod_path.is_file()):
                 _log_task(task, _('lki.install.status.fonts_failed_skip') % task.fo_job_id)
-                non_critical_errors.append("Fonts")
+                # (已修改：本地化)
+                non_critical_errors.append(_('lki.component.font'))
                 fo_mkmod_path = None  # 确保后续步骤跳过它
             # --- 非关键检查结束 ---
 
@@ -660,8 +681,9 @@ class InstallationManager:
             ee_mkmod_path: Optional[Path] = None
             if task.use_ee and ee_zip_path:
                 try:
+                    # (已修改：本地化)
                     ee_unpack_dir = utils.EE_UNPACK_TEMP / task.instance.instance_id
-                    _log_task(task, "正在解压 EE 文件...", 61)
+                    _log_task(task, _('lki.install.status.unpacking_ee'), 61)
 
                     if ee_unpack_dir.exists():
                         shutil.rmtree(ee_unpack_dir)
@@ -681,8 +703,9 @@ class InstallationManager:
                         ee_mkmod_path = utils.TEMP_DIR / f"{task.instance.instance_id}_ee.mkmod"
                         utils.create_mkmod(ee_mkmod_path, ee_files_to_add)
                 except Exception as e:
-                    _log_task(task, f"EE pack failed: {e}")
-                    non_critical_errors.append("EE Pack")
+                    # (已修改：本地化)
+                    _log_task(task, _('lki.install.error.ee_pack_failed') % e)
+                    non_critical_errors.append(_('lki.component.ee'))
                     ee_mkmod_path = None  # 确保不安装
             # --- 非关键打包结束 ---
 
@@ -695,7 +718,7 @@ class InstallationManager:
                 major_version = ".".join(exe_version.split('.')[:2])
 
                 mods_dir = version_folder.bin_folder_path / "mods"
-                dest_core_mod_path = mods_dir / "lk_i18n_mod.mkmod"
+                dest_core_mod_path = mods_dir / "lk_i18n_pack.mkmod"
                 dest_ee_mod_path = mods_dir / "lk_i18n_ee.mkmod"
                 dest_fo_mod_path = mods_dir / "srcwagon_mk.mkmod"
                 info_json_path = task.instance.path / "lki" / "info" / version_folder.bin_folder_name
@@ -715,20 +738,23 @@ class InstallationManager:
                                 absolute_path = version_folder.bin_folder_path / relative_path
                                 files_to_delete.append(absolute_path)
                     except Exception as e:
-                        _log_task(task, f"Warn: Could not read {info_file.name} for cleanup: {e}")
+                        # (已修改：本地化)
+                        _log_task(task, _('lki.install.warn.cleanup_read_failed') % (info_file.name, e))
 
                     for file_path in files_to_delete:
                         try:
                             if file_path.is_file():
                                 os.remove(file_path)
                         except OSError as e:
-                            _log_task(task, f"Warn: Could not remove {file_path.name}: {e}")
+                            # (已修改：本地化)
+                            _log_task(task, _('lki.install.warn.cleanup_remove_failed') % (file_path.name, e))
 
                     try:
                         os.remove(info_file)
                     except OSError as e:
                         # (重要) 清理失败不应停止安装
-                        _log_task(task, f"Warn: Could not remove {info_file.name}: {e}")
+                        # (已修改：本地化)
+                        _log_task(task, _('lki.install.warn.cleanup_remove_failed') % (info_file.name, e))
                 # --- (清理逻辑结束) ---
 
                 if major_version == mo_job.version_info['main']:
@@ -756,7 +782,8 @@ class InstallationManager:
                             files_info["font"][font_rel_path] = utils.get_sha256(dest_fo_mod_path)
 
                     except Exception as e:
-                        print(f"[{task.task_name}] 无法计算 mkmod 的哈希值: {e}")
+                        # (已修改：本地化)
+                        print(_('lki.install.debug.hash_failed') % (task.task_name, e))
                     # --- 非关键安装结束 ---
 
                     # --- 关键的 Info.json 写入 ---
@@ -789,7 +816,8 @@ class InstallationManager:
                                 "files": {}
                             }, f, indent=2)
                     except OSError as e:
-                        _log_task(task, f"警告: 无法清理或写入 {version_folder.bin_folder_name} 的非活跃状态: {e}")
+                        # (已修改：本地化)
+                        _log_task(task, _('lki.install.warn.inactive_cleanup_failed') % (version_folder.bin_folder_name, e))
                     # --- 非关键清理结束 ---
 
             # --- (修改) 检查最终状态 ---
@@ -844,12 +872,13 @@ class InstallationManager:
                     files_data = data.get("files", {})
                     for component_name, path_dict in files_data.items():
                         for relative_path in path_dict.keys():
-                            # relative_path 是 "mods/lk_i18n_mod.mkmod"
+                            # relative_path 是 "mods/lk_i18n_pack.mkmod"
                             absolute_path = game_version.bin_folder_path / relative_path
                             files_to_delete.append(absolute_path)
 
                 except Exception as e:
-                    _log_task(task, f"Error reading {info_file.name}: {e}")
+                    # (已修改：本地化)
+                    _log_task(task, _('lki.uninstall.error.read_info_failed') % (info_file.name, e))
                     # (即使读取失败，我们仍将尝试删除 info_file)
 
                 # 2. 删除所有引用的文件
@@ -858,13 +887,17 @@ class InstallationManager:
                         if file_path.is_file():
                             os.remove(file_path)
                     except OSError as e:
-                        _log_task(task, f"Warn: Could not remove {file_path.name}: {e}")
+                        # (已修改：本地化)
+                        _log_task(task, _('lki.uninstall.warn.remove_failed') % (file_path.name, e))
 
                 # 3. (最后) 删除 info.json 文件本身
                 try:
                     os.remove(info_file)
                 except OSError as e:
-                    _log_task(task, f"Error: Could not remove {info_file.name}: {e}")
+                    # (已修改：本地化)
+                    _log_task(task, _('lki.uninstall.error.remove_info_failed') % (info_file.name, e))
+                    # (已修改：本地化)
+                    raise Exception(_('lki.uninstall.error.remove_info_failed_critical') % info_file.name)
 
             # (所有版本循环完毕)
             _log_task(task, _('lki.uninstall.status.done'), 100)
@@ -910,7 +943,9 @@ class InstallationManager:
 
 def _log_overall(manager: InstallationManager, message: str):
     """安全地记录到主 UI。"""
-    print(f"[Overall] {message}")
+    from localizer import _ # (新增局部导入)
+    # (已修改：本地化)
+    print(f"[{_('lki.log.overall')}] {message}")
     if manager.window:
         manager.root_tk.after(0, manager.window.update_overall_status, message)
 

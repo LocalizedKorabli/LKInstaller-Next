@@ -6,9 +6,10 @@ import settings
 from localizer import _, get_available_languages
 from localization_sources import global_source_manager
 from ui.dialogs import RoutePriorityWindow, BaseDialog
+from ui.tab_base import BaseTab
 
 
-class SettingsTab(ttk.Frame):
+class SettingsTab(BaseTab):
     """
     “设置”选项卡 UI。
     """

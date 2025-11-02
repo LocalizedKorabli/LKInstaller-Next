@@ -1,7 +1,8 @@
 import locale
 import os
 import sys
-import time  # <-- (新增)
+import tkinter
+import time
 from pathlib import Path
 from typing import Optional, Tuple, List, Set, Dict
 
@@ -90,3 +91,15 @@ def determine_default_l10n_lang(ui_lang: str) -> str:
 
     # 回退到 'en'
     return mapping.get(ui_lang, 'en')
+
+def scale_dpi(widget: tkinter.Misc, value: int) -> int:
+    """
+    使用存储在 Toplevel 上的缩放因子来缩放像素值。
+    """
+    try:
+        # 获取存储在根窗口上的 scaling_factor
+        scaling_factor = widget.winfo_toplevel().scaling_factor
+        return int(value * scaling_factor)
+    except Exception:
+        # 如果 scaling_factor 不存在，则回退
+        return value

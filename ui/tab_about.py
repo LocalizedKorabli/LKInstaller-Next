@@ -1,9 +1,10 @@
 import tkinter as tk
 from tkinter import ttk
 from localizer import _
+from ui.tab_base import BaseTab
 
 
-class AboutTab(ttk.Frame):
+class AboutTab(BaseTab):
     """
     “关于”选项卡 UI。
     """

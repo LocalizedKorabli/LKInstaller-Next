@@ -21,12 +21,17 @@ class IconManager:
         self.folder = None
         self.download = None
         self.copy = None
+        self.refresh = None
+        self.play = None
         self.up = None
         self.down = None
 
     def _load_icon_set(self, theme_name):
         """加载特定主题的图标集"""
-        icon_names = ['import', 'rename', 'remove', 'detect', 'manage', 'folder', 'download', 'copy', 'up', 'down']
+        from tkinter import PhotoImage
+        icon_names = ['import', 'rename', 'remove', 'detect', 'manage', 'folder', 'download', 'copy', 'up', 'down',
+                      'refresh', 'play']
+
         for name in icon_names:
             path = utils.base_path.joinpath(f'resources/icons/{theme_name}/{name}.png')
             try:
@@ -51,5 +56,7 @@ class IconManager:
         self.folder = self.icons[theme_name]['folder']
         self.download = self.icons[theme_name]['download']
         self.copy = self.icons[theme_name]['copy']
+        self.refresh = self.icons[theme_name]['refresh']
+        self.play = self.icons[theme_name]['play']
         self.up = self.icons[theme_name]['up']
         self.down = self.icons[theme_name]['down']

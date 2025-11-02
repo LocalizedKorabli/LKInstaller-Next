@@ -6,6 +6,7 @@ from typing import Dict, Optional
 
 import instance_manager
 import settings
+import utils
 from game_instance import GameInstance
 from localizer import _
 from ui.tab_about import AboutTab
@@ -16,9 +17,18 @@ from ui_manager import IconManager
 
 
 class LocalizationInstallerApp:
-    def __init__(self, master, initial_theme):
+    def __init__(self, master, initial_theme, scaling_factor=1.0):  # (scaling_factor is passed in)
         self.master = master
-        master.geometry('450x616') # 616 just enough to accommodate 3 instances.
+        self.master.scaling_factor = scaling_factor  # (新增) 附加到根窗口
+
+        # (修改) 步骤 4: 缩放窗口大小
+        base_width = 350
+        base_height = 449
+        # (修改) 使用新的 scale_dpi 函数
+        scaled_width = utils.scale_dpi(self.master, base_width)
+        scaled_height = utils.scale_dpi(self.master, base_height)
+        master.geometry(f'{scaled_width}x{scaled_height}')
+
         master.title(_('lki.app.title'))
 
         self.icons = IconManager()

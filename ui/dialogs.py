@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import List, Callable, Dict
+
+import utils
 from localizer import _
 
 try:
@@ -57,7 +59,7 @@ class CustomAskStringDialog(BaseDialog): # <-- 继承 BaseDialog
         main_frame = ttk.Frame(self, padding=15)
         main_frame.pack(fill='both', expand=True)
 
-        ttk.Label(main_frame, text=prompt, wraplength=300).pack(fill='x', pady=(0, 10))
+        ttk.Label(main_frame, text=prompt, wraplength=utils.scale_dpi(self, 300)).pack(fill='x', pady=(0, 10))
 
         self.entry = ttk.Entry(main_frame)
         self.entry.insert(0, initialvalue)
@@ -148,7 +150,7 @@ class RoutePriorityWindow(BaseDialog): # <-- 继承 BaseDialog
             ToolTip(self.btn_route_up, _('lki.tooltip.route_up'))
             ToolTip(self.btn_route_down, _('lki.tooltip.route_down'))
 
-        ttk.Label(route_frame, text=_('lki.routes.hint'), style="Hint.TLabel", wraplength=200) \
+        ttk.Label(route_frame, text=_('lki.routes.hint'), style="Hint.TLabel", wraplength=utils.scale_dpi(self, 200)) \
             .grid(row=1, column=0, columnspan=3, sticky='w', padx=5, pady=(5, 0))
 
         # --- (按钮) ---

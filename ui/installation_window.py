@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from typing import List, Callable, Dict, Any
+
+import utils
 from localizer import _
 from ui.dialogs import BaseDialog
 
@@ -22,7 +24,7 @@ class InstallProgressWindow(BaseDialog):
         main_frame = ttk.Frame(self, padding=10)
         main_frame.pack(fill='both', expand=True)
 
-        self.overall_status_label = ttk.Label(main_frame, text=starting_text, wraplength=450) # (已修改)
+        self.overall_status_label = ttk.Label(main_frame, text=starting_text, wraplength=utils.scale_dpi(self, 450)) # (已修改)
         self.overall_status_label.pack(fill='x', pady=(0, 10))
 
         # 为每个任务创建 UI 元素

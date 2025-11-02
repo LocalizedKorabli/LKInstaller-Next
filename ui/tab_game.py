@@ -7,6 +7,9 @@ from pathlib import Path
 from tkinter import ttk, messagebox, filedialog
 from typing import List, Dict, Optional, Set
 
+import utils
+from ui.tab_base import BaseTab
+
 try:
     from tktooltip import ToolTip
 except ImportError:
@@ -23,7 +26,7 @@ from installation_manager import InstallationManager, InstallationTask  # <-- (�
 from localization_sources import global_source_manager
 
 
-class GameTab(ttk.Frame):
+class GameTab(BaseTab):
     """
     “游戏”选项卡 UI。
     """
@@ -69,9 +72,13 @@ class GameTab(ttk.Frame):
         title_label = ttk.Label(top_frame, text=_('lki.game.detected_clients'), style="Client.TLabel")
         title_label.pack(side='left', anchor='w')
 
+        self.btn_refresh = ttk.Button(top_buttons_frame, image=self.icons.refresh, style="Toolbutton",
+                                      command=self._on_refresh_list)
+        self.btn_refresh.pack(side='left', padx=(0, 2))
+
         self.btn_import = ttk.Button(top_buttons_frame, image=self.icons.import_icon, style="Toolbutton",
                                      command=self._open_import_instance_window)
-        self.btn_import.pack(side='left', padx=(0, 2))
+        self.btn_import.pack(side='left', padx=2)
         self.btn_rename = ttk.Button(top_buttons_frame, image=self.icons.rename, style="Toolbutton",
                                      command=self._open_edit_instance_window, state='disabled')
         self.btn_rename.pack(side='left', padx=2)
@@ -82,9 +89,10 @@ class GameTab(ttk.Frame):
                                           command=self._on_auto_import)
         self.btn_auto_import.pack(side='left', padx=(2, 0))
 
-        hint_label = ttk.Label(self, text=_('lki.game.actions_hint'), style="Hint.TLabel", anchor='center',
-                               wraplength=400)
-        hint_label.pack(fill='x', side='bottom', pady=(5, 0))
+        # (已修改：使用基类方法创建)
+        self.hint_label = self._create_placeholder_label(_('lki.game.actions_hint'))
+        self.hint_label.config(style="Hint.TLabel", anchor='center')  # (设置特定样式)
+        self.hint_label.pack(fill='x', side='bottom', pady=(5, 0))
 
         # (已修改：使用网格布局并排)
         bottom_frame = ttk.Frame(self)
@@ -120,6 +128,10 @@ class GameTab(ttk.Frame):
                                           command=self._open_instance_folder, state='disabled')
         self.btn_open_folder.pack(side='left', padx=2)
 
+        self.btn_play = ttk.Button(bottom_buttons_frame, image=self.icons.play, style="Toolbutton",
+                                   command=self._on_play_instance, state='disabled')
+        self.btn_play.pack(side='left', padx=(2, 0))
+
         list_container = ttk.Frame(self)
         list_container.pack(fill='both', expand=True)
         self.canvas = tk.Canvas(list_container, borderwidth=0, highlightthickness=0)
@@ -147,6 +159,8 @@ class GameTab(ttk.Frame):
             ToolTip(self.btn_move_up, _('lki.tooltip.move_up'))
             ToolTip(self.btn_move_down, _('lki.tooltip.move_down'))
             ToolTip(self.btn_open_folder, _('lki.tooltip.open_folder'))
+            ToolTip(self.btn_refresh, _('lki.tooltip.refresh_list'))
+            ToolTip(self.btn_play, _('lki.tooltip.play_instance'))
 
     def _load_and_display_instances(self):
         """从管理器加载实例数据。"""
@@ -365,6 +379,7 @@ class GameTab(ttk.Frame):
         self.btn_rename.config(state='normal')
         self.btn_remove.config(state='normal')
         self.btn_open_folder.config(state='normal')
+        self.btn_play.config(state='normal')
 
         keys = list(self.game_instances.keys())
         try:
@@ -423,6 +438,8 @@ class GameTab(ttk.Frame):
         self.btn_move_up.config(image=self.icons.up)
         self.btn_move_down.config(image=self.icons.down)
         self.btn_open_folder.config(image=self.icons.folder)
+        self.btn_refresh.config(image=self.icons.refresh)
+        self.btn_play.config(image=self.icons.play)
 
     def _clear_selection_and_refresh(self, default_checked_ids: Optional[Set[str]] = None):
         """内部助手，用于清除选择、刷新列表并通知 App"""
@@ -434,6 +451,7 @@ class GameTab(ttk.Frame):
         self.btn_move_up.config(state='disabled')
         self.btn_move_down.config(state='disabled')
         self.btn_open_folder.config(state='disabled')
+        self.btn_play.config(state='disabled')
         self.selected_client_widget = None
 
         # 2. 清除旧的数据缓存 (GameInstance 对象)
@@ -783,6 +801,55 @@ class GameTab(ttk.Frame):
         self.instance_manager.move_instance_down(self.selected_instance_id)
         self._refresh_client_list()
 
+    def _on_refresh_list(self):
+        """
+        点击“刷新”按钮的回调。
+        保留当前的勾选状态并刷新列表。
+        """
+        print("Refreshing instance list...")
+        current_checked_ids = self._get_checked_instance_ids()
+        self._clear_selection_and_refresh(default_checked_ids=current_checked_ids)
+
+    # --- (新增：运行按钮) ---
+    def _on_play_instance(self):
+        """点击“运行”按钮的回调。"""
+        if not self.selected_instance_id:
+            return
+
+        instance_data = self.instance_manager.get_instance(self.selected_instance_id)
+        if not instance_data or 'path' not in instance_data:
+            return
+
+        instance_path = Path(instance_data['path'])
+
+        # 1. 尝试 lgc_api.exe
+        lgc_exe_path = instance_path / "lgc_api.exe"
+        if lgc_exe_path.is_file():
+            try:
+                print(f"Executing {lgc_exe_path}")
+                # (使用 Popen 而不是 startfile 来避免阻塞UI)
+                subprocess.Popen([str(lgc_exe_path)], cwd=str(instance_path))
+                return
+            except Exception as e:
+                print(f"Failed to start lgc_api.exe: {e}")
+
+        # 2. 尝试 Korabli.exe
+        korabli_exe_path = instance_path / "Korabli.exe"
+        if korabli_exe_path.is_file():
+            try:
+                print(f"Executing {korabli_exe_path}")
+                subprocess.Popen([str(korabli_exe_path)], cwd=str(instance_path))
+                return
+            except Exception as e:
+                print(f"Failed to start Korabli.exe: {e}")
+
+        # 3. 均未找到
+        messagebox.showwarning(
+            _('lki.app.title'),
+            _('lki.game.error.play_failed') % (lgc_exe_path.name, korabli_exe_path.name),
+            parent=self.app_master
+        )
+
 
 # --- (从 ui_windows.py 移来的类) ---
 
@@ -829,7 +896,7 @@ class ImportInstanceWindow(BaseDialog):
         self.type_combo.grid(row=2, column=1, sticky='we', pady=5)
 
         # 4. 状态标签
-        self.status_label = ttk.Label(main_frame, text="", wraplength=300)
+        self.status_label = ttk.Label(main_frame, text="", wraplength=utils.scale_dpi(self, 300))
         self.status_label.grid(row=3, column=1, sticky='we', pady=(0, 5), padx=5)
 
         # 5. 按钮
@@ -1011,7 +1078,7 @@ class DeleteInstanceWindow(BaseDialog):
         main_frame.pack(fill='both', expand=True)
         main_frame.columnconfigure(0, weight=1)
 
-        prompt_label = ttk.Label(main_frame, text=_('lki.delete_instance.prompt'), wraplength=350)
+        prompt_label = ttk.Label(main_frame, text=_('lki.delete_instance.prompt'), wraplength=utils.scale_dpi(self, 350))
         prompt_label.grid(row=0, column=0, sticky='w', pady=(0, 10))
 
         name_frame = ttk.Frame(main_frame)
