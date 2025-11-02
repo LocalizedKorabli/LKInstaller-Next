@@ -1,20 +1,22 @@
+import threading
 import tkinter as tk
 from tkinter import ttk, PhotoImage
+from typing import Optional
 
 import constants
 import utils
 from localizer import _
 from ui.tabs.tab_base import BaseTab
+from ui.windows.window_action import ActionProgressWindow
 
 
 class AboutTab(BaseTab):
-    """
-    “关于”选项卡 UI。
-    """
-
     def __init__(self, master):
         super().__init__(master, padding='10 10 10 10')
+        self.app_master = master.master
         self.logo_image = None
+        self.update_window: Optional[ActionProgressWindow] = None  # (新增)
+        self.update_thread: Optional[threading.Thread] = None
 
         self._create_about_widgets()
 
@@ -62,6 +64,36 @@ class AboutTab(BaseTab):
         check_update_btn.pack(side='left', padx=(20, 0))
 
     def _check_for_updates(self):
-        """检查更新的占位方法"""
+        """(修改) 在新线程中启动更新检查。"""
         print("Checking for updates...")
-        tk.messagebox.showinfo(_('lki.app.title'), "Check for updates feature not yet implemented.", parent=self)
+
+        # (新增) 防止打开多个更新窗口
+        if self.update_window and self.update_window.winfo_exists():
+            self.update_window.focus_force()
+            return
+
+        # (修改) 使用 ActionProgressWindow
+        self.update_window = ActionProgressWindow(
+            self.app_master,
+            [_('lki.update.title')],  # 任务名称即为标题
+            cancel_callback=self._on_update_cancel,  # (修改) 传入回调
+            title=_('lki.update.title'),
+            starting_text=_('lki.update.status.checking'),
+            pending_text=_('lki.update.status.checking')
+        )
+
+        # (修改) 启动工作线程
+        self.update_thread = threading.Thread(
+            target=utils.update_worker,
+            args=(self.update_window, self.app_master),  # 传入窗口和根 tk
+            daemon=True
+        )
+        self.update_thread.start()
+
+    def _on_update_cancel(self):  # (新增)
+        """当更新窗口的取消按钮被按下时调用。"""
+        print("Update check/download cancelled by user.")
+        # 工作线程 (utils.update_worker) 会检查 window.is_cancelled()，
+        # 该状态由窗口自己的 _on_close() 方法设置。
+        # 此处我们不需要做额外操作，但必须提供这个回调函数。
+        pass

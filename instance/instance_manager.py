@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 from localization_sources import global_source_manager  # (确保这个导入存在)
-from utils import determine_default_l10n_lang
+from utils import determine_default_l10n_lang, SETTINGS_DIR
 
-instances_path: Path = Path('../lki/settings/instances.json')
+instances_path: Path = SETTINGS_DIR / 'instances.json'
 
 
 class InstanceManager:

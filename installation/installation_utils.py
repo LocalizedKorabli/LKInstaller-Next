@@ -7,6 +7,7 @@ import xml.etree.ElementTree as Et
 import zipfile
 from pathlib import Path
 from typing import Dict, List, Union, Any, Optional, Tuple
+from utils import CACHE_DIR, TEMP_DIR
 
 import polib
 
@@ -22,8 +23,7 @@ BUILTIN_LOCALE_CONFIG_ZH_CN = '''<locale_config>
 '''
 
 # 缓存和临时目录
-CACHE_DIR = Path('../lki/cache')
-TEMP_DIR = Path('../lki/temp')
+
 L10N_CACHE = CACHE_DIR / 'i18n'
 EE_CACHE = CACHE_DIR / 'ee'
 LOCALE_CONFIG_TEMP = TEMP_DIR / 'locale_config'

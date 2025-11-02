@@ -2,11 +2,25 @@ import locale
 import os
 import sys
 import time
-import tkinter
+import tkinter as tk
 from pathlib import Path
 from typing import Optional, Tuple, Set, Dict
 
 base_path: Path = Path(getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__))))
+
+try:
+    # Use LocalAppData for settings/cache if available
+    APP_DATA_PATH = Path(os.getenv('LOCALAPPDATA', '')) / 'LKInstallerNext'
+    if not os.access(os.getenv('LOCALAPPDATA', ''), os.W_OK):
+        raise Exception("LocalAppData not writable")
+    os.makedirs(APP_DATA_PATH, exist_ok=True)
+except Exception:
+    # Fallback to alongside executable (portable mode)
+    APP_DATA_PATH = base_path / 'lki_data'
+
+CACHE_DIR = APP_DATA_PATH / 'cache'
+TEMP_DIR = APP_DATA_PATH / 'temp'
+SETTINGS_DIR = APP_DATA_PATH / 'settings'
 
 major2exact: Dict[str, str] = {
     'zh': 'zh_CN',
@@ -93,7 +107,7 @@ def determine_default_l10n_lang(ui_lang: str) -> str:
     return mapping.get(ui_lang, 'en')
 
 
-def scale_dpi(widget: tkinter.Misc, value: int) -> int:
+def scale_dpi(widget: tk.Misc, value: int) -> int:
     """
     使用存储在 Toplevel 上的缩放因子来缩放像素值。
     """
@@ -104,3 +118,194 @@ def scale_dpi(widget: tkinter.Misc, value: int) -> int:
     except Exception:
         # 如果 scaling_factor 不存在，则回退
         return value
+
+# --- (NEW) Proxy Util (Moved from installation_manager.py) ---
+def get_configured_proxies() -> Optional[Dict[str, str]]:
+    """
+    从全局设置中读取代理配置，并返回 requests 库所需的字典。
+    - 'disabled': 返回 {'http': None, 'https': None}
+    - 'system':   返回 None (requests 会自动检测)
+    - 'manual':   返回 {'http': '...', 'https': '...'}
+    """
+    import settings  # Local import
+    from localizer import _  # Local import
+
+    proxy_mode = settings.global_settings.get('proxy.mode', 'disabled')
+
+    if proxy_mode == 'disabled':
+        return {'http': None, 'https': None}
+
+    if proxy_mode == 'system':
+        return None  # requests 库会自动处理
+
+    if proxy_mode == 'manual':
+        host = settings.global_settings.get('proxy.host', '')
+        port = settings.global_settings.get('proxy.port', '')
+        user = settings.global_settings.get('proxy.user', '')
+        password = settings.global_settings.get('proxy.password', '')
+
+        if not host or not port:
+            print(_('lki.proxy.warn.manual_no_host'))
+            return {'http': None, 'https': None}
+
+        if user and password:
+            proxy_url = f"http://{user}:{password}@{host}:{port}"
+        elif user:
+            proxy_url = f"http://{user}@{host}:{port}"
+        else:
+            proxy_url = f"http://{host}:{port}"
+
+        # (假设代理同时适用于 http 和 https)
+        return {
+            'http': proxy_url,
+            'https': proxy_url
+        }
+
+    return {'http': None, 'https': None}  # (默认禁用)
+
+
+# --- (NEW) Update Logic ---
+def update_worker(window: 'ActionProgressWindow', root_tk: tk.Tk):
+    """
+    在工作线程中执行更新检查和下载。
+    通过检查 window.is_cancelled() 来支持取消。
+    """
+    import requests
+    import semver
+    import constants
+    import subprocess
+    import sys
+    import shutil
+    import threading
+    from localizer import _  # 局部导入
+    from tkinter import messagebox  # 局部导入
+
+    VERSION_URL = "https://dl.localizedkorabli.org/lki/lk-next/version_info.json"
+    DOWNLOAD_URL = "https://dl.localizedkorabli.org/lki/lk-next/lki_setup.exe"
+    UPDATE_DIR = TEMP_DIR / 'updates'
+    INSTALLER_PATH = UPDATE_DIR / 'lki_setup.exe'
+
+    # 辅助函数：安全地更新UI
+    log = lambda msg, p: root_tk.after(0, window.update_task_progress, _('lki.update.title'), p, msg)
+
+    def _download_and_run(remote_ver_str: str, proxies: Optional[dict]):
+        """下载部分，在用户确认后在*新*线程中运行。"""
+        try:
+            if window.is_cancelled():
+                return
+
+            log(_('lki.update.status.found') % remote_ver_str, 20)
+
+            # 下载
+            dl_resp = requests.get(DOWNLOAD_URL, stream=True, proxies=proxies, timeout=30)
+            dl_resp.raise_for_status()
+
+            total_size = int(dl_resp.headers.get('content-length', 0))
+            downloaded = 0
+
+            with open(INSTALLER_PATH, 'wb') as f:
+                for chunk in dl_resp.iter_content(chunk_size=8192):
+                    if window.is_cancelled():
+                        log(_('lki.install.status.cancelled'), 100)
+                        return
+
+                    f.write(chunk)
+                    downloaded += len(chunk)
+                    if total_size > 0:
+                        progress = 20 + (downloaded / total_size) * 70  # 进度从 20% 到 90%
+                        log(_('lki.update.status.downloading'), progress)
+
+            if window.is_cancelled():
+                return
+
+            log(_('lki.update.status.starting_update'), 95)
+
+            # 启动并退出
+            try:
+                subprocess.Popen([str(INSTALLER_PATH)])
+                root_tk.after(500, root_tk.destroy)
+            except Exception as e:
+                log(_('lki.update.error.start_failed') % e, 100)
+                root_tk.after(0, window.mark_task_complete, _('lki.update.title'), False,
+                              _('lki.update.error.start_failed') % e)
+
+        except Exception as e:
+            if window.is_cancelled():
+                log(_('lki.install.status.cancelled'), 100)
+                return
+            import traceback
+            traceback.print_exc()
+            error_msg = _('lki.update.status.download_failed') % str(e)
+            log(error_msg, 100)
+            root_tk.after(0, window.mark_task_complete, _('lki.update.title'), False, error_msg)
+
+    def _check_version_and_ask():
+        """检查版本的主逻辑（在初始线程中运行）。"""
+        try:
+            os.makedirs(UPDATE_DIR, exist_ok=True)
+            if window.is_cancelled(): return
+
+            log(_('lki.update.status.checking'), 10)
+            proxies = get_configured_proxies()
+
+            if window.is_cancelled(): return
+            resp = requests.get(VERSION_URL, timeout=10, proxies=proxies)
+            resp.raise_for_status()
+
+            if window.is_cancelled(): return
+
+            data = resp.json()
+            remote_version = data.get('version')
+
+            if not remote_version or not semver.VersionInfo.isvalid(remote_version):
+                log(_('lki.update.error.invalid_version'), 100)
+                root_tk.after(0, window.mark_task_complete, _('lki.update.title'), False,
+                              _('lki.update.error.invalid_version'))
+                return
+
+            if semver.compare(remote_version, constants.APP_VERSION) > 0:
+                # 发现新版本。必须在主线程中询问用户。
+
+                def _ask_on_main_thread():
+                    """此函数由 root_tk.after() 在主线程上调用。"""
+                    if window.is_cancelled(): return
+
+                    try:
+                        proceed = messagebox.askyesno(
+                            _('lki.update.confirm.title'),
+                            _('lki.update.confirm.message') % (remote_version, constants.APP_VERSION),
+                            parent=window
+                        )
+                    except tk.TclError:  # 窗口可能已关闭
+                        return
+
+                    if proceed:
+                        # 在新线程中开始下载
+                        threading.Thread(target=_download_and_run, args=(remote_version, proxies), daemon=True).start()
+                    else:
+                        # 用户点击了“否”
+                        log(_('lki.install.status.cancelled'), 100)
+                        root_tk.after(1000, window.destroy)
+
+                root_tk.after(0, _ask_on_main_thread)
+
+            else:
+                # 已经是最新版本
+                log(_('lki.update.status.latest'), 100)
+                root_tk.after(0, window.mark_task_complete, _('lki.update.title'), True,
+                              _('lki.update.status.latest'))
+                root_tk.after(2000, window.destroy)
+
+        except Exception as e:
+            if window.is_cancelled():
+                log(_('lki.install.status.cancelled'), 100)
+                return
+
+            import traceback
+            traceback.print_exc()
+            error_msg = _('lki.update.error.check_failed') % str(e)
+            log(error_msg, 100)
+            root_tk.after(0, window.mark_task_complete, _('lki.update.title'), False, error_msg)
+
+    # 启动检查版本线程
+    _check_version_and_ask()

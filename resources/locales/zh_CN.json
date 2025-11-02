@@ -200,6 +200,18 @@
   "lki.uninstall.status.starting": "正在开始卸载...",
   "lki.uninstall.title": "卸载进度",
   "lki.uninstall.warn.remove_failed": "警告:无法移除%s:%s",
+  "lki.update.confirm.message": "发现新版本 (%s)。您的当前版本是 %s。\n\n您想现在下载并安装吗？",
+  "lki.update.confirm.title": "发现更新",
+  "lki.update.error.check_failed": "检查更新失败: %s",
+  "lki.update.error.invalid_version": "从服务器收到的版本信息无效。",
+  "lki.update.error.start_failed": "启动更新程序失败: %s",
+  "lki.update.status.checking": "正在检查更新...",
+  "lki.update.status.download_failed": "下载失败: %s",
+  "lki.update.status.downloading": "正在下载安装包...",
+  "lki.update.status.found": "发现新版本: %s。正在下载...",
+  "lki.update.status.latest": "您已在使用最新版本。",
+  "lki.update.status.starting_update": "下载完成。即将启动更新...",
+  "lki.update.title": "检查更新",
   "lki.version.label": "应用版本",
   "lki.version.check_update": "检查更新"
 }

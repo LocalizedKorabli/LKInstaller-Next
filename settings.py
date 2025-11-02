@@ -4,9 +4,9 @@ from pathlib import Path
 from typing import Dict, Any
 
 # (已修改：导入新函数)
-from utils import select_locale_by_system_lang_code, get_system_language_codes, is_system_gmt8_timezone
+from utils import select_locale_by_system_lang_code, get_system_language_codes, is_system_gmt8_timezone, SETTINGS_DIR
 
-settings_path: Path = Path('lki/settings/global.json')
+settings_path: Path = SETTINGS_DIR / 'global.json'
 
 
 class GlobalSettings:

@@ -200,6 +200,18 @@
   "lki.uninstall.status.starting": "Starting uninstall...",
   "lki.uninstall.title": "Uninstall Progress",
   "lki.uninstall.warn.remove_failed": "Warn: Could not remove %s: %s",
+  "lki.update.confirm.message": "A new version (%s) is available. Your current version is %s.\n\nDo you want to download and install it now?",
+  "lki.update.confirm.title": "Update Found",
+  "lki.update.error.check_failed": "Failed to check for updates: %s",
+  "lki.update.error.invalid_version": "Invalid version info received from server.",
+  "lki.update.error.start_failed": "Failed to start the updater: %s",
+  "lki.update.status.checking": "Checking for updates...",
+  "lki.update.status.download_failed": "Download failed: %s",
+  "lki.update.status.downloading": "Downloading installer...",
+  "lki.update.status.found": "Found new version: %s. Downloading...",
+  "lki.update.status.latest": "You are already using the latest version.",
+  "lki.update.status.starting_update": "Download complete. Starting update...",
+  "lki.update.title": "Check for Update",
   "lki.version.label": "App Version",
   "lki.version.check_update": "Check for Update"
 }

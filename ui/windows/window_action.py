@@ -1,4 +1,5 @@
 from tkinter import ttk
+import tkinter as tk
 from typing import List, Callable, Dict, Any
 
 import utils
@@ -19,12 +20,15 @@ class ActionProgressWindow(BaseDialog):
 
         self.cancel_callback = cancel_callback
         self.widgets: Dict[str, Dict[str, Any]] = {}
+        self._is_cancelled = False
 
         main_frame = ttk.Frame(self, padding=10)
         main_frame.pack(fill='both', expand=True)
 
-        self.overall_status_label = ttk.Label(main_frame, text=starting_text,
-                                              wraplength=utils.scale_dpi(self, 450))  # (已修改)
+        self.overall_status_label = ttk.Label(
+            main_frame, text=starting_text,
+            wraplength=utils.scale_dpi(self, 450)
+        )  # (已修改)
         self.overall_status_label.pack(fill='x', pady=(0, 10))
 
         # 为每个任务创建 UI 元素
@@ -35,7 +39,12 @@ class ActionProgressWindow(BaseDialog):
             name_label = ttk.Label(task_frame, text=name)
             name_label.pack(fill='x')
 
-            status_label = ttk.Label(task_frame, text=pending_text, style="Hint.TLabel")  # (已修改)
+            status_label = ttk.Label(
+                task_frame,
+                text=pending_text,
+                style="Hint.TLabel",
+                wraplength=utils.scale_dpi(self, 450)
+            )  # (已修改)
             status_label.pack(fill='x')
 
             progress_bar = ttk.Progressbar(task_frame, length=450, mode='determinate')
@@ -49,40 +58,54 @@ class ActionProgressWindow(BaseDialog):
             }
 
         # 关闭按钮
-        close_btn = ttk.Button(main_frame, text=_('lki.btn.cancel'), command=self._on_close, style="danger.TButton")
-        close_btn.pack(side='right', pady=(10, 0))
+        self.close_btn = ttk.Button(main_frame, text=_('lki.btn.cancel'), command=self._on_close, style="danger.TButton")
+        self.close_btn.pack(side='right', pady=(10, 0))
 
         self.protocol("WM_DELETE_WINDOW", self._on_close)
 
     def _on_close(self):
-        """当用户点击“取消”或关闭窗口时调用。"""
+        self._is_cancelled = True
         if self.cancel_callback:
             self.cancel_callback()
         self.destroy()
 
+    def is_cancelled(self) -> bool:
+        """检查窗口是否已被用户取消。"""
+        return self._is_cancelled
+
     def update_task_progress(self, task_name: str, progress: float, status: str):
         """从外部更新特定任务的 UI。"""
+        if not self.winfo_exists(): return  # <-- 修复2：添加检查
         if task_name in self.widgets:
-            self.widgets[task_name]['progress_bar']['value'] = progress
-            self.widgets[task_name]['status_label'].config(text=status)
+            try:  # (新增 try/except 进一步加固)
+                self.widgets[task_name]['progress_bar']['value'] = progress
+                self.widgets[task_name]['status_label'].config(text=status)
+            except (tk.TclError, KeyError):
+                pass  # 窗口或组件已销毁
 
     def update_overall_status(self, status: str):
         """更新顶部的总体状态标签。"""
-        self.overall_status_label.config(text=status)
+        if not self.winfo_exists(): return  # <-- 修复2：添加检查
+        try: # (新增 try/except 进一步加固)
+            self.overall_status_label.config(text=status)
+        except tk.TclError:
+            pass # 窗口已销毁
 
     def mark_task_complete(self, task_name: str, success: bool, status_text: str):
+        if not self.winfo_exists(): return  # <-- 修复2：添加检查
         if task_name in self.widgets:
-            self.widgets[task_name]['progress_bar'].config(value=100)
-            # (状态文本现在由管理器直接提供)
-            self.widgets[task_name]['status_label'].config(text=status_text)
+            try:  # (新增 try/except 进一步加固)
+                self.widgets[task_name]['progress_bar'].config(value=100)
+                # (状态文本现在由管理器直接提供)
+                self.widgets[task_name]['status_label'].config(text=status_text)
+            except (tk.TclError, KeyError):
+                pass  # 窗口或组件已销毁
 
     def all_tasks_finished(self):
         """所有任务完成后，将“取消”按钮更改为“关闭”。"""
-        self.cancel_callback = None  # 禁用取消功能
+        if not self.winfo_exists(): return  # <-- 修复2：添加检查
+        self.cancel_callback = None
         self.overall_status_label.config(text=_('lki.action.status.all_done'))
-        close_btn = ttk.Button(self, text=_('lki.btn.close'), command=self.destroy, style="success.TButton")
-        # (这会替换旧按钮，但我们需要找到它... 简单起见，我们只更改文本)
-        for child in self.winfo_children():  # -> main_frame
-            for btn in child.winfo_children():
-                if isinstance(btn, ttk.Button):
-                    btn.config(text=_('lki.btn.close'), style="success.TButton", command=self.destroy)
+        if self.close_btn and self.close_btn.winfo_exists():
+            self.close_btn.config(text=_('lki.btn.close'), style="success.TButton", command=self.destroy,
+                                  state='normal')

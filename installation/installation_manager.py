@@ -13,7 +13,7 @@ import requests
 
 # (移除 _ 的顶层导入)
 import installation.installation_utils as utils
-import settings
+import settings, utils as root_utils
 from instance.game_instance import GameInstance
 from localization_sources import global_source_manager
 from ui.windows.window_action import ActionProgressWindow
@@ -112,11 +112,19 @@ class InstallationManager:
 
         # (为每个任务分配 UI 回调)
         for task in self.tasks:
+            def safe_progress_callback(t=task):
+                try:
+                    if self.window and self.window.winfo_exists():
+                        return self.window.widgets[t.task_name]['progress_bar']['value']
+                except (tk.TclError, KeyError):
+                    pass # 窗口已销毁，返回默认值
+                return 0.0 # 默认值
+
             task.log_callback = lambda msg, p=..., t=task: self.root_tk.after(
                 0, self.window.update_task_progress, t.task_name,
-                p if p is not ... else task.progress_callback(), msg
+                p if p is not ... else safe_progress_callback(t), msg  # (修改) 调用 safe_progress_callback
             )
-            task.progress_callback = lambda t=task: self.window.widgets[t.task_name]['progress_bar']['value']
+            task.progress_callback = safe_progress_callback
 
         threading.Thread(target=self._control_thread, daemon=True).start()
 
@@ -153,11 +161,19 @@ class InstallationManager:
                                            pending_text=_('lki.uninstall.status.pending'))
 
         for task in self.tasks:
+            def safe_progress_callback(t=task):
+                try:
+                    if self.window and self.window.winfo_exists():
+                        return self.window.widgets[t.task_name]['progress_bar']['value']
+                except (tk.TclError, KeyError):
+                    pass  # 窗口已销毁，返回默认值
+                return 0.0  # 默认值
+
             task.log_callback = lambda msg, p=..., t=task: self.root_tk.after(
                 0, self.window.update_task_progress, t.task_name,
-                p if p is not ... else task.progress_callback(), msg
+                p if p is not ... else safe_progress_callback(t), msg  # (修改) 调用 safe_progress_callback
             )
-            task.progress_callback = lambda t=task: self.window.widgets[t.task_name]['progress_bar']['value']
+            task.progress_callback = safe_progress_callback  # (修改) 分配 safe_progress_callback
 
         threading.Thread(target=self._uninstall_control_thread, daemon=True).start()
 
@@ -243,7 +259,7 @@ class InstallationManager:
             _log_task(task, _('lki.install.status.getting_version_from') % route_id)
 
             try:
-                proxies = self._get_configured_proxies()
+                proxies = root_utils.get_configured_proxies()
                 resp = requests.get(v_url, timeout=5, proxies=proxies)
                 resp.raise_for_status()
                 lines = resp.text.splitlines()
@@ -317,48 +333,6 @@ class InstallationManager:
 
             self.root_tk.after(0, self._on_download_complete, job, success)
             self.download_queue.task_done()
-
-    def _get_configured_proxies(self) -> Optional[Dict[str, str]]:
-        """
-        从全局设置中读取代理配置，并返回 requests 库所需的字典。
-        - 'disabled': 返回 {'http': None, 'https': None}
-        - 'system':   返回 None (requests 会自动检测)
-        - 'manual':   返回 {'http': '...', 'https': '...'}
-        """
-        from localizer import _  # (新增局部导入)
-        proxy_mode = settings.global_settings.get('proxy.mode', 'disabled')
-
-        if proxy_mode == 'disabled':
-            return {'http': None, 'https': None}
-
-        if proxy_mode == 'system':
-            return None  # requests 库会自动处理
-
-        if proxy_mode == 'manual':
-            host = settings.global_settings.get('proxy.host', '')
-            port = settings.global_settings.get('proxy.port', '')
-            user = settings.global_settings.get('proxy.user', '')
-            password = settings.global_settings.get('proxy.password', '')
-
-            if not host or not port:
-                # (已修改：本地化)
-                print(_('lki.proxy.warn.manual_no_host'))
-                return {'http': None, 'https': None}
-
-            if user and password:
-                proxy_url = f"http://{user}:{password}@{host}:{port}"
-            elif user:
-                proxy_url = f"http://{user}@{host}:{port}"
-            else:
-                proxy_url = f"http://{host}:{port}"
-
-            # (假设代理同时适用于 http 和 https)
-            return {
-                'http': proxy_url,
-                'https': proxy_url
-            }
-
-        return {'http': None, 'https': None}  # (默认禁用)
 
     def _perform_download(self, job: DownloadJob, task: InstallationTask) -> Tuple[bool, Optional[Path]]:
         """执行单个下载作业，包括缓存检查。"""
@@ -463,7 +437,7 @@ class InstallationManager:
             info_path = cache_dir / "cache_info.json"
             utils.mkdir(cache_dir)
 
-            proxies = self._get_configured_proxies()
+            proxies = root_utils.get_configured_proxies()
             remote_version = None
 
             # 2. 获取远程版本
@@ -550,7 +524,7 @@ class InstallationManager:
         try:
             # (已修改：修复 %s 格式化)
             _log_overall(self, f"{log_prefix}: {_('lki.install.status.connecting') % url}")
-            proxies = self._get_configured_proxies()
+            proxies = root_utils.get_configured_proxies()
 
             response = requests.get(url, stream=True, proxies=proxies, timeout=timeout)
             response.raise_for_status()
