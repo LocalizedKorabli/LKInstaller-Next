@@ -668,7 +668,7 @@ class InstallationManager:
                 _log_task(task, _('lki.install.status.packing_mods'), 20)
                 try:
                     mods_mo_mkmod_path, mods_json_mkmod_path = utils.process_mods_for_installation(
-                        task.instance.instance_id, task.instance.path
+                        task.instance.instance_id, task.instance.path, mo_file_path
                     )
                 except Exception as e:
                     _log_task(task, _('lki.install.status.mods_failed_skip') % e)
@@ -783,36 +783,53 @@ class InstallationManager:
                     shutil.copy(core_mkmod_path, dest_core_mod_path)
                     files_info = {"i18n": {}, "ee": {}, "font": {}, "mods": {}}
                     try:
-                        # (修改) 2. 使用相对路径作为键，存储在 "i18n" 下
                         core_rel_path = f"mods/{dest_core_mod_path.name}"
                         files_info["i18n"][core_rel_path] = utils.get_sha256(dest_core_mod_path)
+                    except Exception as e:
+                        # 如果核心包哈希失败，这是致命错误
+                        raise Exception(f"Critical error hashing core mod: {e}") from e
 
-                        # EE
-                        if ee_mkmod_path and ee_mkmod_path.is_file():
+                        # 2. EE (非关键)
+                    if ee_mkmod_path and ee_mkmod_path.is_file():
+                        try:
                             shutil.copy(ee_mkmod_path, dest_ee_mod_path)
-                            # (修改) 3. 存储在 "ee" 下
                             ee_rel_path = f"mods/{dest_ee_mod_path.name}"
                             files_info["ee"][ee_rel_path] = utils.get_sha256(dest_ee_mod_path)
-                        # Font
-                        if fo_mkmod_path and fo_mkmod_path.is_file():
+                        except Exception as e:
+                            print(_('lki.install.debug.hash_failed') % (f"{task.task_name} (EE)", e))
+                            non_critical_errors.append(_('lki.component.ee'))
+
+                        # 3. Font (非关键)
+                    if fo_mkmod_path and fo_mkmod_path.is_file():
+                        try:
                             shutil.copy(fo_mkmod_path, dest_fo_mod_path)
                             font_rel_path = f"mods/{dest_fo_mod_path.name}"
                             files_info["font"][font_rel_path] = utils.get_sha256(dest_fo_mod_path)
-                        # MO mods
-                        if mods_mo_mkmod_path and mods_mo_mkmod_path.is_file():
+                        except Exception as e:
+                            print(_('lki.install.debug.hash_failed') % (f"{task.task_name} (Font)", e))
+                            non_critical_errors.append(_('lki.component.font'))
+
+                        # 4. Mods (MO) (非关键)
+                    if mods_mo_mkmod_path and mods_mo_mkmod_path.is_file():
+                        try:
                             shutil.copy(mods_mo_mkmod_path, dest_mo_mod_path)
                             mods_mo_rel_path = f"mods/{dest_mo_mod_path.name}"
                             files_info["mods"][mods_mo_rel_path] = utils.get_sha256(dest_mo_mod_path)
-                        # Json Mods
-                        if mods_json_mkmod_path and mods_json_mkmod_path.is_file():
+                        except Exception as e:
+                            print(_('lki.install.debug.hash_failed') % (f"{task.task_name} (Mods-MO)", e))
+                            non_critical_errors.append(_('lki.component.mods'))
+
+                        # 5. Mods (JSON) (非关键)
+                    if mods_json_mkmod_path and mods_json_mkmod_path.is_file():
+                        try:
                             shutil.copy(mods_json_mkmod_path, dest_json_mod_path)
                             mods_json_rel_path = f"mods/{dest_json_mod_path.name}"
                             files_info["mods"][mods_json_rel_path] = utils.get_sha256(dest_json_mod_path)
-
-
-                    except Exception as e:
-                        # (已修改：本地化)
-                        print(_('lki.install.debug.hash_failed') % (task.task_name, e))
+                        except Exception as e:
+                            print(_('lki.install.debug.hash_failed') % (f"{task.task_name} (Mods-JSON)", e))
+                            # 仅当组件尚未在列表中时才添加
+                            if _('lki.component.mods') not in non_critical_errors:
+                                non_critical_errors.append(_('lki.component.mods'))
                     # --- 非关键安装结束 ---
 
                     # --- 关键的 Info.json 写入 ---

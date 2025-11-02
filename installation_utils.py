@@ -4,7 +4,7 @@ import hashlib
 import zipfile
 import json
 import polib
-import uuid  # <-- (新增)
+import uuid
 from pathlib import Path
 from typing import Dict, List, Union, Any, Optional, Tuple
 import xml.etree.ElementTree as Et
@@ -29,10 +29,9 @@ LOCALE_CONFIG_TEMP = TEMP_DIR / 'locale_config'
 EE_UNPACK_TEMP = TEMP_DIR / 'ee'
 FONTS_CACHE = CACHE_DIR / 'fonts'
 FONTS_UNPACK_TEMP = TEMP_DIR / 'fonts'
-MODS_TEMP = TEMP_DIR / 'mods'  # <-- (新增: mods 临时目录)
+MODS_TEMP = TEMP_DIR / 'mods'
 
 
-# (来自 installer_gui.py)
 def mkdir(t_dir: Any):
     os.makedirs(t_dir, exist_ok=True)
 
@@ -47,7 +46,6 @@ def clear_temp_dir():
     mkdir(TEMP_DIR)
 
 
-# (来自 installer_gui.py)
 def process_possible_gbk_zip(zip_file: zipfile.ZipFile):
     name_to_info = zip_file.NameToInfo
     for name, info in name_to_info.copy().items():
@@ -78,7 +76,6 @@ def get_sha256(filepath: Path) -> Optional[str]:
         return None
 
 
-# (来自 installer_gui.py)
 def fix_paths_xml(build_dir: Path):
     if not build_dir.is_dir():
         return
@@ -119,12 +116,11 @@ def fix_paths_xml(build_dir: Path):
                 paths_element.insert(0, element)
             tree.write(xml_path, encoding='utf-8', xml_declaration=True)
             print(f"Updated '{xml_path}'.")
-
+# (其他辅助函数如 fix_paths_xml, get_locale_config_content, write_locale_config_to_temp 保持不变)
     except Exception as e:
         print(f"Error modifying XML {xml_path}: {e}")
 
 
-# (新增)
 def get_locale_config_content(lang_code: str) -> Optional[str]:
     """获取特定语言的 locale_config.xml 内容"""
     # (已修改：使用重命名后的变量)
@@ -149,11 +145,9 @@ def write_locale_config_to_temp(lang_code: str) -> Optional[Path]:
         f.write(content)
     return config_path
 
-
-# (新增)
 def create_mkmod(output_path: Path, files_to_add: Dict[str, Path]):
     """
-    创建一个不压缩的 .mkmod (zip) 文件。
+    创建一个不压缩的 .mkmod (zip) 文件.
     files_to_add: {'zip内的路径': '本地文件路径'}
     """
     mkdir(output_path.parent)
@@ -161,18 +155,24 @@ def create_mkmod(output_path: Path, files_to_add: Dict[str, Path]):
         with zipfile.ZipFile(output_path, 'w', compression=zipfile.ZIP_STORED) as zf:
             for arcname, local_path in files_to_add.items():
                 if local_path and local_path.is_file():
-                    zf.write(local_path, arcname=arcname)
+                    # Check for placeholder file (using startswith for safe check)
+                    if local_path.name.startswith("mod_placeholder_src"):
+                        # Write "placeholder" content directly into the zip
+                        zf.writestr(arcname, "placeholder")
+                    else:
+                        zf.write(local_path, arcname=arcname)
         print(f"Created {output_path}")
     except Exception as e:
         print(f"Failed to create {output_path}: {e}")
 
 
-# (新增: Mods 助手函数 - 提取 zip 中的 mod 文件)
+# (Mods 助手函数: _extract_zip_mods 保持不变)
+
 def _extract_zip_mods(zip_path: Path, temp_target_dir: Path):
-    """从 ZIP 文件中提取 .mo/.l10mod/.i18nmod 文件到临时目录。"""
+    """从 ZIP 文件中提取 .mo/.l10nmod/.i18nmod 文件到临时目录."""
 
     # 允许的文件后缀
-    ALLOWED_EXTENSIONS = ('.mo', '.l10mod', '.i18nmod')
+    ALLOWED_EXTENSIONS = ('.mo', '.l10nmod', '.i18nmod')
 
     try:
         with zipfile.ZipFile(zip_path, 'r') as zf:
@@ -204,7 +204,7 @@ def _extract_zip_mods(zip_path: Path, temp_target_dir: Path):
 
                         if not file_found:
                             shutil.rmtree(temp_sub_dir)
-                            continue  # 文件未找到，跳过
+                            continue  # 文件未找到, 跳过
                         extracted_file_path = file_found
 
                     # 创建唯一文件名
@@ -221,80 +221,232 @@ def _extract_zip_mods(zip_path: Path, temp_target_dir: Path):
         print(f"Warning: Failed to process zip file {zip_path}: {e}")
 
 
-# (新增: Mods 处理函数 - 核心逻辑)
-def process_mods_for_installation(instance_id: str, instance_path: Path) -> Tuple[Optional[Path], Optional[Path]]:
+# --- JSON Mods 编译辅助函数 (基于您的输入) ---
+
+def append_json_mod(json_mod: Dict[str, Any],
+                    json_mods_d: Dict[str, Union[str, List[str]]],
+                    json_mods_m: Dict[str, str]):
+    """将单个 JSON Mod 的替换规则聚合到字典中."""
+    if 'replace' in json_mod.keys():
+        replaces = json_mod.get('replace')
+        if isinstance(replaces, Dict):
+            for r_k in replaces.keys():
+                r_v = replaces[r_k]
+                if isinstance(r_v, (str, List)):
+                    json_mods_d[r_k] = r_v
+    if 'words' in json_mod.keys():
+        words = json_mod.get('words')
+        if isinstance(words, Dict):
+            for w_k in words.keys():
+                w_v = words[w_k]
+                if isinstance(w_v, str):
+                    json_mods_m[w_k] = w_v
+
+
+def process_json_mod_entries(source_mo: polib.MOFile,
+                             json_mods_d_replace: Dict[str, Union[str, List[str]]],
+                             json_mods_m_replace: Dict[str, str]) -> List[polib.MOEntry]:
     """
-    扫描实例的本地 mods 文件夹，处理文件和 zip，并将它们打包成两个 mkmod。
+    根据聚合的替换规则, 应用到 source_mo 的副本上, 并返回被修改的条目列表.
+    """
+    modified_entries = []
+
+    # 遍历 source_mo 中的每个条目
+    for entry in source_mo:
+        modified_in_pass = False
+
+        if not entry.msgid:
+            continue
+
+        modified_entry = entry.__copy__()
+
+        # --- Words Replacement (m_replace) ---
+        original_msgstr = modified_entry.msgstr
+        original_msgstr_plural = modified_entry.msgstr_plural.copy() if modified_entry.msgid_plural else None
+
+        if modified_entry.msgid_plural:
+            msgstrs: Dict[int, str] = modified_entry.msgstr_plural
+            for m_k in json_mods_m_replace:
+                m_v = json_mods_m_replace[m_k]
+                for i in msgstrs.keys():
+                    if m_k in msgstrs.get(i):
+                        msgstrs[i] = msgstrs.get(i).replace(m_k, m_v)
+                        modified_in_pass = True
+            if modified_in_pass:
+                modified_entry.msgstr_plural = msgstrs
+        else:
+            msgstr = modified_entry.msgstr
+            for m_k in json_mods_m_replace:
+                m_v = json_mods_m_replace[m_k]
+                if m_k in msgstr:
+                    modified_entry.msgstr = msgstr.replace(m_k, m_v)
+                    modified_in_pass = True
+
+        # --- Direct/List Replacement (d_replace, 'replace' block) ---
+        for d_k in json_mods_d_replace:
+            if modified_entry.msgid == d_k:
+                target_text = json_mods_d_replace[d_k]
+
+                if modified_entry.msgid_plural:
+                    if isinstance(target_text, str):
+                        list_l = len(modified_entry.msgstr_plural) if modified_entry.msgstr_plural else 1
+                        modified_entry.msgstr_plural = {i: target_text for i in range(list_l)}
+                    elif isinstance(target_text, List):
+                        # Assuming target_text is correctly formatted List[str]
+                        modified_entry.msgstr_plural = {i: target_text[i] for i in range(len(target_text))}
+                else:
+                    if isinstance(target_text, str):
+                        modified_entry.msgstr = target_text
+
+                modified_in_pass = True
+
+        if modified_in_pass:
+            modified_entries.append(modified_entry)
+
+    return modified_entries
+
+
+def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file_path: Path) -> Tuple[
+    Optional[Path], Optional[Path]]:
+    """
+    1. 收集本地 Mods 文件 (.mo, .l10nmod, .i18nmod).
+    2. 处理 JSON Mods (.l10nmod/.i18nmod) 并将其编译成 *多个* 临时的 .mo 文件.
+    3. 打包成两个 mkmod: lk_i18n_mo_mod.mkmod (原生 .mo) 和 lk_i18n_json_mod.mkmod (编译 .mo).
+    4. 总是生成 mkmod (包含占位符).
     返回: (mo_mkmod_path, json_mkmod_path)
     """
     MODS_SOURCE_DIR = instance_path / 'lki' / 'i18n_mods'
-    TEMP_PROCESS_DIR = MODS_TEMP / instance_id  # 临时存储所有解压/复制的文件
+    TEMP_PROCESS_DIR = MODS_TEMP / instance_id
+
+    # 关键修改: 为当前实例创建唯一的占位符路径
+    PLACEHOLDER_SOURCE_NAME = f"mod_placeholder_src_{uuid.uuid4()}.txt"
+    PLACEHOLDER_SOURCE_PATH = TEMP_DIR / PLACEHOLDER_SOURCE_NAME
 
     # 目标 mkmod 文件路径
     MO_MKMOD_PATH = MODS_TEMP / f"{instance_id}_mo_mod.mkmod"
     JSON_MKMOD_PATH = MODS_TEMP / f"{instance_id}_json_mod.mkmod"
 
-    # 清理和创建临时目录
+    # 1. 清理和创建临时目录
     if TEMP_PROCESS_DIR.is_dir():
         shutil.rmtree(TEMP_PROCESS_DIR)
     mkdir(TEMP_PROCESS_DIR)
 
-    # 确保清理旧的 mkmod 文件
-    if MO_MKMOD_PATH.is_file():
-        os.remove(MO_MKMOD_PATH)
-    if JSON_MKMOD_PATH.is_file():
-        os.remove(JSON_MKMOD_PATH)
+    if MO_MKMOD_PATH.is_file(): os.remove(MO_MKMOD_PATH)
+    if JSON_MKMOD_PATH.is_file(): os.remove(JSON_MKMOD_PATH)
 
-    # 1. 遍历源文件夹
-    if not MODS_SOURCE_DIR.is_dir():
-        print(f"Mods source directory not found: {MODS_SOURCE_DIR}")
-        # 如果目录不存在，返回 None, None (非致命错误)
+    # 2. 强制创建占位符源文件
+    try:
+        with open(PLACEHOLDER_SOURCE_PATH, 'w', encoding='utf-8') as f:
+            f.write("placeholder")
+    except Exception as e:
+        print(f"FATAL: Failed to create placeholder source file: {e}")
         return None, None
 
-    for item in os.listdir(MODS_SOURCE_DIR):
-        item_path = MODS_SOURCE_DIR / item
-        if item_path.is_file():
-            # a. 处理 zip 文件
-            if item.lower().endswith('.zip'):
-                _extract_zip_mods(item_path, TEMP_PROCESS_DIR)
+    # 3. 初始化收集字典
+    native_mo_files: Dict[str, Path] = {}
+    json_mods_to_process: List[Path] = []
 
-            # b. 处理 mods 文件 (.mo, .l10mod, .i18nmod)
-            elif item.lower().endswith(('.mo', '.l10mod', '.i18nmod')):
-                # 移动文件到临时目录，并重命名为唯一名称以避免冲突
-                unique_filename = f"{uuid.uuid4()}{item_path.suffix}"
-                final_path = TEMP_PROCESS_DIR / unique_filename
-                shutil.copy(item_path, final_path)  # 使用 copy 以防用户需要保留源文件
+    # 4. 遍历源文件夹 (如果存在) 并收集用户Mods
+    if MODS_SOURCE_DIR.is_dir():
+        for item in os.listdir(MODS_SOURCE_DIR):
+            item_path = MODS_SOURCE_DIR / item
+            if item_path.is_file():
+                # a. 处理 zip 文件: 提取到 TEMP_PROCESS_DIR
+                if item.lower().endswith('.zip'):
+                    _extract_zip_mods(item_path, TEMP_PROCESS_DIR)
 
-    # 2. 将收集到的文件打包
-    mo_files_to_add: Dict[str, Path] = {}
-    json_files_to_add: Dict[str, Path] = {}
+                # b. 处理 mods 文件: 复制到 TEMP_PROCESS_DIR
+                elif item.lower().endswith(('.mo', '.l10nmod', '.i18nmod')):
+                    unique_filename = f"{uuid.uuid4()}{item_path.suffix}"
+                    final_path = TEMP_PROCESS_DIR / unique_filename
+                    shutil.copy(item_path, final_path)
 
+    # 5. 将收集到的文件分类 (位于 TEMP_PROCESS_DIR)
     for file in os.listdir(TEMP_PROCESS_DIR):
         file_path = TEMP_PROCESS_DIR / file
         if file.lower().endswith('.mo'):
-            # zip 内部的路径: texts/ru/LC_MESSAGES/文件名.mo
-            arcname = f"texts/ru/LC_MESSAGES/{file}"
-            mo_files_to_add[arcname] = file_path
+            # Native MOs go to the first MKMOD
+            native_mo_files[f"texts/ru/LC_MESSAGES/{file}"] = file_path
+        elif file.lower().endswith(('.l10nmod', '.i18nmod')):
+            json_mods_to_process.append(file_path)
 
-        elif file.lower().endswith(('.l10mod', '.i18nmod')):
-            # zip 内部的路径: json_mods/文件名.l10mod
-            arcname = f"json_mods/{file}"
-            json_files_to_add[arcname] = file_path
-
-    mo_mkmod_path = None
-    if mo_files_to_add:
-        create_mkmod(MO_MKMOD_PATH, mo_files_to_add)
-        mo_mkmod_path = MO_MKMOD_PATH
-
-    json_mkmod_path = None
-    if json_files_to_add:
-        create_mkmod(JSON_MKMOD_PATH, json_files_to_add)
-        json_mkmod_path = JSON_MKMOD_PATH
-
-    # 3. 清理临时处理目录
+    # 6. 清理 Mods 临时处理目录
     if TEMP_PROCESS_DIR.is_dir():
         shutil.rmtree(TEMP_PROCESS_DIR)
 
-    return mo_mkmod_path, json_mkmod_path
+    # --- 7. JSON Mod 编译 (生成多个 MO 文件) ---
+    json_converted_mo_files: Dict[str, Path] = {}
 
-# --- (Mod 处理逻辑已根据您的文件移除) ---
+    # A. 编译
+    if json_mods_to_process:
+        try:
+            base_mo = polib.mofile(str(mo_file_path))
+        except Exception as e:
+            print(f"Error: Failed to load base MO file for JSON mod compilation: {e}")
+            pass
+        else:
+            for json_path in json_mods_to_process:
+                try:
+                    # Load JSON rules
+                    with open(json_path, 'r', encoding='utf-8') as f:
+                        json_mod_data = json.load(f)
+
+                    single_d_replace = {}
+                    single_m_replace = {}
+                    append_json_mod(json_mod_data, single_d_replace, single_m_replace)
+
+                    # Apply rules and get only modified entries
+                    modified_entries = process_json_mod_entries(base_mo, single_d_replace, single_m_replace)
+
+                    if modified_entries:
+                        # Create a new PO/MO for this single JSON mod
+                        new_po = polib.POFile()
+                        new_po.metadata = base_mo.metadata
+                        for entry in modified_entries:
+                            new_po.append(entry)
+
+                        # Save the converted MO file to a unique temp path
+                        mo_filename = json_path.stem + ".mo"
+                        temp_mo_path = TEMP_DIR / f"compiled_json_{uuid.uuid4()}_{mo_filename}"
+                        new_po.save_as_mo(str(temp_mo_path))
+
+                        # Store the converted MO file for JSON MKMOD packaging
+                        json_converted_mo_files[f"texts/ru/LC_MESSAGES/{mo_filename}"] = temp_mo_path
+
+                except Exception as e:
+                    print(f"Warning: Failed to compile JSON mod {json_path}: {e}")
+
+    # --- 8. 强制添加占位符到打包列表并打包 ---
+
+    # A. 打包原生 MO 文件 (lk_i18n_mo_mod.mkmod)
+    # 强制添加占位符
+    native_mo_files['texts/ru/LC_MESSAGES/.placeholder'] = PLACEHOLDER_SOURCE_PATH
+
+    mo_mkmod_path = None
+    try:
+        create_mkmod(MO_MKMOD_PATH, native_mo_files)
+        mo_mkmod_path = MO_MKMOD_PATH
+    except Exception as e:
+        print(f"FATAL: Failed to create native MO mkmod file: {e}")
+
+    # B. 打包编译后的 JSON MO 文件 (lk_i18n_json_mod.mkmod)
+    # 强制添加占位符
+    json_converted_mo_files['texts/ru/LC_MESSAGES/.placeholder'] = PLACEHOLDER_SOURCE_PATH
+
+    json_mkmod_path = None
+    try:
+        create_mkmod(JSON_MKMOD_PATH, json_converted_mo_files)
+        json_mkmod_path = JSON_MKMOD_PATH
+    except Exception as e:
+        print(f"FATAL: Failed to create JSON MO mkmod file: {e}")
+
+    # 9. 清理所有临时文件
+    # 清理占位符源文件
+    if PLACEHOLDER_SOURCE_PATH.is_file():
+        os.remove(PLACEHOLDER_SOURCE_PATH)
+    # 清理所有编译后的 MO 文件
+    for mo_path in json_converted_mo_files.values():
+        if mo_path.is_file():
+            os.remove(mo_path)
+
+    return mo_mkmod_path, json_mkmod_path
