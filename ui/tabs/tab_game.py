@@ -815,45 +815,24 @@ class GameTab(BaseTab):
         current_checked_ids = self._get_checked_instance_ids()
         self._clear_selection_and_refresh(default_checked_ids=current_checked_ids)
 
-    # --- (新增：运行按钮) ---
+    # --- (修改：使用 'launch_game' 方法) ---
     def _on_play_instance(self):
         """点击“运行”按钮的回调。"""
         if not self.selected_instance_id:
             return
 
-        instance_data = self.instance_manager.get_instance(self.selected_instance_id)
-        if not instance_data or 'path' not in instance_data:
+        instance = self.loaded_game_instances.get(self.selected_instance_id)
+        if not instance:
             return
 
-        instance_path = Path(instance_data['path'])
+        success, exe_name = instance.launch_game()
 
-        # 1. 尝试 lgc_api.exe
-        lgc_exe_path = instance_path / "lgc_api.exe"
-        if lgc_exe_path.is_file():
-            try:
-                print(f"Executing {lgc_exe_path}")
-                # (使用 Popen 而不是 startfile 来避免阻塞UI)
-                subprocess.Popen([str(lgc_exe_path)], cwd=str(instance_path))
-                return
-            except Exception as e:
-                print(f"Failed to start lgc_api.exe: {e}")
-
-        # 2. 尝试 Korabli.exe
-        korabli_exe_path = instance_path / "Korabli.exe"
-        if korabli_exe_path.is_file():
-            try:
-                print(f"Executing {korabli_exe_path}")
-                subprocess.Popen([str(korabli_exe_path)], cwd=str(instance_path))
-                return
-            except Exception as e:
-                print(f"Failed to start Korabli.exe: {e}")
-
-        # 3. 均未找到
-        messagebox.showwarning(
-            _('lki.app.title'),
-            _('lki.game.error.play_failed') % (lgc_exe_path.name, korabli_exe_path.name),
-            parent=self.app_master
-        )
+        if not success:
+            messagebox.showwarning(
+                _('lki.app.title'),
+                _('lki.game.error.play_failed') % ("lgc_api.exe", "Korabli.exe/WorldOfWarships.exe"),
+                parent=self.app_master
+            )
 
 
 # --- (从 ui_windows.py 移来的类) ---

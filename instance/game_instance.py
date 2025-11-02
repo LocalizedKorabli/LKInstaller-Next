@@ -1,8 +1,9 @@
 import hashlib
 import json
 import os
+import subprocess  # (新增)
 from pathlib import Path
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Tuple  # (新增 Tuple)
 
 import win32api
 
@@ -208,3 +209,25 @@ class GameInstance:
         if not self.versions:
             return None
         return self.versions[0]
+
+    # (新增)
+    def launch_game(self) -> Tuple[bool, Optional[str]]:
+        """
+        Tries to launch the game executable.
+        Returns (success, executable_name or None)
+        """
+        executables_to_try = ["lgc_api.exe", "Korabli.exe", "WorldOfWarships.exe"]
+
+        for exe in executables_to_try:
+            exe_path = self.path / exe
+            if exe_path.is_file():
+                try:
+                    print(f"Attempting to launch: {exe_path}")
+                    subprocess.Popen([str(exe_path)], cwd=str(self.path))
+                    return True, exe
+                except Exception as e:
+                    print(f"Failed to start {exe}: {e}")
+                    # Try the next one
+
+        print(f"Error: Could not find any of {executables_to_try} in {self.path}")
+        return False, None  # Failed to find any

@@ -1,10 +1,15 @@
 import ctypes
 import platform
 import tkinter as tk
+import sys  # (新增)
+from pathlib import Path  # (新增)
 
 import settings
 import utils
 from instance import instance_manager
+from installation.installation_manager import InstallationManager, InstallationTask  # (新增)
+from instance.game_instance import GameInstance  # (新增)
+from localizer import global_translator, _  # (新增 _)
 
 # (新增) --- 步骤 1: 设置 HiDPI 感知 ---
 try:
@@ -18,14 +23,98 @@ except AttributeError:
     except Exception as e:
         print(f"Warning: Could not set DPI awareness: {e}")
 
-from localizer import global_translator
-
 global_translator.load_language(settings.global_settings.language)
 # (已修改：导入新的 app 位置)
 from app import LocalizationInstallerApp
 
+
+# --- (新增) Function to handle auto-execution ---
+def run_auto_execute(root, arg, run_client):
+    """
+    在简洁模式下运行安装程序。
+    """
+    print(f"Auto-execute mode triggered with arg: {arg}, run_client: {run_client}")
+
+    try:
+        instance_id, preset_id = arg.split(':', 1)
+    except ValueError:
+        print(f"Error: Invalid --auto-execute-preset argument. Expected format: 'instance_id:preset_id'")
+        sys.exit(1)
+
+    instance_data = instance_manager.global_instance_manager.get_instance(instance_id)
+    if not instance_data:
+        print(f"Error: Could not find instance with ID: {instance_id}")
+        sys.exit(1)
+
+    preset_data = instance_data.get('presets', {}).get(preset_id)
+    if not preset_data:
+        print(f"Error: Could not find preset '{preset_id}' for instance '{instance_data.get('name')}'")
+        sys.exit(1)
+
+    # 创建必要的对象
+    try:
+        instance = GameInstance(
+            instance_id=instance_id,
+            path=Path(instance_data['path']),
+            name=instance_data['name'],
+            type=instance_data['type']
+        )
+    except Exception as e:
+        print(f"Error initializing game instance {instance_data['name']}: {e}")
+        sys.exit(1)
+
+    # (为预设添加一个可显示的名称)
+    if preset_data.get('is_default'):
+        preset_data['name'] = _(preset_data.get('name_key', 'lki.preset.default.name'))
+    else:
+        preset_data['name'] = preset_data.get('name', preset_id)
+
+    task = InstallationTask(instance, preset_data, root)
+
+    # 定义完成回调
+    def _on_auto_install_complete():
+        print("Auto-install complete.")
+        if run_client:
+            print("Launching client...")
+            success, exe_name = instance.launch_game()
+            if not success:
+                print(f"Error: Failed to launch game at {instance.path}")
+
+        # 退出应用
+        print("Exiting.")
+        # (稍作延迟以确保 Popen 有时间启动)
+        root.after(500, root.quit)
+
+    # 启动安装
+    manager = InstallationManager(root)
+    manager.start_installation([task], _on_auto_install_complete)
+
+    # 运行事件循环 (这将只显示 ActionProgressWindow)
+    root.mainloop()
+
+
 if __name__ == '__main__':
     root = tk.Tk()
+
+    # --- (新增) 参数解析逻辑 ---
+    auto_execute_arg = None
+    run_client_flag = False
+
+    args = sys.argv[1:]
+    if '--auto-execute-preset' in args:
+        try:
+            idx = args.index('--auto-execute-preset')
+            if idx + 1 < len(args):
+                auto_execute_arg = args[idx + 1]
+            else:
+                print("Error: --auto-execute-preset flag found but no argument provided.")
+                sys.exit(1)
+        except ValueError:
+            pass  # 标志不存在
+
+    if '--runclient' in args:
+        run_client_flag = True
+    # --- (新增结束) ---
 
     # (新增) --- 步骤 2: 计算缩放因子 ---
     scaling_factor = 1.0
@@ -52,9 +141,16 @@ if __name__ == '__main__':
     root.call('source', utils.base_path.joinpath('resources/theme/azure/azure.tcl'))
     root.call('set_theme', theme)
 
-    app = LocalizationInstallerApp(root, initial_theme=theme, scaling_factor=scaling_factor)
-    root.iconbitmap(utils.base_path.joinpath('resources/logo/logo.ico'))
-    root.mainloop()
+    # (新增) 条件执行
+    if auto_execute_arg:
+        # --- 简洁模式 ---
+        root.withdraw()  # 隐藏主根窗口
+        run_auto_execute(root, auto_execute_arg, run_client_flag)
+    else:
+        # --- GUI模式 ---
+        app = LocalizationInstallerApp(root, initial_theme=theme, scaling_factor=scaling_factor)
+        root.iconbitmap(utils.base_path.joinpath('resources/logo/logo.ico'))
+        root.mainloop()
 
     try:
         settings.global_settings.save()
