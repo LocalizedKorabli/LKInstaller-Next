@@ -208,7 +208,7 @@ def _extract_zip_mods(zip_path: Path, temp_target_dir: Path):
                         extracted_file_path = file_found
 
                     # 创建唯一文件名
-                    unique_filename = f"{uuid.uuid4()}{extracted_file_path.suffix}"
+                    unique_filename = f"{safe_member.stem}@{uuid.uuid4()}{extracted_file_path.suffix}"
                     final_path = temp_target_dir / unique_filename
 
                     # 移动到最终临时目录
@@ -421,7 +421,7 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
 
     # A. 打包原生 MO 文件 (lk_i18n_mo_mod.mkmod)
     # 强制添加占位符
-    native_mo_files['texts/ru/LC_MESSAGES/.placeholder'] = PLACEHOLDER_SOURCE_PATH
+    #native_mo_files['texts/ru/LC_MESSAGES/.placeholder'] = PLACEHOLDER_SOURCE_PATH
 
     mo_mkmod_path = None
     try:
@@ -432,7 +432,7 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
 
     # B. 打包编译后的 JSON MO 文件 (lk_i18n_json_mod.mkmod)
     # 强制添加占位符
-    json_converted_mo_files['texts/ru/LC_MESSAGES/.placeholder'] = PLACEHOLDER_SOURCE_PATH
+    #json_converted_mo_files['texts/ru/LC_MESSAGES/.placeholder'] = PLACEHOLDER_SOURCE_PATH
 
     json_mkmod_path = None
     try:

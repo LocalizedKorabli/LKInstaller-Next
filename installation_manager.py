@@ -733,11 +733,11 @@ class InstallationManager:
                 major_version = ".".join(exe_version.split('.')[:2])
 
                 mods_dir = version_folder.bin_folder_path / "mods"
-                dest_core_mod_path = mods_dir / "lk_i18n_pack.mkmod"
-                dest_ee_mod_path = mods_dir / "lk_i18n_ee.mkmod"
+                dest_core_mod_path = mods_dir / "zz_lk_i18n_pack.mkmod"
+                dest_ee_mod_path = mods_dir / "zzz_lk_i18n_ee.mkmod"
                 dest_fo_mod_path = mods_dir / "srcwagon_mk.mkmod"
-                dest_mo_mod_path = mods_dir / "lk_i18n_mo_mod.mkmod"
-                dest_json_mod_path = mods_dir / "lk_i18n_json_mod.mkmod"
+                dest_mo_mod_path = mods_dir / "zzzz_lk_i18n_mo_mod.mkmod"
+                dest_json_mod_path = mods_dir / "zzzz_lk_i18n_json_mod.mkmod"
 
                 info_json_path = task.instance.path / "lki" / "info" / version_folder.bin_folder_name
                 info_file = info_json_path / "installation_info.json"
