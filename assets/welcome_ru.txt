@@ -1,0 +1,6 @@
+Благодарим за использование LocalizedKorabli Localization Installer Next для "Мира Кораблей".
+Если у вас есть предложения по программе, свяжитесь с OpenKorabli, создав issue на https://github.com/OpenKorabli/OpenL10nInstaller/issues.
+Если у вас есть предложения по программе, свяжитесь с нами, создав issue на https://github.com/LocalizedKorabli/LKInstaller-Next/issues.
+Установка начнется после нажатия кнопки "Далее".
+
+Приятной игры!

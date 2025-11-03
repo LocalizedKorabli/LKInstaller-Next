@@ -52,6 +52,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import sys
 import tkinter as tk
@@ -124,14 +137,15 @@ class LocalizationInstallerApp:
         self.style = ttk.Style()
         self.select_bg = "#0078d4"
         self.select_fg = "white"
-        self.style.configure("Client.TLabel", font=("TkDefaultFont", 12, "bold"))
-        self.style.configure("Path.TLabel", font=("TkDefaultFont", 9))
+        #self.style.configure("Client.TLabel", font=("TkDefaultFont", 12, "bold"))
+        #self.style.configure("Path.TLabel", font=("TkDefaultFont", 9))
         self.style.configure("Selected.TFrame", background=self.select_bg)
-        self.style.configure("Selected.Client.TLabel", font=("TkDefaultFont", 12, "bold"), background=self.select_bg,
-                             foreground=self.select_fg)
-        self.style.configure("Selected.Path.TLabel", font=("TkDefaultFont", 9), background=self.select_bg,
-                             foreground=self.select_fg)
-        self.style.configure("Hint.TLabel", font=("TkDefaultFont", 9), foreground='gray')
+        #self.style.configure("Selected.Client.TLabel", font=("TkDefaultFont", 12, "bold"), background=self.select_bg, foreground=self.select_fg)
+        self.style.configure("Selected.Client.TLabel", background=self.select_bg, foreground=self.select_fg)
+        #self.style.configure("Selected.Path.TLabel", font=("TkDefaultFont", 9), background=self.select_bg, foreground=self.select_fg)
+        self.style.configure("Selected.Path.TLabel", background=self.select_bg, foreground=self.select_fg)
+        #self.style.configure("Hint.TLabel", font=("TkDefaultFont", 9), foreground='gray')
+        self.style.configure("Hint.TLabel", foreground='gray')
         self.style.configure("danger.TButton", foreground="red", background="#d13438")
 
         self.style.configure("Link.TButton", foreground=self.select_bg, borderwidth=0, padding=0)
