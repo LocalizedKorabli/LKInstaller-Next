@@ -26,6 +26,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import threading
 from tkinter import ttk, PhotoImage
@@ -103,7 +116,7 @@ class AboutTab(BaseTab):
         # (修改) 使用 ActionProgressWindow
         self.update_window = ActionProgressWindow(
             self.app_master,
-            [_('lki.update.title')],  # 任务名称即为标题
+            {_('lki.update.title'): None},  # 任务名称即为标题
             cancel_callback=self._on_update_cancel,  # (修改) 传入回调
             title=_('lki.update.title'),
             starting_text=_('lki.update.status.checking'),

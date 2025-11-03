@@ -39,6 +39,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import sys
 import tkinter as tk
@@ -54,7 +67,7 @@ from ui.tabs.tab_about import AboutTab
 from ui.tabs.tab_advanced import AdvancedTab
 from ui.tabs.tab_game import GameTab
 from ui.tabs.tab_settings import SettingsTab
-from ui.ui_manager import IconManager
+from ui.ui_manager import get_icon_manager
 
 
 class LocalizationInstallerApp:
@@ -73,7 +86,7 @@ class LocalizationInstallerApp:
 
         master.title(_('lki.app.title'))
 
-        self.icons = IconManager()
+        self.icons = get_icon_manager()
         self.icons.set_active_theme(initial_theme)
 
         self.instance_type_keys = ['production', 'pts']

@@ -26,6 +26,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
 import os
@@ -135,9 +148,9 @@ class InstallationManager:
         self.is_uninstalling = False  # (新增)
         self._install_phase_started = False  # <-- (修改 2: 重置标志)
 
-        task_names = [t.task_name for t in self.tasks]
+        tasks_data = {t.task_name : t.instance for t in self.tasks}
         # (已修改：传入 title 和 strings)
-        self.window = ActionProgressWindow(self.root_tk, task_names, self.cancel_installation,
+        self.window = ActionProgressWindow(self.root_tk, tasks_data, self.cancel_installation,
                                            title=_('lki.install.title'),
                                            starting_text=_('lki.install.status.starting'),
                                            pending_text=_('lki.install.status.pending'))
@@ -185,9 +198,9 @@ class InstallationManager:
         self.on_complete_callback = on_complete_callback
         self.is_uninstalling = True  # (新增)
 
-        task_names = [t.task_name for t in self.tasks]
+        tasks_data = {t.task_name : None for t in self.tasks}
         # (新增：使用卸载标题)
-        self.window = ActionProgressWindow(self.root_tk, task_names, self.cancel_installation,
+        self.window = ActionProgressWindow(self.root_tk, tasks_data, self.cancel_installation,
                                            title=_('lki.uninstall.title'),
                                            starting_text=_('lki.uninstall.status.starting'),
                                            pending_text=_('lki.uninstall.status.pending'))
