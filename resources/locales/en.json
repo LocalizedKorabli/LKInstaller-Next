@@ -17,7 +17,7 @@
   "lki.advanced.please_select": "To configure an instance, click its name in the 'Game' tab.",
   "lki.advanced.preset_details": "Preset Configuration",
   "lki.advanced.preset_label": "Install Preset:",
-  "lki.app.title": "LocalizedKorabli I18n Installer Next",
+  "lki.app.title": "LK I18n Installer Next",
   "lki.autoupdate.btn.browse": "Browse...",
   "lki.autoupdate.error.create_failed": "Failed to create shortcut: %s",
   "lki.autoupdate.error.no_path": "Please select a location to save the shortcut.",

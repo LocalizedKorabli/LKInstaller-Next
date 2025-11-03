@@ -26,6 +26,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 import subprocess
@@ -758,7 +771,7 @@ class PresetManagerWindow(BaseDialog):
         """将列表框中选中的预设保存并应用到实例，并关闭窗口"""
         self._save_preset(show_popup=False)
         selected_id = self._get_selected_listbox_id()
-        if selected_id and selected_id != self.active_preset_id:
+        if selected_id:
             self.instance_manager.update_instance_data(self.instance_id, {'active_preset_id': selected_id})
 
         self.on_close_callback()
