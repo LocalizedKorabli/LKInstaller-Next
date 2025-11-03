@@ -16,6 +16,8 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
+WizardImageFile=..\assets\wizard.bmp
+WizardSmallImageFile=..\assets\wizard_small.bmp
 DisableWelcomePage=no
 DefaultDirName={autopf}\LocalizedKorabli\LKInstallerNext
 ; "ArchitecturesAllowed=x64compatible" specifies that Setup cannot run
@@ -44,9 +46,9 @@ Source: "..\dist\lki\_internal\*"; DestDir: "{app}\_internal"; Flags: ignorevers
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Languages]
-Name: "en"; MessagesFile: "compiler:Default.isl"; InfoBeforeFile: "assets\welcome_en.txt"; LicenseFile: "assets\license_en.txt";
-Name: "zh_CN"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"; InfoBeforeFile: "assets\welcome_chs.txt"; LicenseFile: "assets\license_en.txt";
-Name: "zh_TW"; MessagesFile: "compiler:Languages\ChineseTraditional.isl"; InfoBeforeFile: "assets\welcome_cht.txt"; LicenseFile: "assets\license_en.txt";
+Name: "en"; MessagesFile: "compiler:Default.isl"; InfoBeforeFile: "..\assets\welcome_en.txt"; LicenseFile: "..\assets\license.txt";
+Name: "zh_CN"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"; InfoBeforeFile: "..\assets\welcome_chs.txt"; LicenseFile: "..\assets\license.txt";
+Name: "zh_TW"; MessagesFile: "compiler:Languages\ChineseTraditional.isl"; InfoBeforeFile: "..\assets\welcome_cht.txt"; LicenseFile: "..\assets\license.txt";
 
 [CustomMessages]
 en.MyAppName=LK L10n Installer Next
@@ -54,18 +56,15 @@ zh_CN.MyAppName=澪刻·本地化安装器Next
 zh_TW.MyAppName=澪刻·在地化安裝器Next
 
 [Registry]
-; 在 HKEY_LOCAL_MACHINE 中存储安装时选择的语言
-; HKLM 而非 HKCU，因为安装是以管理员权限 (admin) 运行的
-; Flags: uninsdeletevalue 会在卸载时自动删除这个值
 Root: HKLM; Subkey: "Software\LocalizedKorabli\LKInstallerNext"; ValueType: string; ValueName: "InstallLanguage"; ValueData: "{language}"; Flags: uninsdeletevalue
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{autoprograms}\{cm:MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{autodesktop}\{cm:MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent shellexec
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{cm:MyAppName}}"; Flags: nowait postinstall skipifsilent shellexec
 

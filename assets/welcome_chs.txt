@@ -1,0 +1,8 @@
+欢迎使用澪刻·本地化安装器Next！
+
+若对本程序有任何意见或建议，请加入QQ群（875113509）反馈，或在https://github.com/OpenKorabli/OpenL10nInstaller/issues创建议题。
+若对安装器有任何意见或建议，请加入QQ群（875113509）反馈，或在https://github.com/LocalizedKorabli/LKInstaller-Next/issues创建议题。
+
+点击“下一步”后，安装流程将自动执行。
+
+祝您游戏愉快~

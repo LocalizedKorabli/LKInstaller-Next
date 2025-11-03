@@ -1,0 +1,8 @@
+Thank you for using LocalizedKorabli Localization Installer Next for Mir Korabley.
+
+Any suggestions about the program, please contact OpenKorabli by creating an issue on https://github.com/OpenKorabli/OpenL10nInstaller/issues.
+Any suggestions about the program, please contact us by creating an issue on https://github.com/LocalizedKorabli/LKInstaller-Next/issues.
+
+The setup will start once you click "Next".
+
+Enjoy the game~

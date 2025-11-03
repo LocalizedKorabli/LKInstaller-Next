@@ -1,0 +1,8 @@
+歡迎使用澪刻·在地化安裝器！
+
+若對本程式有任何意見或建議，请於https://github.com/OpenKorabli/OpenL10nInstaller/issues創建議題。
+若對安裝器有任何意見或建議，请於https://github.com/LocalizedKorabli/LKInstaller-Next/issues創建議題。
+
+點擊「下一步」後，安裝程式將自動運行。
+
+祝您游戲愉快~

@@ -26,6 +26,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import locale
 import os
@@ -209,6 +222,10 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
     from localizer import _  # 局部导入
     from tkinter import messagebox  # 局部导入
 
+    # (新增导入)
+    import settings
+    from pathlib import Path
+
     VERSION_URL = "https://dl.localizedkorabli.org/lki/lk-next/version_info.json"
     DOWNLOAD_URL = "https://dl.localizedkorabli.org/lki/lk-next/lki_setup.exe"
     UPDATE_DIR = TEMP_DIR / 'updates'
@@ -219,6 +236,9 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
 
     def _download_and_run(remote_ver_str: str, proxies: Optional[dict]):
         """下载部分，在用户确认后在*新*线程中运行。"""
+        # (新增导入)
+        import settings
+
         try:
             if window.is_cancelled():
                 return
@@ -251,8 +271,33 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
 
             # 启动并退出
             try:
-                subprocess.Popen([str(INSTALLER_PATH)])
+                # --- (这是修改的部分) ---
+
+                # 1. 获取当前 .exe 所在的目录 (sys.executable)
+                current_install_dir = Path(sys.executable).parent
+
+                # 2. 获取当前语言
+                current_lang = settings.global_settings.language
+
+                # 3. 构建参数
+                # 我们使用 /SILENT 而不是 /VERYSILENT，以便用户可以看到进度
+                args_list = [
+                    str(INSTALLER_PATH),
+                    '/SILENT',
+                    f'/DIR={str(current_install_dir)}',
+                    f'/LANG={current_lang}'
+                ]
+
+                print(f"Starting updater with args: {args_list}")
+
+                # 4. 使用新的参数列表启动更新程序
+                subprocess.Popen(args_list)
+
+                # 5. 通知主应用在 500 毫秒后退出 (保持不变)
                 root_tk.after(500, root_tk.destroy)
+
+                # --- (修改结束) ---
+
             except Exception as e:
                 log(_('lki.update.error.start_failed') % e, 100)
                 root_tk.after(0, window.mark_task_complete, _('lki.update.title'), False,
