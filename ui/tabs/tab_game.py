@@ -72,19 +72,18 @@ class GameTab(BaseTab):
         title_label = ttk.Label(top_frame, text=_('lki.game.detected_clients'), style="Client.TLabel")
         title_label.pack(side='left', anchor='w')
 
-        self.btn_refresh = ttk.Button(top_buttons_frame, image=self.icons.refresh, style="Toolbutton",
-                                      command=self._on_refresh_list)
-        self.btn_refresh.pack(side='left', padx=(0, 2))
-
         self.btn_import = ttk.Button(top_buttons_frame, image=self.icons.import_icon, style="Toolbutton",
                                      command=self._open_import_instance_window)
-        self.btn_import.pack(side='left', padx=2)
+        self.btn_import.pack(side='left', padx=(0, 2))
         self.btn_rename = ttk.Button(top_buttons_frame, image=self.icons.rename, style="Toolbutton",
                                      command=self._open_edit_instance_window, state='disabled')
         self.btn_rename.pack(side='left', padx=2)
         self.btn_remove = ttk.Button(top_buttons_frame, image=self.icons.remove, style="Toolbutton",
                                      command=self._open_delete_instance_window, state='disabled')
         self.btn_remove.pack(side='left', padx=2)
+        self.btn_refresh = ttk.Button(top_buttons_frame, image=self.icons.refresh, style="Toolbutton",
+                                      command=self._on_refresh_list)
+        self.btn_refresh.pack(side='left', padx=2)
         self.btn_auto_import = ttk.Button(top_buttons_frame, image=self.icons.auto_import_icon, style="Toolbutton",
                                           command=self._on_auto_import)
         self.btn_auto_import.pack(side='left', padx=(2, 0))
@@ -286,7 +285,7 @@ class GameTab(BaseTab):
 
                     # (请求 3) 首先处理“非活跃版本”
                     if l10n_ver_full == "INACTIVE":
-                        l10n_details = f"{_('lki.game.l10n_status.inactive')}"
+                        l10n_details = f"{_('lki.game.i18n_status.inactive')}"
                     else:
                         # (请求 1) 为“游戏”选项卡计算一个总状态
                         # (已修改：为“游戏”选项卡计算总状态时检查预设)
@@ -328,12 +327,12 @@ class GameTab(BaseTab):
                                 # 但预设为 False (例如 ee=False)，所以这是 OK 的 (⭕)
 
                         display_ver = l10n_sub_ver if l10n_sub_ver else l10n_ver_full
-                        status_key = 'lki.game.l10n_status.ok' if is_ok else 'lki.game.l10n_status.corrupted'
+                        status_key = 'lki.game.i18n_status.ok' if is_ok else 'lki.game.i18n_status.corrupted'
                         l10n_details = f"{lang_str}{display_ver} - {_(status_key)}"
 
                     status_text += f" | {l10n_details}"  # (回到单行)
                 else:
-                    status_text += f" | {_('lki.game.l10n_status.not_installed')}"
+                    status_text += f" | {_('lki.game.i18n_status.not_installed')}"
                 # --- (修改结束) ---
 
                 status_label = ttk.Label(text_frame, text=status_text, style="Path.TLabel", cursor="hand2",

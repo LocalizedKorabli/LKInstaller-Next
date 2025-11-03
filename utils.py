@@ -96,12 +96,11 @@ def select_locale_by_system_lang_code():
 def determine_default_l10n_lang(ui_lang: str) -> str:
     """
     根据 UI 语言确定默认的*本地化*语言。
-    (不再需要 instance_type)
+    映射 UI 语言 (zh_CN) -> 本地化语言 (zh_CN)
     """
-    # 映射 UI 语言 (zh_CN) -> 本地化语言 (zh_CN)
-    # (之后可以添加 'zh_TW': 'zh_TW' 等)
     mapping = {
         'zh_CN': 'zh_CN',
+        'zh_TW': 'zh_TW',
         'en': 'en'
     }
 

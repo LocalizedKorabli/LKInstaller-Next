@@ -5,6 +5,7 @@ import uuid
 from pathlib import Path
 from typing import Dict, Any, Optional
 
+import utils
 from localization_sources import global_source_manager  # (确保这个导入存在)
 from utils import determine_default_l10n_lang, SETTINGS_DIR
 
@@ -110,7 +111,7 @@ class InstanceManager:
                 # (3. 'presets' 键完全缺失, 创建全新的默认预设)
                 print(f"Migrating old instance data for {instance_id} (creating default preset)...")
 
-                default_lang_code = 'zh_CN'  # (保持 load 方法中的硬编码回退)
+                default_lang_code = utils.select_locale_by_system_lang_code()  # (保持 load 方法中的硬编码回退)
                 default_preset = self._get_default_preset_data(default_lang_code)
 
                 data['presets'] = {"default": default_preset}

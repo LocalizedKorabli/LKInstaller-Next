@@ -2,11 +2,10 @@ from typing import Dict, Optional, List
 
 from localizer import _
 
-# --- (链接定义) ---
 MODS_URL_CHS = 'https://tapio.lanzn.com/b0nxzso2b'
 MODS_URL_EN = None
+MODS_URL_CHT = None
 
-# (已修改：添加了 'version' 和 'mo' 的新路径)
 # 1. 简体中文路由
 CHS_LIVE_ROUTES = {
     'gitee': {
@@ -69,8 +68,32 @@ EN_PT_ROUTES = {
     }
 }
 
+# 3. 繁体中文路由
+CHT_LIVE_ROUTES = {
+    'gitlab': {
+        'mo': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht/-/raw/main/Localizations/latest/global.mo',
+        'version': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht/-/raw/main/Localizations/latest/version.info',
+        'ee': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+    },
+    'github': {
+        'mo': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT/raw/main/Localizations/latest/global.mo',
+        'version': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT/raw/main/Localizations/latest/version.info',
+        'ee': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+    }
+}
+CHT_PT_ROUTES = {
+    'gitlab': {
+        'mo': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht-publictest/-/raw/main/Localizations/latest/global.mo',
+        'version': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht-publictest/-/raw/main/Localizations/latest/version.info',
+        'ee': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht-publictest/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+    },
+    'github': {
+        'mo': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT-PublicTest/raw/main/Localizations/latest/global.mo',
+        'version': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT-PublicTest/raw/main/Localizations/latest/version.info',
+        'ee': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT-PublicTest/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+    }
+}
 
-# --- (重构结束) ---
 
 
 class LocalizationSource:
@@ -133,21 +156,31 @@ class SourceManager:
         # 1. 简体中文
         self.add_source(
             source_id="zh_CN",
-            name_key="l10n.zh_CN.name",
+            name_key="lki.i18n.lang.zh_CN.name",
             routes_live=CHS_LIVE_ROUTES,
             routes_pt=CHS_PT_ROUTES,
             mods_url=MODS_URL_CHS,
-            requires_fonts=True  # <-- (3. 为 'zh_CN' 传入 True)
+            requires_fonts=True
         )
 
         # 2. 英文
         self.add_source(
             source_id="en",
-            name_key="l10n.en.name",
+            name_key="lki.i18n.lang.en.name",
             routes_live=EN_LIVE_ROUTES,
             routes_pt=EN_PT_ROUTES,
             mods_url=MODS_URL_EN,
-            requires_fonts=False  # <-- (4. 为 'en' 传入 False)
+            requires_fonts=False
+        )
+        
+        # 3. 繁体中文
+        self.add_source(
+            source_id="zh_TW",
+            name_key="l10n.zh_TW.name",
+            routes_live=CHT_LIVE_ROUTES,
+            routes_pt=CHT_PT_ROUTES,
+            mods_url=MODS_URL_CHT,
+            requires_fonts=True
         )
 
         # --- (新增：定义全局资产) ---

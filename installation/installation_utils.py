@@ -12,8 +12,7 @@ import polib
 
 from utils import CACHE_DIR, TEMP_DIR
 
-# (来自 installer_gui.py, 已重命名)
-BUILTIN_LOCALE_CONFIG_ZH_CN = '''<locale_config>
+BUILTIN_LOCALE_CONFIG_ZH = '''<locale_config>
     <locale_id>ru</locale_id>
     <text_path>../res/texts</text_path>
     <text_domain>global</text_domain>
@@ -127,8 +126,8 @@ def get_locale_config_content(lang_code: str) -> Optional[str]:
     """获取特定语言的 locale_config.xml 内容"""
     # (已修改：使用重命名后的变量)
     lang2lconf = {
-        'zh_CN': BUILTIN_LOCALE_CONFIG_ZH_CN,
-        'zh_TW': BUILTIN_LOCALE_CONFIG_ZH_CN
+        'zh_CN': BUILTIN_LOCALE_CONFIG_ZH,
+        'zh_TW': BUILTIN_LOCALE_CONFIG_ZH
     }
     return lang2lconf.get(lang_code, None)
 

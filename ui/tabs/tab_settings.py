@@ -34,10 +34,10 @@ class SettingsTab(BaseTab):
 
         # (新增：路由名称映射)
         self.route_id_to_name = {
-            'gitee': _('l10n.route.gitee'),
-            'gitlab': _('l10n.route.gitlab'),
-            'github': _('l10n.route.github'),
-            'cloudflare': _('l10n.route.cloudflare')  # <-- (新增)
+            'gitee': _('lki.i18n.route.gitee'),
+            'gitlab': _('lki.i18n.route.gitlab'),
+            'github': _('lki.i18n.route.github'),
+            'cloudflare': _('lki.i18n.route.cloudflare')  # <-- (新增)
         }
 
         self._create_settings_tab_widgets()
@@ -115,14 +115,33 @@ class SettingsTab(BaseTab):
         # (新增：初始化摘要)
         self._update_route_priority_display()
 
+    # --- (已修改) ---
     def _on_language_select(self, event=None):
         selected_name = self.lang_combobox.get()
         selected_code = self.ui_lang_name_to_code.get(selected_name)
 
         if selected_code and selected_code != settings.global_settings.language:
+            # 1. 立即保存设置
             settings.global_settings.language = selected_code
-            self.lang_reload_label.config(text=_('lki.settings.language.reload_required'))
-            self.on_language_change_callback()
+
+            # 2. 更新内部状态，以防用户点击“否”时UI回弹
+            self.current_lang_name = selected_name
+
+            # 3. 立即询问是否重载
+            if messagebox.askyesno(
+                    _('lki.reload.title'),
+                    _('lki.reload.confirm'),
+                    parent=self
+            ):
+                # 4a. 如果“是”，则清除标签并执行重载
+                self.lang_reload_label.config(text="")
+                self.on_reload_callback()
+            else:
+                # 4b. 如果“否”，则显示“需要重载”标签
+                self.lang_reload_label.config(text=_('lki.settings.language.reload_required'))
+                # (我们不再调用 on_language_change_callback，因为它会触发多余的弹窗)
+
+    # --- (修改结束) ---
 
     def _on_theme_select(self):
         selected_theme = self.theme_var.get()

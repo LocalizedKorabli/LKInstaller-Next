@@ -1,6 +1,9 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox, filedialog  # (已修改)
 from typing import List, Callable
+import sys  # (新增)
+import os  # (新增)
+from pathlib import Path  # (新增)
 
 import utils
 from localizer import _
@@ -10,6 +13,13 @@ try:
 except ImportError:
     print("Warning: tktooltip not found. Tooltips will be disabled.")
     ToolTip = None
+
+# (新增)
+try:
+    import win32com.client
+except ImportError:
+    print("Warning: pywin32 not installed. Shortcut creation will be disabled.")
+    win32com = None
 
 
 class BaseDialog(tk.Toplevel):
@@ -46,7 +56,7 @@ class BaseDialog(tk.Toplevel):
 
             self.geometry(f"+{x}+{y}")
             self.deiconify()
-        except tk.TclError:
+        except tk.Toplevel:
             pass  # 窗口可能在居中之前被销毁
 
 
@@ -109,10 +119,10 @@ class RoutePriorityWindow(BaseDialog):  # <-- 继承 BaseDialog
 
         # 准备显示名称
         self.route_id_to_name = {
-            'gitee': _('l10n.route.gitee'),
-            'gitlab': _('l10n.route.gitlab'),
-            'github': _('l10n.route.github'),
-            'cloudflare': _('l10n.route.cloudflare')  # <-- (新增)
+            'gitee': _('lki.i18n.route.gitee'),
+            'gitlab': _('lki.i18n.route.gitlab'),
+            'github': _('lki.i18n.route.github'),
+            'cloudflare': _('lki.i18n.route.cloudflare')  # <-- (新增)
         }
         self.route_name_to_id = {v: k for k, v in self.route_id_to_name.items()}
 
@@ -233,3 +243,127 @@ class RoutePriorityWindow(BaseDialog):  # <-- 继承 BaseDialog
         self.on_save_callback(new_route_ids)
         self.destroy()
 # --- (新增结束) ---
+
+
+# --- (新增：自动更新快捷方式配置窗口) ---
+class AutoUpdateConfigDialog(BaseDialog):
+    def __init__(self, parent, instance_id: str, instance_name: str, preset_id: str):
+        super().__init__(parent)
+        self.title(_('lki.autoupdate.title'))
+        self.resizable(False, False)
+
+        self.instance_id = instance_id
+        self.instance_name = instance_name
+        self.preset_id = preset_id
+
+        # --- 获取默认保存路径 ---
+        desktop = Path(os.path.expanduser("~/Desktop"))
+        default_name = f"LKI - {self.instance_name}.lnk"
+        self.shortcut_path_var = tk.StringVar(value=str(desktop / default_name))
+        self.start_game_var = tk.BooleanVar(value=True)
+
+        # --- UI 设置 ---
+        main_frame = ttk.Frame(self, padding=15)
+        main_frame.pack(fill='both', expand=True)
+        main_frame.columnconfigure(1, weight=1)
+
+        # 1. 路径选择
+        ttk.Label(main_frame, text=_('lki.autoupdate.save_location')).grid(row=0, column=0, sticky='e', padx=(0, 10), pady=5)
+
+        path_frame = ttk.Frame(main_frame)
+        path_frame.grid(row=0, column=1, sticky='we', pady=5)
+        path_frame.columnconfigure(0, weight=1)
+
+        path_entry = ttk.Entry(path_frame, textvariable=self.shortcut_path_var, width=50)
+        path_entry.grid(row=0, column=0, sticky='we')
+
+        browse_btn = ttk.Button(path_frame, text=_('lki.autoupdate.btn.browse'), command=self._on_browse)
+        browse_btn.grid(row=0, column=1, sticky='w', padx=(5, 0))
+
+        # 2. 复选框
+        cb_run_client = ttk.Checkbutton(main_frame, text=_('lki.autoupdate.run_client'),
+                                        variable=self.start_game_var)
+        cb_run_client.grid(row=1, column=0, columnspan=2, sticky='w', pady=(10, 0))
+
+        # 3. 按钮
+        button_frame = ttk.Frame(main_frame, padding=(0, 10, 0, 0))
+        button_frame.grid(row=2, column=0, columnspan=2, sticky='e', pady=(10, 0))
+
+        self.ok_btn = ttk.Button(button_frame, text=_('lki.btn.save'), command=self._on_ok)
+        self.ok_btn.pack(side='right')
+        ttk.Button(button_frame, text=_('lki.btn.cancel'), command=self.destroy).pack(side='right', padx=5)
+
+        if not win32com:
+            self.ok_btn.config(state='disabled')
+            path_entry.config(state='disabled')
+            browse_btn.config(state='disabled')
+            cb_run_client.config(state='disabled')
+            ttk.Label(main_frame, text="Error: pywin32 is required to create shortcuts.", foreground='red').grid(row=3, column=0, columnspan=2, sticky='w', pady=5)
+
+    def _on_browse(self):
+        """显示保存文件对话框"""
+        initial_dir = str(Path(self.shortcut_path_var.get()).parent)
+        initial_file = Path(self.shortcut_path_var.get()).name
+
+        save_path = filedialog.asksaveasfilename(
+            parent=self,
+            title=_('lki.autoupdate.file_dialog_title'),
+            initialdir=initial_dir,
+            initialfile=initial_file,
+            defaultextension=".lnk",
+            filetypes=[(_('lki.autoupdate.file_type_name'), "*.lnk"), ("All files", "*.*")]
+        )
+
+        if save_path:
+            self.shortcut_path_var.set(os.path.normpath(save_path))
+
+    def _on_ok(self):
+        """创建快捷方式"""
+        save_path = self.shortcut_path_var.get()
+        if not save_path:
+            messagebox.showwarning(_('lki.autoupdate.title'), _('lki.autoupdate.error.no_path'), parent=self)
+            return
+
+        if not win32com:
+            messagebox.showerror(_('lki.autoupdate.title'), "pywin32 library is missing.", parent=self)
+            return
+
+        try:
+            # 1. 获取正在运行的可执行文件路径 (lki.exe)
+            target_exe = sys.executable
+            # 2. 获取它所在的目录 (用于 WorkingDirectory)
+            target_dir = str(Path(target_exe).parent)
+            # 3. 获取图标路径
+            icon_path = str(utils.base_path / 'resources' / 'logo' / 'logo.ico')
+
+            # 4. 构建参数
+            preset_arg = f'--auto-execute-preset "{self.instance_id}:{self.preset_id}"'
+            run_arg = "--runclient" if self.start_game_var.get() else ""
+            full_args = f"{preset_arg} {run_arg}".strip()
+
+            # 5. 创建快捷方式
+            shell = win32com.client.Dispatch("WScript.Shell")
+            shortcut = shell.CreateShortCut(save_path)
+            shortcut.TargetPath = target_exe
+            shortcut.Arguments = full_args
+            shortcut.WorkingDirectory = target_dir
+            # IconLocation 格式为 "path,index"
+            shortcut.IconLocation = f"{icon_path}, 0"
+            shortcut.Description = f"Launch {self.instance_name} with LKI auto-update"
+            shortcut.Save()
+
+            messagebox.showinfo(
+                _('lki.autoupdate.success.title'),
+                _('lki.autoupdate.success.message') % save_path,
+                parent=self
+            )
+            self.destroy()
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            messagebox.showerror(
+                _('lki.autoupdate.title'),
+                _('lki.autoupdate.error.create_failed') % e,
+                parent=self
+            )

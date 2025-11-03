@@ -11,7 +11,7 @@ from instance import instance_manager
 from instance.game_instance import GameInstance
 from localization_sources import global_source_manager
 from localizer import _
-from ui.dialogs import CustomAskStringDialog, BaseDialog
+from ui.dialogs import CustomAskStringDialog, BaseDialog, AutoUpdateConfigDialog  # (已修改)
 from ui.tabs.tab_base import BaseTab
 from utils import determine_default_l10n_lang
 
@@ -40,10 +40,10 @@ class AdvancedTab(BaseTab):
 
         self.l10n_id_to_name, self.l10n_name_to_id = global_source_manager.get_display_maps()
         self.route_id_to_name = {
-            'gitee': _('l10n.route.gitee'),
-            'gitlab': _('l10n.route.gitlab'),
-            'github': _('l10n.route.github'),
-            'cloudflare': _('l10n.route.cloudflare')
+            'gitee': _('lki.i18n.route.gitee'),
+            'gitlab': _('lki.i18n.route.gitlab'),
+            'github': _('lki.i18n.route.github'),
+            'cloudflare': _('lki.i18n.route.cloudflare')
         }
 
         self.advanced_tab_placeholder = self._create_placeholder_label(_('lki.advanced.please_select'))
@@ -173,7 +173,7 @@ class AdvancedTab(BaseTab):
                     l10n_ver_full = game_version.l10n_info.version
 
                     if l10n_ver_full == "INACTIVE":
-                        l10n_text = f"{_('lki.game.l10n_status.inactive')}"
+                        l10n_text = f"{_('lki.game.i18n_status.inactive')}"
                     else:
                         # (已修改：现在包含所有 3 个组件)
                         statuses = game_version.get_component_statuses()
@@ -482,10 +482,20 @@ class PresetManagerWindow(BaseDialog):
         self.btn_save = ttk.Button(button_frame, text=_('lki.btn.save_changes'), command=self._save_preset)
         self.btn_save.pack(side='right')
 
+        # --- (已修改：布局更改为 Grid) ---
         select_frame = ttk.Frame(main_frame)
         select_frame.grid(row=2, column=0, columnspan=2, sticky='ew', pady=(10, 0))
+        select_frame.columnconfigure((0, 1), weight=1)  # 配置 2 列以共享空间
+
+        # (新增) 按钮 1: 创建快捷方式
+        self.btn_create_shortcut = ttk.Button(select_frame, text=_('lki.preset.btn.configure_autoupdate'),
+                                              command=self._open_auto_update_config)
+        self.btn_create_shortcut.grid(row=0, column=0, sticky='ew', padx=(0, 5))  # 居左
+
+        # (已修改) 按钮 2: 保存并选定
         self.btn_select = ttk.Button(select_frame, text=_('lki.preset.btn.save_select'), command=self._select_and_close)
-        self.btn_select.pack(fill='x', expand=True)
+        self.btn_select.grid(row=0, column=1, sticky='ew', padx=(5, 0))  # 居右
+        # --- (修改结束) ---
 
         self._populate_listbox_and_select()
 
@@ -563,6 +573,9 @@ class PresetManagerWindow(BaseDialog):
 
         self.btn_rename.config(state=btn_state)
         self.btn_delete.config(state=btn_state)
+
+        # (新增) 快捷方式按钮始终启用
+        self.btn_create_shortcut.config(state='normal')
 
         self._update_download_mods_btn_state(lang_code)
 
@@ -757,3 +770,29 @@ class PresetManagerWindow(BaseDialog):
         mods_url = global_source_manager.get_mods_url(lang_code)
         if mods_url:
             webbrowser.open(mods_url)
+
+    # (新增)
+    def _open_auto_update_config(self):
+        """打开用于创建自动更新快捷方式的对话框。"""
+        preset_id = self._get_selected_listbox_id()
+        if not preset_id:
+            return  # 如果没有选中的预设，则不执行任何操作
+
+        # 我们必须先保存任何待处理的更改，否则快捷方式将使用旧设置创建。
+        self._save_preset(show_popup=False)
+
+        instance_name = self.instance_data.get("name", "Game Instance")
+
+        # 检查 pywin32 是否可用
+        try:
+            import win32com.client
+        except ImportError:
+            messagebox.showerror(
+                _('lki.autoupdate.title'),
+                "创建快捷方式需要 'pywin32' 库。请运行 'pip install pywin32' 并重启本程序。",
+                parent=self
+            )
+            return
+
+        # 打开新对话框，传递它所需的信息
+        AutoUpdateConfigDialog(self, self.instance_id, instance_name, preset_id)
