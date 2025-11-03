@@ -176,7 +176,7 @@ class SourceManager:
         # 3. 繁体中文
         self.add_source(
             source_id="zh_TW",
-            name_key="l10n.zh_TW.name",
+            name_key="lki.i18n.lang.zh_TW.name",
             routes_live=CHT_LIVE_ROUTES,
             routes_pt=CHT_PT_ROUTES,
             mods_url=MODS_URL_CHT,
