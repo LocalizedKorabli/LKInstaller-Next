@@ -39,6 +39,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import platform
 import tkinter as tk
@@ -180,8 +193,21 @@ if __name__ == '__main__':
         print(f"Could not load settings, defaulting theme. Error: {e}")
         theme = 'light'
 
+    font_family = "Microsoft YaHei"
+
+    try:
+        if platform.system() == "Windows":
+            # Windows 11 Build Number >= 22000
+            build_number = int(platform.version().split('.')[-1])
+            if build_number >= 22000:
+                font_family = "Segoe UI"
+    except (ValueError, IndexError):
+        pass
+
     root.call('source', utils.base_path.joinpath('resources/theme/azure/azure.tcl'))
-    root.call('set_theme', theme)
+    root.call('set_theme', theme, font_family)
+
+    root.iconbitmap(default=utils.base_path.joinpath('resources/logo/logo64.ico'))
 
     if auto_execute_arg:
         # --- 简洁模式 ---
@@ -189,8 +215,7 @@ if __name__ == '__main__':
         run_auto_execute(root, auto_execute_arg, run_client_flag)
     else:
         # --- GUI模式 ---
-        app = LocalizationInstallerApp(root, initial_theme=theme, scaling_factor=scaling_factor)
-        root.iconbitmap(utils.base_path.joinpath('resources/logo/logo.ico'))
+        app = LocalizationInstallerApp(root, initial_theme=theme, font_family=font_family, scaling_factor=scaling_factor)
         root.mainloop()
 
     try:

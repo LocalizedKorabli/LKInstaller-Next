@@ -65,6 +65,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import sys
 import tkinter as tk
@@ -84,10 +97,10 @@ from ui.ui_manager import get_icon_manager
 
 
 class LocalizationInstallerApp:
-    def __init__(self, master, initial_theme, scaling_factor=1.0):  # (scaling_factor is passed in)
+    def __init__(self, master, initial_theme, font_family: str, scaling_factor=1.0):  # (scaling_factor is passed in)
         self.master = master
         self.master.scaling_factor = scaling_factor  # (新增) 附加到根窗口
-
+        self.font_family = font_family
         # (修改) 步骤 4: 缩放窗口大小
         base_width = 350
         base_height = 449
@@ -246,10 +259,11 @@ class LocalizationInstallerApp:
 
             # 4. 获取当前主题并重新设置
             current_theme = settings.global_settings.get('theme', 'light')
-            self.master.call('set_theme', current_theme)
+            self.master.call('set_theme', current_theme, self.font_family)
 
             # 5. 重建整个应用 UI
             LocalizationInstallerApp(self.master, initial_theme=current_theme,
+                                     font_family=self.font_family,
                                      scaling_factor=self.master.scaling_factor)
 
         except Exception as e:

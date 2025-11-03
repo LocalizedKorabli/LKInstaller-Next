@@ -5,7 +5,7 @@ source [file join [file dirname [info script]] theme dark.tcl]
 
 option add *tearOff 0
 
-proc set_theme {mode} {
+proc set_theme {mode font_family} {
 	if {$mode == "dark"} {
 		ttk::style theme use "azure-dark"
 
@@ -17,7 +17,7 @@ proc set_theme {mode} {
             -selectfg       "#ffffff"
             -selectbg       "#007fff"
         }
-        
+
         ttk::style configure . \
             -background $colors(-bg) \
             -foreground $colors(-fg) \
@@ -28,7 +28,7 @@ proc set_theme {mode} {
             -insertcolor $colors(-fg) \
             -insertwidth 1 \
             -fieldbackground $colors(-selectbg) \
-            -font {"Segoe Ui" 10} \
+            -font [list $font_family 10] \
             -borderwidth 1 \
             -relief flat
 
@@ -44,7 +44,7 @@ proc set_theme {mode} {
 
         option add *font [ttk::style lookup . -font]
         option add *Menu.selectcolor $colors(-fg)
-    
+
 	} elseif {$mode == "light"} {
 		ttk::style theme use "azure-light"
 
@@ -67,7 +67,7 @@ proc set_theme {mode} {
             -insertcolor $colors(-fg) \
             -insertwidth 1 \
             -fieldbackground $colors(-selectbg) \
-            -font {"Segoe Ui" 10} \
+            -font [list $font_family 10] \
             -borderwidth 1 \
             -relief flat
 
