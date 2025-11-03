@@ -39,6 +39,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog  # (已修改)
@@ -75,6 +88,7 @@ class BaseDialog(tk.Toplevel):
         if parent and parent.winfo_exists() and parent.state() == 'normal':
             self.transient(parent)  # 保持在父窗口之上
         self.grab_set()  # 设为模态窗口
+        self.iconbitmap(utils.base_path.joinpath('resources/logo/logo.ico'))
 
         # 我们使用 .after() 来确保窗口大小已被计算
         self.after(50, self._center_on_screen)

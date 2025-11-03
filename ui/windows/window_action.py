@@ -39,6 +39,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 import subprocess
@@ -98,7 +111,7 @@ class ActionProgressWindow(BaseDialog):
 
             if instance:
             # (新增) 按钮框架，位于右侧
-                button_frame = ttk.Frame(task_frame)
+                button_frame = ttk.Frame(top_row_frame)
                 button_frame.pack(side='right', anchor='n', padx=(10, 0))
 
                 # (新增) 运行按钮
@@ -122,23 +135,23 @@ class ActionProgressWindow(BaseDialog):
                 folder_btn.pack(side='right', padx=(2, 0))
 
             # (新增) 进度框架，位于左侧
-            progress_frame = ttk.Frame(task_frame)
-            progress_frame.pack(fill='x', expand=True, side='left')
+            label_frame = ttk.Frame(top_row_frame)
+            label_frame.pack(fill='x', expand=True, side='left')
 
-            name_label = ttk.Label(progress_frame, text=name)
+            name_label = ttk.Label(label_frame, text=name)
             name_label.pack(fill='x')
 
             status_label = ttk.Label(
-                progress_frame,
+                label_frame,
                 text=pending_text,
                 style="Hint.TLabel",
                 # (已修改) 减小宽度以适应按钮
-                wraplength=utils.scale_dpi(self, 350)
+                wraplength=utils.scale_dpi(self, 450)
             )
             status_label.pack(fill='x')
 
-            progress_bar = ttk.Progressbar(progress_frame, mode='determinate')  # (已修改) 移除固定长度，使其可缩放
-            progress_bar.pack(fill='x', pady=2)
+            progress_bar = ttk.Progressbar(task_frame, mode='determinate')  # (已修改) 移除固定长度，使其可缩放
+            progress_bar.pack(fill='x', pady=(5, 2))
 
             widget: Dict[str, Any] = {
                 'frame': task_frame,
