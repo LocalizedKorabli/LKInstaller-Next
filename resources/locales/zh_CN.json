@@ -129,7 +129,7 @@
   "lki.install.warn.inactive_cleanup_failed": "警告:无法清理或写入%s的非活跃状态: %s",
   "lki.i18n.lang.en.name": "英文",
   "lki.i18n.lang.zh_CN.name": "简体中文",
-  "lki.i18n.lang.zh_TW.name": "简体中文",
+  "lki.i18n.lang.zh_TW.name": "繁体中文",
   "lki.i18n.route.cloudflare": "Cloudflare",
   "lki.i18n.route.gitee": "Gitee码云",
   "lki.i18n.route.github": "GitHub",
