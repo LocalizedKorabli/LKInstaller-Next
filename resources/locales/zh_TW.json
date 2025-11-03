@@ -25,6 +25,7 @@
   "lki.autoupdate.file_type_name": "捷徑",
   "lki.autoupdate.run_client": "更新後啟動遊戲",
   "lki.autoupdate.save_location": "捷徑位置：",
+  "lki.autoupdate.shortcut_default_title": "啟動%s",
   "lki.autoupdate.success.message": "捷徑已成功生成於：\n%s",
   "lki.autoupdate.success.title": "捷徑已生成",
   "lki.autoupdate.title": "設定自動更新",

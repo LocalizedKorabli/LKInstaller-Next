@@ -25,6 +25,7 @@
   "lki.autoupdate.file_type_name": "Shortcut",
   "lki.autoupdate.run_client": "Start game after update",
   "lki.autoupdate.save_location": "Shortcut Location:",
+  "lki.autoupdate.shortcut_default_title": "Launch %s",
   "lki.autoupdate.success.message": "Shortcut successfully created at:\n%s",
   "lki.autoupdate.success.title": "Shortcut Created",
   "lki.autoupdate.title": "Configure Auto-Update",

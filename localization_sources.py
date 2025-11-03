@@ -26,6 +26,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Dict, Optional, List
 
@@ -244,19 +257,6 @@ class SourceManager:
             id_to_name[source_id] = display_name
             name_to_id[display_name] = source_id
         return id_to_name, name_to_id
-
-    def get_routes_for_source(self, source_id: str) -> List[str]:
-        """获取一个本地化来源可用的下载线路列表 (例如 ['gitee', 'gitlab'])"""
-        source = self.get_source(source_id)
-        if not source:
-            return ['gitee']
-
-        keys = source.get_available_route_ids()
-
-        if not keys:
-            return ['gitee']
-
-        return keys
 
     def get_all_available_route_ids(self) -> List[str]:
         """获取 *所有* 来源中 *所有* 可用的唯一路由 ID。"""

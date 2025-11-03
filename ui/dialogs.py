@@ -26,6 +26,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog  # (已修改)
@@ -286,8 +299,8 @@ class AutoUpdateConfigDialog(BaseDialog):
         self.preset_id = preset_id
 
         # --- 获取默认保存路径 ---
-        desktop = Path(os.path.expanduser("~/Desktop"))
-        default_name = f"LKI - {self.instance_name}.lnk"
+        desktop = Path(os.path.join(os.environ["USERPROFILE"], "Desktop"))
+        default_name = f"{_('lki.autoupdate.shortcut_default_title') % self.instance_name}.lnk"
         self.shortcut_path_var = tk.StringVar(value=str(desktop / default_name))
         self.start_game_var = tk.BooleanVar(value=True)
 

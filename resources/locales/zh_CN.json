@@ -25,6 +25,7 @@
   "lki.autoupdate.file_type_name": "快捷方式",
   "lki.autoupdate.run_client": "更新后启动游戏",
   "lki.autoupdate.save_location": "快捷方式位置：",
+  "lki.autoupdate.shortcut_default_title": "启动%s",
   "lki.autoupdate.success.message": "快捷方式已成功生成于：\n%s",
   "lki.autoupdate.success.title": "快捷方式已生成",
   "lki.autoupdate.title": "配置自动更新",
