@@ -78,6 +78,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog  # (已修改)
@@ -327,7 +340,7 @@ class RoutePriorityWindow(BaseDialog):  # <-- 继承 BaseDialog
 
 # --- (新增：自动更新快捷方式配置窗口) ---
 class AutoUpdateConfigDialog(BaseDialog):
-    def __init__(self, parent, instance_id: str, instance_name: str, preset_id: str):
+    def __init__(self, parent, instance_id: str, instance_name: str, preset_id: str, preset_name: str):
         super().__init__(parent)
         self.title(_('lki.autoupdate.title'))
         self.resizable(False, False)
@@ -340,7 +353,7 @@ class AutoUpdateConfigDialog(BaseDialog):
         shell = win32com.client.Dispatch('WScript.Shell')
         desktop_path_str = shell.SpecialFolders('Desktop')
         desktop = Path(desktop_path_str)
-        default_name = f"{_('lki.autoupdate.shortcut_default_title') % self.instance_name}.lnk"
+        default_name = f"{_('lki.autoupdate.shortcut_default_title') % f'{self.instance_name}-{preset_name}'}.lnk"
         self.shortcut_path_var = tk.StringVar(value=str(desktop / default_name))
         self.start_game_var = tk.BooleanVar(value=True)
 
