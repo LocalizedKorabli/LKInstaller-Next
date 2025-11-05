@@ -96,7 +96,7 @@ def get_sha256(filepath: Path) -> Optional[str]:
 def fix_paths_xml(build_dir: Path):
     if not build_dir.is_dir():
         return
-    xml_path = build_dir / 'paths.xml'
+    xml_path = build_dir / 'bin64' / 'paths.xml'
     if not xml_path.is_file():
         log(f"Warning: paths.xml not found in {build_dir}")
         return
@@ -114,8 +114,8 @@ def fix_paths_xml(build_dir: Path):
         # (来自 installer_gui.py)
         # (已移除 run_dir_num 检查，如您上传的文件所示)
         new_paths_to_add = [
-            ('../res_mods', {}),
-            ('../mods', {'type': 'mods'})
+            (r'..\res_mods', {}),
+            (r'..\mods', {'type': 'mods'})
         ]
 
         elements_to_insert = []

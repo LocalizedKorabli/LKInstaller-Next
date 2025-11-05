@@ -738,8 +738,6 @@ class InstallationManager:
 
             if self._cancel_event.is_set(): return
 
-            if self._cancel_event.is_set(): return
-
             for version_folder in task.instance.versions:
                 exe_version = version_folder.exe_version or ""
                 major_version = ".".join(exe_version.split('.')[:2])
@@ -791,6 +789,14 @@ class InstallationManager:
                     # --- 关键安装步骤 ---
                     _log_task(task, _('lki.install.status.installing_to') % version_folder.bin_folder_name, 80)
                     utils.mkdir(mods_dir)
+
+                    try:
+                        _log_task(task, _('lki.install.status.patching_paths_xml'), 81)
+                        utils.fix_paths_xml(version_folder.bin_folder_path)
+                    except Exception as e:
+                        # 这是一个非关键步骤，记录警告即可
+                        _log_task(task, _('lki.install.error.paths_xml_failed') % e)
+                        log(f"Warning: Failed to fix paths.xml for {version_folder.bin_folder_path}: {e}")
 
                     shutil.copy(core_mkmod_path, dest_core_mod_path)
                     files_info = {"i18n": {}, "ee": {}, "font": {}, "mods": {}}
