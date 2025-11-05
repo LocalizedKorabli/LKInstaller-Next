@@ -26,12 +26,28 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import platform
 import sys
 import time
 from pathlib import Path
 
+import utils
+
+current_log_file_name: str = ''
 
 class StreamToLogger:
     def __init__(self, original_stream, log_file_path):
@@ -97,10 +113,11 @@ def setup_logger():
         os.makedirs(APP_DATA_PATH, exist_ok=True)
 
     # 定义日志目录和文件路径
-    LOG_DIR = APP_DATA_PATH / 'logs'
+    LOG_DIR = utils.LOG_DIR
     os.makedirs(LOG_DIR, exist_ok=True)
-    # 使用日期创建日志文件，例如 lki-next-2025-11-05.log
-    LOG_FILE_PATH = LOG_DIR / f"lki-next-{time.strftime('%Y-%m-%d')}.log"
+    global current_log_file_name
+    current_log_file_name = f"lki-next-{time.strftime('%Y-%m-%d-%H:%M')}.log"
+    LOG_FILE_PATH = LOG_DIR / current_log_file_name
 
     original_stdout = sys.stdout
     original_stderr = sys.stderr
