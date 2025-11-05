@@ -13,33 +13,6 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import json
 import os
 import queue
@@ -48,14 +21,15 @@ import threading
 import tkinter as tk
 import zipfile
 from pathlib import Path
+from logger import log
 from tkinter import messagebox
 from typing import List, Dict, Callable, Optional, Set, Tuple
 
 import requests
 
 # (移除 _ 的顶层导入)
-import installation.installation_utils as utils
 import settings
+import installation.installation_utils as utils
 import utils as root_utils
 from instance.game_instance import GameInstance
 from localization_sources import global_source_manager
@@ -410,11 +384,11 @@ class InstallationManager:
 
                     if expected_hash and actual_hash == expected_hash:
                         # (已修改：本地化)
-                        print(_('lki.install.debug.cache_hit') % job.job_id)
+                        log(_('lki.install.debug.cache_hit') % job.job_id)
                         return True, mo_path
                 except Exception as e:
                     # (已修改：本地化)
-                    print(_('lki.install.debug.cache_check_failed') % e)
+                    log(_('lki.install.debug.cache_check_failed') % e)
 
             utils.mkdir(cache_path)
 
@@ -445,7 +419,7 @@ class InstallationManager:
             # (新增: 检查 ee.zip 是否已下载)
             if ee_zip_path.is_file() and ee_zip_path.stat().st_size > 0:
                 # (已修改：本地化)
-                print(_('lki.install.debug.cache_hit_ee') % job.job_id)
+                log(_('lki.install.debug.cache_hit_ee') % job.job_id)
                 return True, ee_zip_path
 
             for route_id in self.download_routes_priority:
@@ -523,11 +497,11 @@ class InstallationManager:
                         actual_hash = utils.get_sha256(mkmod_path)
                         if actual_hash == expected_hash:
                             # (已修改：本地化)
-                            print(_('lki.install.debug.cache_hit') % job.job_id)
+                            log(_('lki.install.debug.cache_hit') % job.job_id)
                             return True, mkmod_path
                 except Exception as e:
                     # (已修改：本地化)
-                    print(_('lki.install.debug.cache_check_failed') % e)
+                    log(_('lki.install.debug.cache_check_failed') % e)
 
             # 4. 缓存未命中 - 下载并重新打包
             _log_task(task, _('lki.install.status.packing_fonts'))  # <-- *** 修改点 5 ***
@@ -566,7 +540,7 @@ class InstallationManager:
                     json.dump({'version': remote_version, 'file_sha256': new_hash}, f)
             except Exception as e:
                 # (已修改：本地化)
-                print(_('lki.install.error.fonts_cache_write') % e)
+                log(_('lki.install.error.fonts_cache_write') % e)
 
             return True, mkmod_path
         # --- (新增结束) ---
@@ -834,7 +808,7 @@ class InstallationManager:
                             ee_rel_path = f"mods/{dest_ee_mod_path.name}"
                             files_info["ee"][ee_rel_path] = utils.get_sha256(dest_ee_mod_path)
                         except Exception as e:
-                            print(_('lki.install.debug.hash_failed') % (f"{task.task_name} (EE)", e))
+                            log(_('lki.install.debug.hash_failed') % (f"{task.task_name} (EE)", e))
                             non_critical_errors.append(_('lki.component.ee'))
 
                         # 3. Font (非关键)
@@ -844,7 +818,7 @@ class InstallationManager:
                             font_rel_path = f"mods/{dest_fo_mod_path.name}"
                             files_info["font"][font_rel_path] = utils.get_sha256(dest_fo_mod_path)
                         except Exception as e:
-                            print(_('lki.install.debug.hash_failed') % (f"{task.task_name} (Font)", e))
+                            log(_('lki.install.debug.hash_failed') % (f"{task.task_name} (Font)", e))
                             non_critical_errors.append(_('lki.component.font'))
 
                         # 4. Mods (MO) (非关键)
@@ -854,7 +828,7 @@ class InstallationManager:
                             mods_mo_rel_path = f"mods/{dest_mo_mod_path.name}"
                             files_info["mods"][mods_mo_rel_path] = utils.get_sha256(dest_mo_mod_path)
                         except Exception as e:
-                            print(_('lki.install.debug.hash_failed') % (f"{task.task_name} (Mods-MO)", e))
+                            log(_('lki.install.debug.hash_failed') % (f"{task.task_name} (Mods-MO)", e))
                             non_critical_errors.append(_('lki.component.mods'))
 
                         # 5. Mods (JSON) (非关键)
@@ -864,7 +838,7 @@ class InstallationManager:
                             mods_json_rel_path = f"mods/{dest_json_mod_path.name}"
                             files_info["mods"][mods_json_rel_path] = utils.get_sha256(dest_json_mod_path)
                         except Exception as e:
-                            print(_('lki.install.debug.hash_failed') % (f"{task.task_name} (Mods-JSON)", e))
+                            log(_('lki.install.debug.hash_failed') % (f"{task.task_name} (Mods-JSON)", e))
                             # 仅当组件尚未在列表中时才添加
                             if _('lki.component.mods') not in non_critical_errors:
                                 non_critical_errors.append(_('lki.component.mods'))
@@ -922,7 +896,7 @@ class InstallationManager:
         except Exception as e:
             # (这现在只捕获关键错误)
             import traceback
-            print(f"Error in install worker for {task.task_name}: {e}")
+            log(f"Error in install worker for {task.task_name}: {e}")
             traceback.print_exc()
             self._mark_task_failed(task, str(e))
 
@@ -994,7 +968,7 @@ class InstallationManager:
 
         except Exception as e:
             import traceback
-            print(f"Error in uninstall worker for {task.task_name}: {e}")
+            log(f"Error in uninstall worker for {task.task_name}: {e}")
             traceback.print_exc()
             self._mark_task_failed(task, str(e))
 
@@ -1034,14 +1008,14 @@ def _log_overall(manager: InstallationManager, message: str):
     """安全地记录到主 UI。"""
     from localizer import _  # (新增局部导入)
     # (已修改：本地化)
-    print(f"[{_('lki.log.overall')}] {message}")
+    log(f"[{_('lki.log.overall')}] {message}")
     if manager.window:
         manager.root_tk.after(0, manager.window.update_overall_status, message)
 
 
 def _log_task(task: InstallationTask, message: str, progress: Optional[float] = None):
     """安全地记录到任务的 UI。"""
-    print(f"[{task.task_name}] {message}")
+    log(f"[{task.task_name}] {message}")
     if progress is None:
         if task.progress_callback:
             progress = task.progress_callback()

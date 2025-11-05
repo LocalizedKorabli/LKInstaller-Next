@@ -13,39 +13,26 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import os
 import subprocess
 import threading
 import tkinter as tk
 import webbrowser
+from logger import log
 from pathlib import Path
 from tkinter import ttk, messagebox, filedialog
 from typing import List, Dict, Optional, Set
 
+import settings
 import utils
 from ui.tabs.tab_base import BaseTab
 
 try:
     from tktooltip import ToolTip
 except ImportError:
-    print("Warning: tktooltip not found. Tooltips will be disabled.")
+    log("Warning: tktooltip not found. Tooltips will be disabled.")
     ToolTip = None
 
-import settings
 from instance import instance_manager
 from localizer import _
 from instance.game_instance import GameInstance
@@ -230,7 +217,7 @@ class GameTab(BaseTab):
                 loaded_instances.append(instance)
                 self.loaded_game_instances[instance_id] = instance
             except Exception as e:
-                print(f"Error loading game instance {data['path']}: {e}")
+                log(f"Error loading game instance {data['path']}: {e}")
 
         frame_to_select: Optional[ttk.Frame] = None
         id_to_select: Optional[str] = self.selected_instance_id
@@ -392,7 +379,7 @@ class GameTab(BaseTab):
                         else:
                             child.config(style="Path.TLabel")
             except tk.TclError:
-                print("Warning: Failed to de-select destroyed widget. Resetting selection.")
+                log("Warning: Failed to de-select destroyed widget. Resetting selection.")
                 self.selected_client_widget = None
 
         selected_frame.text_frame.config(style="Selected.TFrame")
@@ -406,7 +393,7 @@ class GameTab(BaseTab):
         self.selected_client_widget = selected_frame
         self.selected_instance_id = selected_id
 
-        print(f"Selected instance ID: {self.selected_instance_id}")
+        log(f"Selected instance ID: {self.selected_instance_id}")
 
         self.btn_rename.config(state='normal')
         self.btn_remove.config(state='normal')
@@ -565,7 +552,7 @@ class GameTab(BaseTab):
             self.app_master.after(0, self._auto_import_finished, new_count, new_ids, is_initial_run)
 
         except Exception as e:
-            print(f"Error during instance detection thread: {e}")
+            log(f"Error during instance detection thread: {e}")
             if not is_initial_run:
                 self.app_master.after(0, messagebox.showerror,
                                       _('lki.game.detected_clients'),
@@ -661,7 +648,7 @@ class GameTab(BaseTab):
         由 InstallationManager 在所有任务完成后调用的回调。
         刷新游戏列表以显示新的安装状态。
         """
-        print("Installation complete. Refreshing game list...")
+        log("Installation complete. Refreshing game list...")
         checked_ids = self._get_checked_instance_ids()
 
         # (修改) 延迟刷新以等待文件系统I/O完成
@@ -705,7 +692,7 @@ class GameTab(BaseTab):
         由 InstallationManager 在所有任务完成后调用的回调。
         刷新游戏列表以显示新的（未安装）状态。
         """
-        print("Uninstallation complete. Refreshing game list...")
+        log("Uninstallation complete. Refreshing game list...")
         checked_ids = self._get_checked_instance_ids()
 
         # (修改) 延迟刷新以等待文件系统I/O完成
@@ -817,7 +804,7 @@ class GameTab(BaseTab):
             try:
                 subprocess.run(['explorer', os.path.normpath(path)])
             except Exception as e:
-                print(f"Error opening folder: {e}")
+                log(f"Error opening folder: {e}")
                 webbrowser.open(f'file:///{path}')
 
     def _move_instance_up(self):
@@ -839,7 +826,7 @@ class GameTab(BaseTab):
         点击“刷新”按钮的回调。
         保留当前的勾选状态并刷新列表。
         """
-        print("Refreshing instance list...")
+        log("Refreshing instance list...")
         current_checked_ids = self._get_checked_instance_ids()
         self._clear_selection_and_refresh(default_checked_ids=current_checked_ids)
 
@@ -1142,7 +1129,7 @@ class DeleteInstanceWindow(BaseDialog):
             self.copy_feedback_label.config(text=_('lki.generic.copied'), foreground='green')
             self.after(2000, lambda: self.copy_feedback_label.config(text=""))
         except Exception as e:
-            print(f"Clipboard error: {e}")
+            log(f"Clipboard error: {e}")
             self.copy_feedback_label.config(text=f"{_('lki.install.status.failed')}", foreground='red')
             self.after(2000, lambda: self.copy_feedback_label.config(text=""))
 

@@ -13,85 +13,6 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import sys
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -102,6 +23,7 @@ import utils
 from instance import instance_manager
 from instance.game_instance import GameInstance
 from localizer import _, global_translator
+from logger import log
 from ui.tabs.tab_about import AboutTab
 from ui.tabs.tab_advanced import AdvancedTab
 from ui.tabs.tab_game import GameTab
@@ -192,25 +114,23 @@ class LocalizationInstallerApp:
 
             # (如果大小仍为1, 可能是 update_idletasks() 不够, 但我们先尝试)
             if window_width < 100 or window_height < 100:
-                print("Warning: Window size not fully calculated, centering may be inaccurate.")
+                log("Warning: Window size not fully calculated, centering may be inaccurate.")
 
             x = (screen_width // 2) - (window_width // 2)
             y = (screen_height // 2) - (window_height // 2)
 
             self.master.geometry(f"+{x}+{y}")
         except tk.TclError as e:
-            print(f"Error centering main window: {e}")
+            log(f"Error centering main window: {e}")
 
     def run_initial_detection(self):
         """在启动时*仅一次*触发自动检测。"""
         if not settings.global_settings.get('ever_launched', False):
-            print("Running *first time* instance import...")
+            log("Running *first time* instance import...")
 
             self.tab_game._on_auto_import(is_initial_run=True)
 
             settings.global_settings.set('ever_launched', True)
-        else:
-            print("Skipping initial instance import (not first launch).")
 
     def _on_language_select(self):
         """由 SettingsTab 调用的回调。"""
@@ -256,7 +176,7 @@ class LocalizationInstallerApp:
         保存所有内容，清除当前 UI 元素，并重建整个应用程序界面，
         以应用语言和主题更改（不关闭进程）。
         """
-        print(_('lki.reload.status.reloading_ui'))  # <-- 本地化
+        log(_('lki.reload.status.reloading_ui'))  # <-- 本地化
 
         try:
             settings.global_settings.save()

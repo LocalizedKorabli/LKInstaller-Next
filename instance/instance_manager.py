@@ -13,20 +13,6 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import hashlib
 import json
 import os
@@ -36,7 +22,9 @@ from typing import Dict, Any, Optional
 
 import utils
 from localization_sources import global_source_manager  # (确保这个导入存在)
-from utils import determine_default_l10n_lang, SETTINGS_DIR
+from logger import log
+from utils import determine_default_l10n_lang
+from dirs import SETTINGS_DIR
 
 instances_path: Path = SETTINGS_DIR / 'instances.json'
 
@@ -63,10 +51,10 @@ class InstanceManager:
         try:
             default_fonts = global_source_manager.lang_code_requires_fonts(lang_code)
         except AttributeError:
-            print(f"Warning: global_source_manager.lang_code_requires_fonts() not found. Defaulting use_fonts to True.")
+            log(f"Warning: global_source_manager.lang_code_requires_fonts() not found. Defaulting use_fonts to True.")
             default_fonts = True  # (回退到旧逻辑)
         except Exception as e:
-            print(f"Error checking font requirement for {lang_code}: {e}. Defaulting use_fonts to True.")
+            log(f"Error checking font requirement for {lang_code}: {e}. Defaulting use_fonts to True.")
             default_fonts = True
 
         return {
@@ -87,7 +75,7 @@ class InstanceManager:
                 with open(instances_path, 'r', encoding='utf-8') as f:
                     self.instances = json.load(f)
             except Exception as ex:
-                print(f'Failed to load instances: {ex}')
+                log(f'Failed to load instances: {ex}')
                 self.instances = {}
         else:
             self.instances = {}
@@ -118,7 +106,7 @@ class InstanceManager:
                     # (a. 补全静态默认键)
                     for key, default_value in component_defaults.items():
                         if key not in preset_data:
-                            print(f"Migrating preset {preset_id} for {instance_id} (adding {key}: {default_value})...")
+                            log(f"Migrating preset {preset_id} for {instance_id} (adding {key}: {default_value})...")
                             preset_data[key] = default_value
                             needs_save = True
 
@@ -131,14 +119,14 @@ class InstanceManager:
                         except Exception:
                             default_fonts = True  # (回退)
 
-                        print(
+                        log(
                             f"Migrating preset {preset_id} for {instance_id} (adding use_fonts: {default_fonts} for lang={lang_code})...")
                         preset_data['use_fonts'] = default_fonts
                         needs_save = True
 
             else:
                 # (3. 'presets' 键完全缺失, 创建全新的默认预设)
-                print(f"Migrating old instance data for {instance_id} (creating default preset)...")
+                log(f"Migrating old instance data for {instance_id} (creating default preset)...")
 
                 default_lang_code = utils.select_locale_by_system_lang_code()  # (保持 load 方法中的硬编码回退)
                 default_preset = self._get_default_preset_data(default_lang_code)
@@ -148,7 +136,7 @@ class InstanceManager:
                 needs_save = True
 
         if needs_save:
-            print("Migration complete, saving updated instances.json...")
+            log("Migration complete, saving updated instances.json...")
             self.save()
 
     def save(self):

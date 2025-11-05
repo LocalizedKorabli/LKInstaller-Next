@@ -13,72 +13,16 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import locale
 import os
 import sys
 import time
 import tkinter as tk
-from pathlib import Path
 from typing import Optional, Tuple, Set, Dict
 
-base_path: Path = Path(getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__))))
-
+import dirs
+from logger import log
 from ui.windows.window_action import ActionProgressWindow
-
-try:
-    # Use LocalAppData for settings/cache if available
-    APP_DATA_PATH = Path(os.getenv('LOCALAPPDATA', '')) / 'LocalizedKorabli' / 'LKInstallerNext'
-    if not os.access(os.getenv('LOCALAPPDATA', ''), os.W_OK):
-        raise Exception("LocalAppData not writable")
-    os.makedirs(APP_DATA_PATH, exist_ok=True)
-except Exception:
-    # Fallback to alongside executable (portable mode)
-    APP_DATA_PATH = base_path / 'lki_data'
-
-CACHE_DIR = APP_DATA_PATH / 'cache'
-TEMP_DIR = APP_DATA_PATH / 'temp'
-SETTINGS_DIR = APP_DATA_PATH / 'settings'
-LOG_DIR = APP_DATA_PATH / 'logs'
 
 major2exact: Dict[str, str] = {
     'zh': 'zh_CN',
@@ -95,7 +39,7 @@ def get_system_language_codes() -> Tuple[Optional[str], Optional[str]]:
             return exact_lang, major_lang
 
     except Exception as e:
-        print(f'Error getting system locale: {e}')
+        log(f'Error getting system locale: {e}')
         return None, None
 
     return None, None
@@ -113,7 +57,7 @@ def is_system_gmt8_timezone() -> bool:
         if offset_seconds == 28800:  # 8 * 60 * 60
             return True
     except Exception as e:
-        print(f"Error checking timezone: {e}")
+        log(f"Error checking timezone: {e}")
     return False
 
 
@@ -128,7 +72,7 @@ Returns sets of exact languages and major languages.
 def gather_locales() -> Tuple[Set[str], Set[str]]:
     exact = set([])
     major = set([])
-    for _locale in os.listdir(base_path.joinpath('resources/locales')):
+    for _locale in os.listdir(dirs.base_path.joinpath('resources/locales')):
         if not _locale.endswith('.json'):
             continue
         _locale = _locale.replace('.json', '')
@@ -203,7 +147,7 @@ def get_configured_proxies() -> Optional[Dict[str, str]]:
         password = settings.global_settings.get('proxy.password', '')
 
         if not host or not port:
-            print(_('lki.proxy.warn.manual_no_host'))
+            log(_('lki.proxy.warn.manual_no_host'))
             return {'http': '', 'https': ''}
 
         if user and password:
@@ -237,12 +181,11 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
     from tkinter import messagebox  # 局部导入
 
     # (新增导入)
-    import settings
     from pathlib import Path
 
     VERSION_URL = "https://dl.localizedkorabli.org/lki/lk-next/version_info.json"
     DOWNLOAD_URL = "https://dl.localizedkorabli.org/lki/lk-next/lki_setup.exe"
-    UPDATE_DIR = TEMP_DIR / 'updates'
+    UPDATE_DIR = dirs.TEMP_DIR / 'updates'
     INSTALLER_PATH = UPDATE_DIR / 'lki_setup.exe'
 
     # 辅助函数：安全地更新UI
@@ -302,7 +245,7 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
                     f'/LANG={current_lang}'
                 ]
 
-                print(f"Starting updater with args: {args_list}")
+                log(f"Starting updater with args: {args_list}")
 
                 # 4. 使用新的参数列表启动更新程序
                 subprocess.Popen(args_list)

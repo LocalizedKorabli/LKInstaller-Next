@@ -13,46 +13,6 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import List
@@ -62,17 +22,18 @@ import subprocess  # (新增)
 import shutil  # (新增)
 
 import settings
-import utils  # (新增)
-import logger  # (新增)
+import logger
+from dirs import APP_DATA_PATH, base_path, CACHE_DIR, LOG_DIR
 from localization_sources import global_source_manager
 from localizer import _, get_available_languages
+from logger import log
 from ui.dialogs import RoutePriorityWindow, BaseDialog
 from ui.tabs.tab_base import BaseTab
 
 try:
     from tktooltip import ToolTip
 except ImportError:
-    print("Warning: tktooltip not found. Tooltips will be disabled.")
+    log("Warning: tktooltip not found. Tooltips will be disabled.")
     ToolTip = None
 
 
@@ -200,7 +161,7 @@ class SettingsTab(BaseTab):
         self.work_path_display.grid(row=0, column=0, sticky='w', padx=5)
 
         work_path_btn = ttk.Button(work_path_frame, text=_('lki.btn.open_dir'),
-                                   command=lambda: self._open_directory(utils.base_path))
+                                   command=lambda: self._open_directory(base_path))
         work_path_btn.grid(row=0, column=1, sticky='e')
 
         # 数据路径
@@ -211,12 +172,12 @@ class SettingsTab(BaseTab):
         data_path_frame.grid(row=1, column=1, sticky='we', pady=10)
         data_path_frame.columnconfigure(0, weight=1)
 
-        app_data_path = str(utils.APP_DATA_PATH.absolute())
+        app_data_path = str(APP_DATA_PATH.absolute())
         self.data_path_display = ttk.Label(data_path_frame, text=self._truncate_path(app_data_path, 30))
         self.data_path_display.grid(row=0, column=0, sticky='w', padx=5)
 
         data_path_btn = ttk.Button(data_path_frame, text=_('lki.btn.open_dir'),
-                                   command=lambda: self._open_directory(utils.APP_DATA_PATH))
+                                   command=lambda: self._open_directory(APP_DATA_PATH))
         data_path_btn.grid(row=0, column=1, sticky='e')
 
         # 清除按钮
@@ -374,7 +335,7 @@ class SettingsTab(BaseTab):
             else:  # Linux
                 subprocess.Popen(['xdg-open', path_str])
         except Exception as e:
-            print(f"Error opening directory: {e}")
+            log(f"Error opening directory: {e}")
             messagebox.showerror(_('lki.settings.clear.error'), f"Could not open directory: {e}", parent=self)
 
     def _on_clear_logs(self):
@@ -388,15 +349,15 @@ class SettingsTab(BaseTab):
 
         try:
             cleared_count = 0
-            for f in utils.LOG_DIR.glob('*.log'):
+            for f in LOG_DIR.glob('*.log'):
                 if f.name != logger.current_log_file_name:
                     os.remove(f)
                     cleared_count += 1
-            print(f"Cleared {cleared_count} log files.")
+            log(f"Cleared {cleared_count} log files.")
             messagebox.showinfo(_('lki.settings.clear_logs.confirm.title'),
                                 _('lki.settings.clear_logs.success'), parent=self)
         except Exception as e:
-            print(f"Error clearing logs: {e}")
+            log(f"Error clearing logs: {e}")
             messagebox.showerror(_('lki.settings.clear.error'), f"{e}", parent=self)
 
     def _on_clear_cache(self):
@@ -410,20 +371,20 @@ class SettingsTab(BaseTab):
 
         try:
             # 删除 CACHE_DIR 的 *内容*
-            for item in utils.CACHE_DIR.iterdir():
+            for item in CACHE_DIR.iterdir():
                 try:
                     if item.is_file():
                         os.remove(item)
                     elif item.is_dir():
                         shutil.rmtree(item)
                 except Exception as e:
-                    print(f"Could not remove item {item}: {e}")
+                    log(f"Could not remove item {item}: {e}")
 
-            print("Cache cleared.")
+            log("Cache cleared.")
             messagebox.showinfo(_('lki.settings.clear_cache.confirm.title'),
                                 _('lki.settings.clear_cache.success'), parent=self)
         except Exception as e:
-            print(f"Error clearing cache: {e}")
+            log(f"Error clearing cache: {e}")
             messagebox.showerror(_('lki.settings.clear.error'), f"{e}", parent=self)
 
     # --- (新增结束) ---

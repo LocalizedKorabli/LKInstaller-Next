@@ -13,56 +13,17 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import os
 import subprocess
 import tkinter as tk
 import webbrowser
 from functools import partial
 from tkinter import ttk, messagebox
-from typing import List, Callable, Dict, Any, Optional
+from typing import Callable, Dict, Any, Optional
 
 import utils
 from localizer import _
+from logger import log
 from ui.dialogs import BaseDialog
 from instance.game_instance import GameInstance
 from ui.ui_manager import get_icon_manager
@@ -240,12 +201,12 @@ class ActionProgressWindow(BaseDialog):
     def _open_instance_folder(self, instance: GameInstance):
         """打开所选实例的根文件夹"""
         if not instance:
-            print("ActionProgress: No instance provided for folder action.")
+            log("ActionProgress: No instance provided for folder action.")
             return
 
         path = instance.path
         if not path:
-            print(f"ActionProgress: No path for instance {instance.name}")
+            log(f"ActionProgress: No path for instance {instance.name}")
             return
 
         try:
@@ -255,13 +216,13 @@ class ActionProgressWindow(BaseDialog):
                 # (已修改) 确保路径是字符串
                 subprocess.run(['explorer', os.path.normpath(str(path))])
             except Exception as e:
-                print(f"Error opening folder: {e}")
+                log(f"Error opening folder: {e}")
                 webbrowser.open(f'file:///{path}')
 
     def _on_play_instance(self, instance: GameInstance):
         """点击“运行”按钮的回调。"""
         if not instance:
-            print("ActionProgress: No instance provided for play action.")
+            log("ActionProgress: No instance provided for play action.")
             return
 
         success, exe_name = instance.launch_game()

@@ -13,40 +13,15 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import threading
 from tkinter import ttk, PhotoImage
 from typing import Optional
 
+import dirs
 import constants
 import utils
 from localizer import _
+from logger import log
 from ui.tabs.tab_base import BaseTab
 from ui.windows.window_action import ActionProgressWindow
 
@@ -66,7 +41,7 @@ class AboutTab(BaseTab):
         content_frame.pack(expand=True, fill='both', anchor='n')
 
         # Logo
-        logo_path = utils.base_path.joinpath('resources/imgs/lki.png')
+        logo_path = dirs.base_path.joinpath('resources/imgs/lki.png')
 
         try:
             if logo_path.is_file():
@@ -77,7 +52,7 @@ class AboutTab(BaseTab):
 
             logo_label.pack(pady=(0, 10))
         except Exception as e:
-            print(f"Error loading logo image: {e}")
+            log(f"Error loading logo image: {e}")
             logo_label = ttk.Label(content_frame, text="[Logo Loading Error]")
             logo_label.pack(pady=(0, 10))
 
@@ -106,7 +81,7 @@ class AboutTab(BaseTab):
 
     def _check_for_updates(self):
         """(修改) 在新线程中启动更新检查。"""
-        print("Checking for updates...")
+        log("Checking for updates...")
 
         # (新增) 防止打开多个更新窗口
         if self.update_window and self.update_window.winfo_exists():
@@ -133,7 +108,7 @@ class AboutTab(BaseTab):
 
     def _on_update_cancel(self):  # (新增)
         """当更新窗口的取消按钮被按下时调用。"""
-        print("Update check/download cancelled by user.")
+        log("Update check/download cancelled by user.")
         # 工作线程 (utils.update_worker) 会检查 window.is_cancelled()，
         # 该状态由窗口自己的 _on_close() 方法设置。
         # 此处我们不需要做额外操作，但必须提供这个回调函数。

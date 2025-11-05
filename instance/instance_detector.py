@@ -13,25 +13,12 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import os
 import string
 import winreg
 import xml.etree.ElementTree as Et
 from pathlib import Path
+from logger import log
 from typing import List, Optional, Tuple, Set
 
 
@@ -73,7 +60,7 @@ def get_instance_type_from_path(path: Path) -> Optional[str]:
                 if game_id == 'MK.RPT.PRODUCTION':
                     return 'pts'
         except Exception as e:
-            print(f"Error parsing game_info.xml at {path}: {e}")
+            log(f"Error parsing game_info.xml at {path}: {e}")
 
     return None
 
@@ -113,9 +100,9 @@ def _find_from_registry() -> List[Tuple[str, str]]:
                     seen_paths.add(normalized_path)  # <-- (在找到时去重)
 
     except FileNotFoundError:
-        print("LGC registry key or preferences.xml not found. Skipping registry scan.")
+        log("LGC registry key or preferences.xml not found. Skipping registry scan.")
     except Exception as e:
-        print(f"Error scanning registry: {e}")
+        log(f"Error scanning registry: {e}")
     return found_list
 
 
@@ -162,7 +149,7 @@ def find_instances_for_auto_import() -> List[Tuple[str, str]]:
     检测所有游戏实例（来自注册表和常见路径），并按发现顺序返回列表。
     返回: (path, type_code) 元组的列表。
     """
-    print("Starting instance detection...")
+    log("Starting instance detection...")
 
     # 1. 获取通用路径结果 (List, 按扫描顺序排序)
     common_found_sorted: List[Tuple[str, str]] = _find_from_common_paths()
@@ -185,5 +172,5 @@ def find_instances_for_auto_import() -> List[Tuple[str, str]]:
             final_list.append((path, type_code))
             seen_paths.add(path)
 
-    print(f"Detection finished. Found {len(final_list)} potential instances.")
+    log(f"Detection finished. Found {len(final_list)} potential instances.")
     return final_list

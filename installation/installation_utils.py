@@ -13,33 +13,6 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import hashlib
 import json
 import os
@@ -48,11 +21,12 @@ import uuid
 import xml.etree.ElementTree as Et
 import zipfile
 from pathlib import Path
+from logger import log
 from typing import Dict, List, Union, Any, Optional, Tuple
 
 import polib
 
-from utils import CACHE_DIR, TEMP_DIR
+from dirs import CACHE_DIR, TEMP_DIR
 
 BUILTIN_LOCALE_CONFIG_ZH = '''<locale_config>
     <locale_id>ru</locale_id>
@@ -85,7 +59,7 @@ def clear_temp_dir():
         try:
             shutil.rmtree(TEMP_DIR)
         except Exception as e:
-            print(f"Warning: Could not clear temp dir: {e}")
+            log(f"Warning: Could not clear temp dir: {e}")
     mkdir(TEMP_DIR)
 
 
@@ -115,7 +89,7 @@ def get_sha256(filepath: Path) -> Optional[str]:
                 sha256_hash.update(byte_block)
             return sha256_hash.hexdigest()
     except Exception as e:
-        print(f"Error calculating SHA256 for {filepath}: {e}")
+        log(f"Error calculating SHA256 for {filepath}: {e}")
         return None
 
 
@@ -124,7 +98,7 @@ def fix_paths_xml(build_dir: Path):
         return
     xml_path = build_dir / 'paths.xml'
     if not xml_path.is_file():
-        print(f"Warning: paths.xml not found in {build_dir}")
+        log(f"Warning: paths.xml not found in {build_dir}")
         return
 
     try:
@@ -158,10 +132,10 @@ def fix_paths_xml(build_dir: Path):
             for element in reversed(elements_to_insert):
                 paths_element.insert(0, element)
             tree.write(xml_path, encoding='utf-8', xml_declaration=True)
-            print(f"Updated '{xml_path}'.")
+            log(f"Updated '{xml_path}'.")
     # (其他辅助函数如 fix_paths_xml, get_locale_config_content, write_locale_config_to_temp 保持不变)
     except Exception as e:
-        print(f"Error modifying XML {xml_path}: {e}")
+        log(f"Error modifying XML {xml_path}: {e}")
 
 
 def get_locale_config_content(lang_code: str) -> Optional[str]:
@@ -205,9 +179,9 @@ def create_mkmod(output_path: Path, files_to_add: Dict[str, Path]):
                         zf.writestr(arcname, "placeholder")
                     else:
                         zf.write(local_path, arcname=arcname)
-        print(f"Created {output_path}")
+        log(f"Created {output_path}")
     except Exception as e:
-        print(f"Failed to create {output_path}: {e}")
+        log(f"Failed to create {output_path}: {e}")
 
 
 # (Mods 助手函数: _extract_zip_mods 保持不变)
@@ -262,7 +236,7 @@ def _extract_zip_mods(zip_path: Path, temp_target_dir: Path):
                     shutil.rmtree(temp_sub_dir)
 
     except Exception as e:
-        print(f"Warning: Failed to process zip file {zip_path}: {e}")
+        log(f"Warning: Failed to process zip file {zip_path}: {e}")
 
 
 # --- JSON Mods 编译辅助函数 (基于您的输入) ---
@@ -383,7 +357,7 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
         with open(PLACEHOLDER_SOURCE_PATH, 'w', encoding='utf-8') as f:
             f.write("placeholder")
     except Exception as e:
-        print(f"FATAL: Failed to create placeholder source file: {e}")
+        log(f"FATAL: Failed to create placeholder source file: {e}")
         return None, None
 
     # 3. 初始化收集字典
@@ -421,7 +395,7 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
         try:
             base_mo = polib.mofile(str(mo_file_path))
         except Exception as e:
-            print(f"Error: Failed to load base MO file for JSON mod compilation: {e}")
+            log(f"Error: Failed to load base MO file for JSON mod compilation: {e}")
             pass
         else:
             for json_path in json_mods_to_process:
@@ -458,7 +432,7 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
                         json_converted_mo_files[f"texts/ru/LC_MESSAGES/{mo_filename}"] = temp_mo_path
 
                 except Exception as e:
-                    print(f"Warning: Failed to compile JSON mod {json_path}: {e}")
+                    log(f"Warning: Failed to compile JSON mod {json_path}: {e}")
 
     # --- 8. 强制添加占位符到打包列表并打包 ---
 
@@ -471,7 +445,7 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
         create_mkmod(MO_MKMOD_PATH, native_mo_files)
         mo_mkmod_path = MO_MKMOD_PATH
     except Exception as e:
-        print(f"FATAL: Failed to create native MO mkmod file: {e}")
+        log(f"FATAL: Failed to create native MO mkmod file: {e}")
 
     # B. 打包编译后的 JSON MO 文件 (lk_i18n_json_mod.mkmod)
     # 强制添加占位符
@@ -482,7 +456,7 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
         create_mkmod(JSON_MKMOD_PATH, json_converted_mo_files)
         json_mkmod_path = JSON_MKMOD_PATH
     except Exception as e:
-        print(f"FATAL: Failed to create JSON MO mkmod file: {e}")
+        log(f"FATAL: Failed to create JSON MO mkmod file: {e}")
 
     if TEMP_PROCESS_DIR.is_dir():
         shutil.rmtree(TEMP_PROCESS_DIR)

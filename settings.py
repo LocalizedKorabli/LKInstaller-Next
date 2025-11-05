@@ -13,35 +13,6 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-# settings.py
-
 import json
 import os
 from pathlib import Path
@@ -56,8 +27,10 @@ except ImportError:
     winreg = None  # 保证在非 Windows 系统或 pywin32 未安装时不会崩溃
 
 # (修改：导入 localizer 以便验证语言)
-from utils import select_locale_by_system_lang_code, get_system_language_codes, is_system_gmt8_timezone, SETTINGS_DIR
+from utils import select_locale_by_system_lang_code, get_system_language_codes, is_system_gmt8_timezone
+from dirs import SETTINGS_DIR
 from localizer import get_available_languages
+from logger import log
 
 settings_path: Path = SETTINGS_DIR / 'global.json'
 
@@ -79,13 +52,13 @@ def _read_installer_language_from_registry() -> Optional[str]:
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, key_flags) as key:
             value, reg_type = winreg.QueryValueEx(key, 'InstallLanguage')
             if reg_type == winreg.REG_SZ:
-                print(f"Read language from installer registry: {value}")
+                log(f"Read language from installer registry: {value}")
                 return value
     except FileNotFoundError:
         # 键或值不存在, 这是正常的 (例如在开发环境中)
-        print("Installer language registry key not found (normal for dev).")
+        log("Installer language registry key not found (normal for dev).")
     except Exception as e:
-        print(f"Warning: Could not read installer language from registry: {e}")
+        log(f"Warning: Could not read installer language from registry: {e}")
 
     return None
 
@@ -134,23 +107,23 @@ class GlobalSettings:
                 with open(settings_path, 'r', encoding='utf-8') as f:
                     saved_data = json.load(f)
             except Exception as ex:
-                print(f'Failed to load global settings: {ex}')
+                log(f'Failed to load global settings: {ex}')
 
         is_first_launch = not saved_data.get('ever_launched', False)
 
         if is_first_launch:
-            print("First launch detected, checking for installer language...")
+            log("First launch detected, checking for installer language...")
             installer_lang = _read_installer_language_from_registry()
 
             if installer_lang:
                 # 验证该语言是否在 'resources/locales' 中存在
                 available_langs = get_available_languages()  # 返回 {code: name}
                 if installer_lang in available_langs:
-                    print(f"Setting default language from installer registry: {installer_lang}")
+                    log(f"Setting default language from installer registry: {installer_lang}")
                     # 覆盖掉 system_default_lang
                     defaults['language'] = installer_lang
                 else:
-                    print(f"Warning: Installer language '{installer_lang}' is not available, falling back to system default.")
+                    log(f"Warning: Installer language '{installer_lang}' is not available, falling back to system default.")
 
         self.data = defaults
 
@@ -177,12 +150,12 @@ class GlobalSettings:
         current_routes = self.data['download_routes_priority']
         for route in all_available_routes:
             if route not in current_routes:
-                print(f"Migrating settings: adding new route '{route}'")
+                log(f"Migrating settings: adding new route '{route}'")
                 current_routes.append(route)
                 migration_needs_save = True
 
         if migration_needs_save:
-            print("Saving migrated settings...")
+            log("Saving migrated settings...")
             self.save()
 
     # ... (GlobalSettings 的其余部分保持不变) ...

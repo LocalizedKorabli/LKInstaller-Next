@@ -13,4 +13,23 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-APP_VERSION = '0.0.5'
+import os
+import sys
+from pathlib import Path
+
+base_path: Path = Path(getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__))))
+
+try:
+    # Use LocalAppData for settings/cache if available
+    APP_DATA_PATH = Path(os.getenv('LOCALAPPDATA', '')) / 'LocalizedKorabli' / 'LKInstallerNext'
+    if not os.access(os.getenv('LOCALAPPDATA', ''), os.W_OK):
+        raise Exception("LocalAppData not writable")
+    os.makedirs(APP_DATA_PATH, exist_ok=True)
+except Exception:
+    # Fallback to alongside executable (portable mode)
+    APP_DATA_PATH = base_path / 'lki_data'
+
+CACHE_DIR = APP_DATA_PATH / 'cache'
+TEMP_DIR = APP_DATA_PATH / 'temp'
+SETTINGS_DIR = APP_DATA_PATH / 'settings'
+LOG_DIR = APP_DATA_PATH / 'logs'

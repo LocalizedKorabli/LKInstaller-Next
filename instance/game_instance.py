@@ -13,38 +13,12 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import hashlib
 import json
 import os
 import subprocess  # (新增)
 from pathlib import Path
+from logger import log
 from typing import Dict, Optional, List, Tuple  # (新增 Tuple)
 
 import win32api
@@ -62,7 +36,7 @@ def _calculate_sha256(filepath: Path) -> Optional[str]:
                 sha256_hash.update(byte_block)
             return sha256_hash.hexdigest()
     except Exception as e:
-        print(f"Error calculating SHA256 for {filepath}: {e}")
+        log(f"Error calculating SHA256 for {filepath}: {e}")
         return None
 
 
@@ -107,7 +81,7 @@ class GameVersion:
         if not os.path.exists(exe_path_str):
             exe_path_str = str(self.bin_folder_path / "bin64" / "WorldOfWarships64.exe")
             if not os.path.exists(exe_path_str):
-                print(f"Warning: Did not find Korabli64.exe or WorldOfWarships64.exe in {self.bin_folder_path}")
+                log(f"Warning: Did not find Korabli64.exe or WorldOfWarships64.exe in {self.bin_folder_path}")
                 return None
 
         try:
@@ -136,7 +110,7 @@ class GameVersion:
                 return f"{major}.{minor}.{patch}.{build}"
 
         except Exception as e:
-            print(f"Error reading exe product version from {exe_path_str}: {e}")
+            log(f"Error reading exe product version from {exe_path_str}: {e}")
             return None
 
     # --- (修改结束) ---
@@ -160,7 +134,7 @@ class GameVersion:
                 l10n_sub_version=data.get("l10n_sub_version")
             )
         except Exception as e:
-            print(f"Error loading {info_path}: {e}")
+            log(f"Error loading {info_path}: {e}")
             return None
 
     def get_component_statuses(self) -> Dict[str, str]:
@@ -197,7 +171,7 @@ class GameVersion:
                 actual_hash = _calculate_sha256(absolute_path)
 
                 if actual_hash != expected_hash:
-                    print(f"Verification FAILED for {relative_path}: Hash mismatch.")
+                    log(f"Verification FAILED for {relative_path}: Hash mismatch.")
                     is_verified = False
                     break  # 一个坏文件使该组件失败
 
@@ -229,14 +203,14 @@ class GameInstance:
         self.versions = []
         bin_path = self.path / "bin"
         if not bin_path.is_dir():
-            print(f"Warning: 'bin' directory not found in {self.path}")
+            log(f"Warning: 'bin' directory not found in {self.path}")
             return
 
         for folder_name in os.listdir(bin_path):
             if folder_name.isdigit():
                 folder_path = bin_path / folder_name
                 if folder_path.is_dir():
-                    print(f"Found game version folder: {folder_name}")
+                    log(f"Found game version folder: {folder_name}")
                     self.versions.append(GameVersion(folder_path, self.path))
 
         self.versions.sort(key=lambda v: v.exe_version or "0.0", reverse=True)
@@ -261,12 +235,12 @@ class GameInstance:
             exe_path = self.path / exe
             if exe_path.is_file():
                 try:
-                    print(f"Attempting to launch: {exe_path}")
+                    log(f"Attempting to launch: {exe_path}")
                     subprocess.Popen([str(exe_path)], cwd=str(self.path))
                     return True, exe
                 except Exception as e:
-                    print(f"Failed to start {exe}: {e}")
+                    log(f"Failed to start {exe}: {e}")
                     # Try the next one
 
-        print(f"Error: Could not find any of {executables_to_try} in {self.path}")
+        log(f"Error: Could not find any of {executables_to_try} in {self.path}")
         return False, None  # Failed to find any

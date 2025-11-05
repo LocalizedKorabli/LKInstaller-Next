@@ -13,46 +13,6 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import os
 import subprocess
 import tkinter as tk
@@ -66,6 +26,7 @@ from instance import instance_manager
 from instance.game_instance import GameInstance
 from localization_sources import global_source_manager
 from localizer import _
+from logger import log
 from ui.dialogs import CustomAskStringDialog, BaseDialog, AutoUpdateConfigDialog  # (已修改)
 from ui.tabs.tab_base import BaseTab
 from utils import determine_default_l10n_lang
@@ -73,7 +34,7 @@ from utils import determine_default_l10n_lang
 try:
     from tktooltip import ToolTip
 except ImportError:
-    print("Warning: tktooltip not found. Tooltips will be disabled.")
+    log("Warning: tktooltip not found. Tooltips will be disabled.")
     ToolTip = None
 
 
@@ -367,7 +328,7 @@ class AdvancedTab(BaseTab):
         selected_id = self.display_name_to_preset_id.get(selected_name, 'default')
 
         if selected_id and self.current_instance:
-            print(f"Updating instance {self.current_instance.instance_id} active preset to {selected_id}")
+            log(f"Updating instance {self.current_instance.instance_id} active preset to {selected_id}")
             self.instance_manager.update_instance_data(
                 self.current_instance.instance_id,
                 {'active_preset_id': selected_id}
@@ -423,7 +384,7 @@ class AdvancedTab(BaseTab):
 
     def _on_preset_manager_close(self):
         """当预设管理器关闭时，由其调用的回调函数"""
-        print("Preset manager closed. Refreshing preset combobox.")
+        log("Preset manager closed. Refreshing preset combobox.")
         self._build_preset_maps()
         self._update_preset_combobox()
         self._update_preset_details_display()
@@ -812,7 +773,7 @@ class PresetManagerWindow(BaseDialog):
         try:
             subprocess.run(['explorer', os.path.normpath(mods_path)])
         except Exception as e:
-            print(f"Error opening mods folder: {e}")
+            log(f"Error opening mods folder: {e}")
             webbrowser.open(f'file:///{mods_path}')
 
     def _open_mods_download(self):

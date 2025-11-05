@@ -13,35 +13,10 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Optional
 
-import utils
+import dirs
+from logger import log
 
 
 class IconManager:
@@ -74,11 +49,11 @@ class IconManager:
                       'refresh', 'play']
 
         for name in icon_names:
-            path = utils.base_path.joinpath(f'resources/icons/{theme_name}/{name}.png')
+            path = dirs.base_path.joinpath(f'resources/icons/{theme_name}/{name}.png')
             try:
                 self.icons[theme_name][name] = PhotoImage(file=path)
             except Exception as e:
-                print(f"FATAL: 无法加载图标: {path}\n{e}")
+                log(f"FATAL: 无法加载图标: {path}\n{e}")
                 self.icons[theme_name][name] = None
 
     def set_active_theme(self, theme_name):
@@ -86,7 +61,7 @@ class IconManager:
         将活动图标集（例如 self.add）设置为 'light' 或 'dark'。
         """
         if theme_name not in ['light', 'dark']:
-            print(f"Warning: 未知的图标主题 '{theme_name}'。默认为 'light'。")
+            log(f"Warning: 未知的图标主题 '{theme_name}'。默认为 'light'。")
             theme_name = 'light'
 
         self.import_icon = self.icons[theme_name]['import']

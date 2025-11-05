@@ -13,27 +13,15 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import glob
 import json
 import os
 
-import utils
+import dirs
 
-locales_dir = utils.base_path.joinpath('resources/locales')
+from logger import log
+
+locales_dir = dirs.base_path.joinpath('resources/locales')
 
 
 class Localizer:
@@ -53,11 +41,11 @@ class Localizer:
                     target_translations = json.load(f)
                     self.translations.update(target_translations)
             self.current_lang = language_code
-            print(f"Loaded language: {language_code}")
+            log(f"Loaded language: {language_code}")
         except FileNotFoundError:
-            print(f"Warning: Translation file not found for {language_code}. Falling back to default (en).")
+            log(f"Warning: Translation file not found for {language_code}. Falling back to default (en).")
         except json.JSONDecodeError:
-            print(f"Error: Invalid JSON format in {file_path}")
+            log(f"Error: Invalid JSON format in {file_path}")
 
     def gettext(self, text):
         return self.translations.get(text, text)
@@ -83,7 +71,7 @@ def get_available_languages():
             if lang_name:
                 langs[locale_code] = lang_name
             else:
-                print(f"Warning: '{f_path}' 中缺少 'lki.lang.name'。")
+                log(f"Warning: '{f_path}' 中缺少 'lki.lang.name'。")
         except Exception as e:
-            print(f"Error loading locale '{f_path}': {e}")
+            log(f"Error loading locale '{f_path}': {e}")
     return langs

@@ -13,71 +13,18 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU Affero General Public License for more details.
-#
-#  You should have received a copy of the GNU Affero General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import os
 import platform
 import tkinter as tk
 import sys
 from pathlib import Path
 
+import dirs
 import settings
-import utils
 from instance import instance_manager
 from installation.installation_manager import InstallationManager, InstallationTask
 from instance.game_instance import GameInstance
 from localizer import global_translator, _
-from logger import setup_logger
+from logger import setup_logger, log
 
 # HiDPI Awareness
 try:
@@ -91,7 +38,7 @@ try:
             # Windows Vista / 7 / 8
             ctypes.windll.user32.SetProcessDPIAware()
 except Exception as e:
-    print(f"Warning: Could not set DPI awareness: {e}")
+    log(f"Warning: Could not set DPI awareness: {e}")
 
 global_translator.load_language(settings.global_settings.language)
 from app import LocalizationInstallerApp
@@ -101,22 +48,22 @@ def run_auto_execute(root, arg, run_client):
     """
     在简洁模式下运行安装程序。
     """
-    print(f"Auto-execute mode triggered with arg: {arg}, run_client: {run_client}")
+    log(f"Auto-execute mode triggered with arg: {arg}, run_client: {run_client}")
 
     try:
         instance_id, preset_id = arg.split(':', 1)
     except ValueError:
-        print(f"Error: Invalid --auto-execute-preset argument. Expected format: 'instance_id:preset_id'")
+        log(f"Error: Invalid --auto-execute-preset argument. Expected format: 'instance_id:preset_id'")
         sys.exit(1)
 
     instance_data = instance_manager.global_instance_manager.get_instance(instance_id)
     if not instance_data:
-        print(f"Error: Could not find instance with ID: {instance_id}")
+        log(f"Error: Could not find instance with ID: {instance_id}")
         sys.exit(1)
 
     preset_data = instance_data.get('presets', {}).get(preset_id)
     if not preset_data:
-        print(f"Error: Could not find preset '{preset_id}' for instance '{instance_data.get('name')}'")
+        log(f"Error: Could not find preset '{preset_id}' for instance '{instance_data.get('name')}'")
         sys.exit(1)
 
     # 创建必要的对象
@@ -128,7 +75,7 @@ def run_auto_execute(root, arg, run_client):
             type=instance_data['type']
         )
     except Exception as e:
-        print(f"Error initializing game instance {instance_data['name']}: {e}")
+        log(f"Error initializing game instance {instance_data['name']}: {e}")
         sys.exit(1)
 
     # 为预设添加一个可显示的名称
@@ -140,31 +87,31 @@ def run_auto_execute(root, arg, run_client):
     task = InstallationTask(instance, preset_data, root)
 
     def _on_auto_install_complete():
-        print("Auto-install complete.")
+        log("Auto-install complete.")
         if run_client:
-            print("Launching client...")
+            log("Launching client...")
             success, exe_name = instance.launch_game()
             if not success:
-                print(f"Error: Failed to launch game at {instance.path}")
+                log(f"Error: Failed to launch game at {instance.path}")
 
-        print("Exiting.")
+        log("Exiting.")
         root.after(500, root.quit)
 
     # 启动安装
     manager = InstallationManager(root)
     def deferred_start_installation():
-        print("Mainloop is running. Starting installation...")
+        log("Mainloop is running. Starting installation...")
         try:
             manager.start_installation([task], _on_auto_install_complete)
         except Exception as e:
-            print(f"CRITICAL ERROR during installation start: {e}")
+            log(f"CRITICAL ERROR during installation start: {e}")
             import traceback
             traceback.print_exc()
             root.quit()
 
     root.after(100, deferred_start_installation)
 
-    print("Starting mainloop, waiting for deferred start...")
+    log("Starting mainloop, waiting for deferred start...")
     root.mainloop()
 
 
@@ -182,7 +129,7 @@ if __name__ == '__main__':
             if idx + 1 < len(args):
                 auto_execute_arg = args[idx + 1]
             else:
-                print("Error: --auto-execute-preset flag found but no argument provided.")
+                log("Error: --auto-execute-preset flag found but no argument provided.")
                 sys.exit(1)
         except ValueError:
             pass
@@ -196,16 +143,16 @@ if __name__ == '__main__':
             dpi = ctypes.windll.user32.GetDpiForWindow(root.winfo_id())
             scaling_factor = dpi / 96.0  # 96 DPI = 100% 缩放
             if scaling_factor > 1.0:
-                print(f"HiDPI detected. Scaling factor: {scaling_factor}")
+                log(f"HiDPI detected. Scaling factor: {scaling_factor}")
                 root.tk.call('tk', 'scaling', scaling_factor)
     except Exception as e:
-        print(f"Warning: Could not set Tk scaling: {e}")
+        log(f"Warning: Could not set Tk scaling: {e}")
         scaling_factor = 1.0  # 重置
 
     try:
         theme = settings.global_settings.get('theme', 'light')
     except Exception as e:
-        print(f"Could not load settings, defaulting theme. Error: {e}")
+        log(f"Could not load settings, defaulting theme. Error: {e}")
         theme = 'light'
 
     font_family = "Microsoft YaHei"
@@ -219,10 +166,10 @@ if __name__ == '__main__':
     except (ValueError, IndexError):
         pass
 
-    root.call('source', utils.base_path.joinpath('resources/theme/azure/azure.tcl'))
+    root.call('source', dirs.base_path.joinpath('resources/theme/azure/azure.tcl'))
     root.call('set_theme', theme, font_family)
 
-    root.iconbitmap(default=utils.base_path.joinpath('resources/logo/logo64.ico'))
+    root.iconbitmap(default=dirs.base_path.joinpath('resources/logo/logo64.ico'))
 
     if auto_execute_arg:
         # --- 简洁模式 ---
@@ -237,7 +184,7 @@ if __name__ == '__main__':
         settings.global_settings.save()
         instance_manager.global_instance_manager.save()
     except Exception:  # (捕捉更广泛的异常，因为 settings 可能未完全加载)
-        print("Settings module not fully loaded or failed, skipping save.")
+        log("Settings module not fully loaded or failed, skipping save.")
 
 # pyinstaller -w lki.py --add-data "resources\*;resources" -i resources\logo\logo.ico --version-file=assets\version_file.txt --clean --uac-admin
 # Windows 7 Users: Install KB3063858
