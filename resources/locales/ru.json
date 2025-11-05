@@ -178,7 +178,7 @@
   "lki.settings.category.download": "Загрузка",
   "lki.settings.category.files": "Файлы",
   "lki.settings.clear.error": "Очистка не удалась: %s",
-  "lki.settings.clear_cache.confirm.message": "Подтвердите очистку кеша загрузок?\nКеш загрузок повышает эффективность установки.\nНо если ваша локализация не загружается корректно, попробуйте эту опцию.",
+  "lki.settings.clear_cache.confirm.message": "Кеш загрузок повышает эффективность установки.\nНо если ваша локализация не загружается корректно, попробуйте эту опцию.\nПодтвердите очистку кеша загрузок?",
   "lki.settings.clear_cache.confirm.title": "Очистка кеша",
   "lki.settings.clear_cache.success": "Кеш очищен.",
   "lki.settings.clear_logs.confirm.message": "Подтвердите очистку логов вывода?",

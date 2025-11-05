@@ -178,7 +178,7 @@
   "lki.settings.category.download": "ダウンロード",
   "lki.settings.category.files": "ファイル",
   "lki.settings.clear.error": "消去に失敗しました: %s",
-  "lki.settings.clear_cache.confirm.message": "ダウンロードキャッシュを消去しますか？\nキャッシュはインストール効率を向上させます。\nしかし、ローカライズが正常に読み込まれない場合は、これを試してください。",
+  "lki.settings.clear_cache.confirm.message": "キャッシュはインストール効率を向上させます。\nしかし、ローカライズが正常に読み込まれない場合は、これを試してください。\nダウンロードキャッシュを消去しますか？",
   "lki.settings.clear_cache.confirm.title": "キャッシュの消去",
   "lki.settings.clear_cache.success": "キャッシュは消去されました。",
   "lki.settings.clear_logs.confirm.message": "出力ログを消去しますか？",

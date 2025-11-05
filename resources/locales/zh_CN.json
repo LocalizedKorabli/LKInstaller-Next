@@ -178,7 +178,7 @@
   "lki.settings.category.download": "下载",
   "lki.settings.category.files": "文件",
   "lki.settings.clear.error": "清除失败: %s",
-  "lki.settings.clear_cache.confirm.message": "确认清除下载缓存？\n下载缓存能够有效提升安装效率。\n但如果您安装的本地化包一直无法被游戏正常读取，请尝试该选项。",
+  "lki.settings.clear_cache.confirm.message": "下载缓存能够有效提升安装效率。\n但如果您安装的本地化包一直无法被游戏正常读取，请尝试该选项。\n确认清除下载缓存？",
   "lki.settings.clear_cache.confirm.title": "清除缓存",
   "lki.settings.clear_cache.success": "缓存已清除。",
   "lki.settings.clear_logs.confirm.message": "确认清除输出日志？",

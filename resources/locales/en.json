@@ -178,7 +178,7 @@
   "lki.settings.category.download": "Download",
   "lki.settings.category.files": "Files",
   "lki.settings.clear.error": "Clear failed: %s",
-  "lki.settings.clear_cache.confirm.message": "Confirm clearing download cache?\nDownload cache improves installation efficiency.\nBut if your localization pack fails to load correctly, please try this.",
+  "lki.settings.clear_cache.confirm.message": "Download cache improves installation efficiency.\nBut if your localization pack fails to load correctly, please try this.\nConfirm clearing download cache?",
   "lki.settings.clear_cache.confirm.title": "Clear Cache",
   "lki.settings.clear_cache.success": "Cache cleared.",
   "lki.settings.clear_logs.confirm.message": "Confirm clearing output logs?",
