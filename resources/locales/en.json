@@ -185,7 +185,7 @@
   "lki.settings.clear_logs.confirm.title": "Clear Logs",
   "lki.settings.clear_logs.success": "Logs cleared.",
   "lki.settings.download_routes_priority": "Routes:",
-  "lki.settings.language": "\uD83C\uDF10Language:",
+  "lki.settings.language": "Language:",
   "lki.settings.language.reload_required": "Reload the application to apply the change.",
   "lki.settings.paths.data_path": "App Data Path:",
   "lki.settings.paths.work_path": "Work Path:",

@@ -185,7 +185,7 @@
   "lki.settings.clear_logs.confirm.title": "清除日誌",
   "lki.settings.clear_logs.success": "日誌已清除。",
   "lki.settings.download_routes_priority": "下載線路:",
-  "lki.settings.language": "\uD83C\uDF10語言:",
+  "lki.settings.language": "Language/語言:",
   "lki.settings.language.reload_required": "重新載入應用程式以生效。",
   "lki.settings.paths.data_path": "應用程式資料路徑:",
   "lki.settings.paths.work_path": "應用程式工作路徑:",

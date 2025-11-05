@@ -185,7 +185,7 @@
   "lki.settings.clear_logs.confirm.title": "ログの消去",
   "lki.settings.clear_logs.success": "ログは消去されました。",
   "lki.settings.download_routes_priority": "ルート:",
-  "lki.settings.language": "\uD83C\uDF10言語:",
+  "lki.settings.language": "Language/言語:",
   "lki.settings.language.reload_required": "変更を適用するにはアプリケーションをリロードしてください。",
   "lki.settings.paths.data_path": "データパス:",
   "lki.settings.paths.work_path": "作業パス:",
