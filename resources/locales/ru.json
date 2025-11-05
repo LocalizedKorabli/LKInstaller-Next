@@ -185,7 +185,7 @@
   "lki.settings.clear_logs.confirm.title": "Очистка логов",
   "lki.settings.clear_logs.success": "Логи очищены.",
   "lki.settings.download_routes_priority": "Маршруты:",
-  "lki.settings.language": "Язык:",
+  "lki.settings.language": "\uD83C\uDF10Язык:",
   "lki.settings.language.reload_required": "Перезагрузите приложение, чтобы применить изменения.",
   "lki.settings.paths.data_path": "Путь данных:",
   "lki.settings.paths.work_path": "Рабочий путь:",
