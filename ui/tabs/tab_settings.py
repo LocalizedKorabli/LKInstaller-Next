@@ -26,6 +26,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -71,15 +84,23 @@ class SettingsTab(BaseTab):
 
         self._create_settings_tab_widgets()
 
+    # --- (方法已修改：使用 LabelFrame 整合) ---
     def _create_settings_tab_widgets(self):
         """创建“设置”选项卡中的所有小部件"""
 
-        self.columnconfigure(1, weight=1)
+        # 配置主选项卡（self）的列
+        self.columnconfigure(0, weight=1)
 
-        lang_label = ttk.Label(self, text=_('lki.settings.language'))
+        # --- “外观”设置组 ---
+        appearance_frame = ttk.LabelFrame(self, text=_('lki.settings.category.appearance'), padding=10)
+        appearance_frame.grid(row=0, column=0, sticky='we', pady=(0, 5))
+        appearance_frame.columnconfigure(1, weight=1)
+
+        # 语言设置
+        lang_label = ttk.Label(appearance_frame, text=_('lki.settings.language'))
         lang_label.grid(row=0, column=0, sticky='e', padx=(0, 10), pady=10)
 
-        lang_frame = ttk.Frame(self)
+        lang_frame = ttk.Frame(appearance_frame)
         lang_frame.grid(row=0, column=1, sticky='we', pady=10)
 
         self.lang_combobox = ttk.Combobox(lang_frame, values=list(self.available_ui_langs.values()), state='readonly')
@@ -88,25 +109,32 @@ class SettingsTab(BaseTab):
 
         self.lang_combobox.bind("<<ComboboxSelected>>", self._on_language_select)
 
-        self.lang_reload_label = ttk.Label(self, text="", foreground='gray')
+        self.lang_reload_label = ttk.Label(appearance_frame, text="", foreground='gray')
         self.lang_reload_label.grid(row=1, column=1, sticky='w', padx=5, pady=(0, 10))
 
-        theme_label = ttk.Label(self, text=_('lki.settings.theme'))
+        # 主题设置
+        theme_label = ttk.Label(appearance_frame, text=_('lki.settings.theme'))
         theme_label.grid(row=2, column=0, sticky='e', padx=(0, 10), pady=(10, 0))
 
-        rb_light = ttk.Radiobutton(self, text=_('lki.settings.theme.light'), variable=self.theme_var,
+        rb_light = ttk.Radiobutton(appearance_frame, text=_('lki.settings.theme.light'), variable=self.theme_var,
                                    value='light', command=self._on_theme_select)
-        rb_light.grid(row=2, column=1, sticky='w', pady=(10, 0))
+        rb_light.grid(row=2, column=1, sticky='w', pady=(10, 5))  # 调整了pady
 
-        rb_dark = ttk.Radiobutton(self, text=_('lki.settings.theme.dark'), variable=self.theme_var,
+        rb_dark = ttk.Radiobutton(appearance_frame, text=_('lki.settings.theme.dark'), variable=self.theme_var,
                                   value='dark', command=self._on_theme_select)
         rb_dark.grid(row=3, column=1, sticky='w', pady=(0, 10))
 
-        proxy_label = ttk.Label(self, text=_('lki.settings.proxy'))
-        proxy_label.grid(row=4, column=0, sticky='e', padx=(0, 10), pady=10)
+        # --- “下载”设置组 ---
+        download_frame = ttk.LabelFrame(self, text=_('lki.settings.category.download'), padding=10)
+        download_frame.grid(row=1, column=0, sticky='we', pady=5)
+        download_frame.columnconfigure(1, weight=1)
 
-        proxy_frame = ttk.Frame(self)
-        proxy_frame.grid(row=4, column=1, sticky='we', pady=10)
+        # 代理设置
+        proxy_label = ttk.Label(download_frame, text=_('lki.settings.proxy'))
+        proxy_label.grid(row=0, column=0, sticky='e', padx=(0, 10), pady=10)
+
+        proxy_frame = ttk.Frame(download_frame)
+        proxy_frame.grid(row=0, column=1, sticky='we', pady=10)
         proxy_frame.columnconfigure(0, weight=1)
 
         self.proxy_status_label = ttk.Label(proxy_frame, text=self.proxy_status_text)
@@ -115,27 +143,29 @@ class SettingsTab(BaseTab):
         self.proxy_config_btn = ttk.Button(proxy_frame, text=_('lki.btn.configure'), command=self._open_proxy_window)
         self.proxy_config_btn.grid(row=0, column=1, sticky='e')
 
-        # --- (已修改：下载线路优先级) ---
-        route_label = ttk.Label(self, text=_('lki.settings.download_routes_priority'))
-        route_label.grid(row=5, column=0, sticky='e', padx=(0, 10), pady=10)
+        # 下载线路优先级
+        route_label = ttk.Label(download_frame, text=_('lki.settings.download_routes_priority'))
+        route_label.grid(row=1, column=0, sticky='e', padx=(0, 10), pady=10)
 
-        route_frame = ttk.Frame(self)
-        route_frame.grid(row=5, column=1, sticky='we', pady=10)
+        route_frame = ttk.Frame(download_frame)
+        route_frame.grid(row=1, column=1, sticky='we', pady=10)
         route_frame.columnconfigure(0, weight=1)
 
-        # (新增：摘要标签)
-        self.route_priority_display_label = ttk.Label(route_frame, text="", style="Hint.TLabel")
+        self.route_priority_display_label = ttk.Label(route_frame, text="")
         self.route_priority_display_label.grid(row=0, column=0, sticky='w', padx=5)
 
         self.route_config_btn = ttk.Button(route_frame, text=_('lki.btn.configure'),
                                            command=self._open_route_priority_window)
         self.route_config_btn.grid(row=0, column=1, sticky='e')
-        # --- (修改结束) ---
 
-        self.rowconfigure(6, weight=1)
+        # --- 占位和重载按钮 ---
 
+        # 垂直占位
+        self.rowconfigure(2, weight=1)
+
+        # 重载按钮
         reload_frame = ttk.Frame(self)
-        reload_frame.grid(row=7, column=0, columnspan=2, sticky='se', pady=(20, 0))
+        reload_frame.grid(row=3, column=0, columnspan=2, sticky='se', pady=(20, 0))  # 调整了row
 
         self.reload_btn = ttk.Button(reload_frame, text=_('lki.settings.btn.reload'),
                                      command=self._on_reload_click, style="Link.TButton")
@@ -143,6 +173,8 @@ class SettingsTab(BaseTab):
 
         # (新增：初始化摘要)
         self._update_route_priority_display()
+
+    # --- (修改结束) ---
 
     # --- (已修改) ---
     def _on_language_select(self, event=None):

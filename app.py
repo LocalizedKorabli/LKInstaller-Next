@@ -78,6 +78,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import sys
 import tkinter as tk
@@ -120,7 +133,7 @@ class LocalizationInstallerApp:
             code: _(f"lki.game.client_type.{code}") for code in self.instance_type_keys
         }
 
-        self._setup_styles()
+        self._setup_styles(initial_theme == 'dark')
 
         self.notebook = ttk.Notebook(master)
         self.notebook.pack(pady=10, padx=10, expand=True, fill='both')
@@ -145,10 +158,10 @@ class LocalizationInstallerApp:
 
         self.master.after(100, self.run_initial_detection)
 
-    def _setup_styles(self):
+    def _setup_styles(self, is_dark: bool):
         """定义自定义字体和样式"""
         self.style = ttk.Style()
-        self.select_bg = "#0078d4"
+        self.select_bg = "#66bdff" if is_dark else "#0078d4"
         self.select_fg = "white"
         #self.style.configure("Client.TLabel", font=("TkDefaultFont", 12, "bold"))
         #self.style.configure("Path.TLabel", font=("TkDefaultFont", 9))
@@ -159,7 +172,7 @@ class LocalizationInstallerApp:
         self.style.configure("Selected.Path.TLabel", background=self.select_bg, foreground=self.select_fg)
         #self.style.configure("Hint.TLabel", font=("TkDefaultFont", 9), foreground='gray')
         self.style.configure("Hint.TLabel", foreground='gray')
-        self.style.configure("danger.TButton", foreground="red", background="#d13438")
+        self.style.configure("danger.TButton", foreground="#ff7777" if is_dark else "red", background="#d13438")
 
         self.style.configure("Link.TButton", foreground=self.select_bg, borderwidth=0, padding=0)
         self.style.map("Link.TButton",
@@ -208,9 +221,9 @@ class LocalizationInstallerApp:
 
     def _on_theme_select(self, selected_theme: str):
         """由 SettingsTab 调用的回调。"""
-        self.master.call('set_theme', selected_theme)
+        self.master.call('set_theme', selected_theme, self.font_family)
 
-        self._setup_styles()
+        self._setup_styles(selected_theme == 'dark')
 
         self.icons.set_active_theme(selected_theme)
         self._update_all_icons()

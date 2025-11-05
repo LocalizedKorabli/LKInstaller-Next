@@ -26,6 +26,19 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import hashlib
 import json
@@ -379,15 +392,14 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
 
     # 4. 遍历源文件夹 (如果存在) 并收集用户Mods
     if MODS_SOURCE_DIR.is_dir():
-        for item in os.listdir(MODS_SOURCE_DIR):
-            item_path = MODS_SOURCE_DIR / item
+        for item_path in MODS_SOURCE_DIR.rglob('*'):
             if item_path.is_file():
-                # a. 处理 zip 文件: 提取到 TEMP_PROCESS_DIR
-                if item.lower().endswith('.zip'):
+                item_name_lower = item_path.name.lower()
+
+                if item_name_lower.endswith('.zip'):
                     _extract_zip_mods(item_path, TEMP_PROCESS_DIR)
 
-                # b. 处理 mods 文件: 复制到 TEMP_PROCESS_DIR
-                elif item.lower().endswith(('.mo', '.l10nmod', '.i18nmod')):
+                elif item_name_lower.endswith(('.mo', '.l10nmod', '.i18nmod')):
                     unique_filename = f"{uuid.uuid4()}{item_path.suffix}"
                     final_path = TEMP_PROCESS_DIR / unique_filename
                     shutil.copy(item_path, final_path)

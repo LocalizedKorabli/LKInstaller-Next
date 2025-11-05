@@ -52,7 +52,20 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+import os
 import platform
 import tkinter as tk
 import sys
@@ -64,6 +77,7 @@ from instance import instance_manager
 from installation.installation_manager import InstallationManager, InstallationTask
 from instance.game_instance import GameInstance
 from localizer import global_translator, _
+from logger import setup_logger
 
 # HiDPI Awareness
 try:
@@ -155,6 +169,7 @@ def run_auto_execute(root, arg, run_client):
 
 
 if __name__ == '__main__':
+    setup_logger()
     root = tk.Tk()
 
     auto_execute_arg = None
