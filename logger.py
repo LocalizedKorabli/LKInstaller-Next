@@ -145,7 +145,7 @@ def setup_logger():
 
     # 5. 使用新的 log() 函数写入初始信息
     # 注意：现在我们调用 log() 而不是 print()
-    log(f"\n--- Log Start: {time.strftime('%Y-%m-%d %H:%M:%S')} ---")
+    log(f"--- Log Start: {time.strftime('%Y-%m-%d %H:%M:%S')} ---")
     log(f"Platform: {platform.platform()}")
     log(f"Program: {sys.executable}")
     log(f"Base Path: {base_path}")
@@ -155,7 +155,7 @@ def setup_logger():
 def close_logger():
     """在程序退出时自动关闭日志文件。"""
     global _log_file_handle
-    log(f"\n--- Log End: {time.strftime('%Y-%m-%d %H:%M:%S')} ---")
+    log(f"--- Log End: {time.strftime('%Y-%m-%d %H:%M:%S')} ---")
     if _log_file_handle:
         try:
             _log_file_handle.close()
