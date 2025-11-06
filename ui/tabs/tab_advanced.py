@@ -472,8 +472,8 @@ class PresetManagerWindow(BaseDialog):
         self.mods_dir_tooltip = None
 
         if ToolTip:
-            # (修改：保存引用以便动态更新文本)
-            self.mods_dir_tooltip = ToolTip(self.btn_open_mods_dir, _('lki.preset.manager.tooltip_open_mods_dir'))
+            self.mods_dir_tooltip = _('lki.preset.manager.tooltip_open_mods_dir')
+            ToolTip(self.btn_open_mods_dir, lambda: self.mods_dir_tooltip)
             ToolTip(self.btn_download_mods, _('lki.preset.manager.tooltip_download_mods'))
 
         self.cb_use_fonts = ttk.Checkbutton(self.details_frame, text=_('lki.preset.manager.use_fonts'),
@@ -598,14 +598,17 @@ class PresetManagerWindow(BaseDialog):
         if self.mods_dir_tooltip:
             lang_name = self.l10n_id_to_name.get(lang_code, lang_code)
             tooltip_text = _('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name
-            self.mods_dir_tooltip = ToolTip(self.btn_open_mods_dir,
-                                            _('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name)
+            self.mods_dir_tooltip = _('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name
 
     def _on_lang_select_changed(self, event=None):
         """当语言下拉框更改时，动态更新下载线路下拉框"""
         lang_name = self.lang_combobox.get()
         lang_code = self.l10n_name_to_id.get(lang_name)
         self._update_download_mods_btn_state(lang_code)
+        if lang_name in self.l10n_name_to_id:
+            self.mods_dir_tooltip = _('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name
+        else:
+            self.mods_dir_tooltip = _('lki.preset.manager.tooltip_open_mods_dir')
 
     # --- (路由相关方法已移除) ---
 
@@ -756,16 +759,10 @@ class PresetManagerWindow(BaseDialog):
         if not self.instance_data:
             return
 
-            # 1. 获取当前选定的预设的语言代码
-        preset_id = self._get_selected_listbox_id()
-        if not preset_id:
+        lang_name = self.lang_combobox.get()
+        if not lang_name:
             return
-
-        preset_data = self.presets.get(preset_id)
-        if not preset_data:
-            return
-
-        lang_code = preset_data.get('lang_code', 'en')
+        lang_code = self.l10n_name_to_id.get(lang_name, 'en')
 
         mods_path = os.path.join(self.instance_data['path'], 'lki', 'i18n_mods', lang_code)
         os.makedirs(mods_path, exist_ok=True)
