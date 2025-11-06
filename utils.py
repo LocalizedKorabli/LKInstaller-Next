@@ -21,7 +21,7 @@ import tkinter as tk
 from typing import Optional, Tuple, Set, Dict
 
 import dirs
-from logger import log
+from logger import log as logger_log
 from ui.windows.window_action import ActionProgressWindow
 
 major2exact: Dict[str, str] = {
@@ -39,7 +39,7 @@ def get_system_language_codes() -> Tuple[Optional[str], Optional[str]]:
             return exact_lang, major_lang
 
     except Exception as e:
-        log(f'Error getting system locale: {e}')
+        logger_log(f'Error getting system locale: {e}')
         return None, None
 
     return None, None
@@ -57,7 +57,7 @@ def is_system_gmt8_timezone() -> bool:
         if offset_seconds == 28800:  # 8 * 60 * 60
             return True
     except Exception as e:
-        log(f"Error checking timezone: {e}")
+        logger_log(f"Error checking timezone: {e}")
     return False
 
 
@@ -147,7 +147,7 @@ def get_configured_proxies() -> Optional[Dict[str, str]]:
         password = settings.global_settings.get('proxy.password', '')
 
         if not host or not port:
-            log(_('lki.proxy.warn.manual_no_host'))
+            logger_log(_('lki.proxy.warn.manual_no_host'))
             return {'http': '', 'https': ''}
 
         if user and password:
@@ -189,7 +189,7 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
     INSTALLER_PATH = UPDATE_DIR / 'lki_setup.exe'
 
     # 辅助函数：安全地更新UI
-    log = lambda msg, p: root_tk.after(0, window.update_task_progress, _('lki.update.title'), p, msg)
+    ui_log = lambda msg, p: root_tk.after(0, window.update_task_progress, _('lki.update.title'), p, msg)
 
     def _download_and_run(remote_ver_str: str, proxies: Optional[dict]):
         """下载部分，在用户确认后在*新*线程中运行。"""
@@ -200,7 +200,7 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
             if window.is_cancelled():
                 return
 
-            log(_('lki.update.status.found') % remote_ver_str, 20)
+            ui_log(_('lki.update.status.found') % remote_ver_str, 20)
 
             # 下载
             dl_resp = requests.get(DOWNLOAD_URL, stream=True, proxies=proxies, timeout=30)
@@ -212,19 +212,19 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
             with open(INSTALLER_PATH, 'wb') as f:
                 for chunk in dl_resp.iter_content(chunk_size=8192):
                     if window.is_cancelled():
-                        log(_('lki.install.status.cancelled'), 100)
+                        ui_log(_('lki.install.status.cancelled'), 100)
                         return
 
                     f.write(chunk)
                     downloaded += len(chunk)
                     if total_size > 0:
                         progress = 20 + (downloaded / total_size) * 70  # 进度从 20% 到 90%
-                        log(_('lki.update.status.downloading'), progress)
+                        ui_log(_('lki.update.status.downloading'), progress)
 
             if window.is_cancelled():
                 return
 
-            log(_('lki.update.status.starting_update'), 95)
+            ui_log(_('lki.update.status.starting_update'), 95)
 
             # 启动并退出
             try:
@@ -245,7 +245,7 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
                     f'/LANG={current_lang}'
                 ]
 
-                log(f"Starting updater with args: {args_list}")
+                logger_log(f"Starting updater with args: {args_list}")
 
                 # 4. 使用新的参数列表启动更新程序
                 subprocess.Popen(args_list)
@@ -256,18 +256,18 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
                 # --- (修改结束) ---
 
             except Exception as e:
-                log(_('lki.update.error.start_failed') % e, 100)
+                ui_log(_('lki.update.error.start_failed') % e, 100)
                 root_tk.after(0, window.mark_task_complete, _('lki.update.title'), False,
                               _('lki.update.error.start_failed') % e)
 
         except Exception as e:
             if window.is_cancelled():
-                log(_('lki.install.status.cancelled'), 100)
+                ui_log(_('lki.install.status.cancelled'), 100)
                 return
             import traceback
             traceback.print_exc()
             error_msg = _('lki.update.status.download_failed') % str(e)
-            log(error_msg, 100)
+            ui_log(error_msg, 100)
             root_tk.after(0, window.mark_task_complete, _('lki.update.title'), False, error_msg)
 
     def _check_version_and_ask():
@@ -276,7 +276,7 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
             os.makedirs(UPDATE_DIR, exist_ok=True)
             if window.is_cancelled(): return
 
-            log(_('lki.update.status.checking'), 10)
+            ui_log(_('lki.update.status.checking'), 10)
             proxies = get_configured_proxies()
 
             if window.is_cancelled(): return
@@ -289,7 +289,7 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
             remote_version = data.get('version')
 
             if not remote_version or not semver.VersionInfo.is_valid(remote_version):
-                log(_('lki.update.error.invalid_version'), 100)
+                ui_log(_('lki.update.error.invalid_version'), 100)
                 root_tk.after(0, window.mark_task_complete, _('lki.update.title'), False,
                               _('lki.update.error.invalid_version'))
                 return
@@ -315,27 +315,27 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
                         threading.Thread(target=_download_and_run, args=(remote_version, proxies), daemon=True).start()
                     else:
                         # 用户点击了“否”
-                        log(_('lki.install.status.cancelled'), 100)
+                        ui_log(_('lki.install.status.cancelled'), 100)
                         root_tk.after(1000, window.destroy)
 
                 root_tk.after(0, _ask_on_main_thread)
 
             else:
                 # 已经是最新版本
-                log(_('lki.update.status.latest'), 100)
+                ui_log(_('lki.update.status.latest'), 100)
                 root_tk.after(0, window.mark_task_complete, _('lki.update.title'), True,
                               _('lki.update.status.latest'))
                 root_tk.after(2000, window.destroy)
 
         except Exception as e:
             if window.is_cancelled():
-                log(_('lki.install.status.cancelled'), 100)
+                ui_log(_('lki.install.status.cancelled'), 100)
                 return
 
             import traceback
             traceback.print_exc()
             error_msg = _('lki.update.error.check_failed') % str(e)
-            log(error_msg, 100)
+            ui_log(error_msg, 100)
             root_tk.after(0, window.mark_task_complete, _('lki.update.title'), False, error_msg)
 
     # 启动检查版本线程
