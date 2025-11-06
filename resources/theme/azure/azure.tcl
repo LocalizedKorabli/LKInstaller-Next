@@ -44,7 +44,7 @@ proc set_theme {mode font_family} {
 
         option add *font [ttk::style lookup . -font]
         option add *Menu.selectcolor $colors(-fg)
-
+    
 	} elseif {$mode == "light"} {
 		ttk::style theme use "azure-light"
 

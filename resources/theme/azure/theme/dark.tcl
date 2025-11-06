@@ -11,9 +11,9 @@ namespace eval ttk::theme::azure-dark {
     ttk::style theme create azure-dark -parent clam -settings {
         proc load_images {imgdir} {
             variable I
-            foreach file [glob -directory $imgdir *.png] {
+            foreach file [glob -directory $imgdir *.gif] {
                 set img [file tail [file rootname $file]]
-                set I($img) [image create photo -file $file -format png]
+                set I($img) [image create photo -file $file -format gif]
             }
         }
 
@@ -22,7 +22,7 @@ namespace eval ttk::theme::azure-dark {
         array set colors {
             -fg             "#ffffff"
             -bg             "#333333"
-            -disabledfg     "#aaaaaa"
+            -disabledfg     "#ffffff"
             -disabledbg     "#737373"
             -selectfg       "#ffffff"
             -selectbg       "#007fff"
@@ -291,8 +291,8 @@ namespace eval ttk::theme::azure-dark {
             [list $I(off-basic) \
                 {selected disabled} $I(on-basic) \
                 disabled $I(off-basic) \
-                {pressed selected} $I(on-accent) \
-                {active selected} $I(on-accent) \
+                {pressed selected} $I(on-basic) \
+                {active selected} $I(on-basic) \
                 selected $I(on-accent) \
                 {pressed !selected} $I(off-basic) \
                 active $I(off-basic) \
