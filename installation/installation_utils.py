@@ -336,10 +336,6 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
     MODS_SOURCE_DIR = instance_path / 'lki' / 'i18n_mods' / lang_code
     TEMP_PROCESS_DIR = MODS_TEMP / instance_id
 
-    # 关键修改: 为当前实例创建唯一的占位符路径
-    PLACEHOLDER_SOURCE_NAME = f"mod_placeholder_src_{uuid.uuid4()}.txt"
-    PLACEHOLDER_SOURCE_PATH = TEMP_DIR / PLACEHOLDER_SOURCE_NAME
-
     # 目标 mkmod 文件路径
     MO_MKMOD_PATH = MODS_TEMP / f"{instance_id}_mo_mod.mkmod"
     JSON_MKMOD_PATH = MODS_TEMP / f"{instance_id}_json_mod.mkmod"
@@ -352,13 +348,6 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
     if MO_MKMOD_PATH.is_file(): os.remove(MO_MKMOD_PATH)
     if JSON_MKMOD_PATH.is_file(): os.remove(JSON_MKMOD_PATH)
 
-    # 2. 强制创建占位符源文件
-    try:
-        with open(PLACEHOLDER_SOURCE_PATH, 'w', encoding='utf-8') as f:
-            f.write("placeholder")
-    except Exception as e:
-        log(f"FATAL: Failed to create placeholder source file: {e}")
-        return None, None
 
     # 3. 初始化收集字典
     native_mo_files: Dict[str, Path] = {}
@@ -437,8 +426,6 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
     # --- 8. 强制添加占位符到打包列表并打包 ---
 
     # A. 打包原生 MO 文件 (lk_i18n_mo_mod.mkmod)
-    # 强制添加占位符
-    # native_mo_files['texts/ru/LC_MESSAGES/.placeholder'] = PLACEHOLDER_SOURCE_PATH
 
     mo_mkmod_path = None
     try:
@@ -446,10 +433,6 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
         mo_mkmod_path = MO_MKMOD_PATH
     except Exception as e:
         log(f"FATAL: Failed to create native MO mkmod file: {e}")
-
-    # B. 打包编译后的 JSON MO 文件 (lk_i18n_json_mod.mkmod)
-    # 强制添加占位符
-    # json_converted_mo_files['texts/ru/LC_MESSAGES/.placeholder'] = PLACEHOLDER_SOURCE_PATH
 
     json_mkmod_path = None
     try:
@@ -461,9 +444,6 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
     if TEMP_PROCESS_DIR.is_dir():
         shutil.rmtree(TEMP_PROCESS_DIR)
     # 9. 清理所有临时文件
-    # 清理占位符源文件
-    if PLACEHOLDER_SOURCE_PATH.is_file():
-        os.remove(PLACEHOLDER_SOURCE_PATH)
     # 清理所有编译后的 MO 文件
     for mo_path in json_converted_mo_files.values():
         if mo_path.is_file():
