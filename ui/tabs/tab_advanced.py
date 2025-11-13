@@ -635,14 +635,12 @@ class PresetManagerWindow(BaseDialog):
         default_lang_code = determine_default_l10n_lang(current_ui_lang)
         default_use_ee = True
         default_use_mods = True
+        default_use_fonts = False
 
-        # --- (已修改：不再硬编码 True) ---
-        try:
-            # (查询 localization_sources 获取该语言的默认值)
-            default_use_fonts = global_source_manager.lang_code_requires_fonts(default_lang_code)
-        except Exception:
-            default_use_fonts = True  # (回退)
-        # --- (修改结束) ---
+        # try:
+        #     default_use_fonts = global_source_manager.lang_code_requires_fonts(default_lang_code)
+        # except Exception:
+        #     default_use_fonts = True  # (回退)
 
         self.active_preset_id = self.instance_manager.add_preset(
             self.instance_id, new_name, default_lang_code, default_use_ee, default_use_mods, default_use_fonts
