@@ -21,7 +21,7 @@ import time
 import tkinter as tk
 from os import PathLike
 from pathlib import Path
-from typing import Optional, Tuple, Set, Dict
+from typing import Optional, Tuple, Set, Dict, List
 
 import dirs
 from logger import log as logger_log
@@ -122,6 +122,7 @@ def scale_dpi(widget: tk.Misc, value: int) -> int:
         # 如果 scaling_factor 不存在，则回退
         return value
 
+
 # --- (NEW) Proxy Util (Moved from installation_manager.py) ---
 def get_configured_proxies() -> Optional[Dict[str, str]]:
     """
@@ -171,10 +172,39 @@ def copy_with_log(src: Path, dst: Path, *, follow_symlinks=True):
     shutil.copy(src, dst, follow_symlinks=True)
     logger_log(f'Copying {str(src.absolute())} to {str(dst.absolute())}...')
 
+
+def _get_prioritized_update_routes() -> List[Dict[str, str]]:
+    """
+    获取按优先级排序的更新线路列表。
+    列表中的每一项都是一个字典 {'version': url, 'download': url}。
+    """
+    import settings
+    from localization_sources import LKI_UPDATE_ROUTES
+
+    priority_keys = settings.global_settings.get('download_routes_priority', [])
+
+    sorted_routes = []
+    added_keys = set()
+
+    # 1. 添加设置中指定的优先线路
+    for key in priority_keys:
+        if key in LKI_UPDATE_ROUTES and key not in added_keys:
+            sorted_routes.append(LKI_UPDATE_ROUTES[key])
+            added_keys.add(key)
+
+    # 2. 如果设置中遗漏了某些线路，将其补充在最后 (作为安全回退)
+    for key, route in LKI_UPDATE_ROUTES.items():
+        if key not in added_keys:
+            sorted_routes.append(route)
+
+    return sorted_routes
+
+
 # --- (NEW) Update Logic ---
 def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
     """
     在工作线程中执行更新检查和下载。
+    支持多线路故障转移 (Fallback)。
     通过检查 window.is_cancelled() 来支持取消。
     """
     import requests
@@ -184,47 +214,78 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
     import threading
     from localizer import _  # 局部导入
     from tkinter import messagebox  # 局部导入
+    import settings
 
     # (新增导入)
     from pathlib import Path
 
-    VERSION_URL = "https://dl.localizedkorabli.org/lki/lk-next/version_info.json"
-    DOWNLOAD_URL = "https://dl.localizedkorabli.org/lki/lk-next/lki_setup.exe"
     UPDATE_DIR = dirs.TEMP_DIR / 'updates'
     INSTALLER_PATH = UPDATE_DIR / 'lki_setup.exe'
 
     # 辅助函数：安全地更新UI
     ui_log = lambda msg, p: root_tk.after(0, window.update_task_progress, _('lki.update.title'), p, msg)
 
-    def _download_and_run(remote_ver_str: str, proxies: Optional[dict]):
-        """下载部分，在用户确认后在*新*线程中运行。"""
-        # (新增导入)
-        import settings
-
+    def _download_and_run(remote_ver_str: str, proxies: Optional[dict], routes_list: List[Dict[str, str]]):
+        """
+        下载部分，在用户确认后在*新*线程中运行。
+        会在 routes_list 中依次尝试下载，直到成功。
+        """
         try:
             if window.is_cancelled():
                 return
 
-            ui_log(_('lki.update.status.found') % remote_ver_str, 20)
+            download_success = False
 
-            # 下载
-            dl_resp = requests.get(DOWNLOAD_URL, stream=True, proxies=proxies, timeout=30)
-            dl_resp.raise_for_status()
+            # --- 遍历所有线路进行下载 ---
+            for route in routes_list:
+                if window.is_cancelled():
+                    ui_log(_('lki.install.status.cancelled'), 100)
+                    return
 
-            total_size = int(dl_resp.headers.get('content-length', 0))
-            downloaded = 0
+                download_url = route.get('download')
+                if not download_url:
+                    continue
 
-            with open(INSTALLER_PATH, 'wb') as f:
-                for chunk in dl_resp.iter_content(chunk_size=8192):
-                    if window.is_cancelled():
-                        ui_log(_('lki.install.status.cancelled'), 100)
-                        return
+                try:
+                    ui_log(_('lki.update.status.downloading') + f" ({remote_ver_str})...", 20)
+                    logger_log(f"Attempting update download from: {download_url}")
 
-                    f.write(chunk)
-                    downloaded += len(chunk)
-                    if total_size > 0:
-                        progress = 20 + (downloaded / total_size) * 70  # 进度从 20% 到 90%
-                        ui_log(_('lki.update.status.downloading'), progress)
+                    # 下载
+                    dl_resp = requests.get(download_url, stream=True, proxies=proxies, timeout=30)
+                    dl_resp.raise_for_status()
+
+                    total_size = int(dl_resp.headers.get('content-length', 0))
+                    downloaded = 0
+
+                    with open(INSTALLER_PATH, 'wb') as f:
+                        for chunk in dl_resp.iter_content(chunk_size=8192):
+                            if window.is_cancelled():
+                                ui_log(_('lki.install.status.cancelled'), 100)
+                                return
+
+                            f.write(chunk)
+                            downloaded += len(chunk)
+                            if total_size > 0:
+                                progress = 20 + (downloaded / total_size) * 70  # 进度从 20% 到 90%
+                                ui_log(_('lki.update.status.downloading'), progress)
+
+                    # 如果代码走到这里，说明下载成功
+                    download_success = True
+                    break  # 跳出循环
+
+                except Exception as e:
+                    logger_log(f"Download failed from {download_url}: {e}")
+                    # 继续尝试下一个线路
+                    continue
+
+            # --- 循环结束 ---
+
+            if not download_success:
+                # 所有线路都失败
+                error_msg = _('lki.update.status.download_failed') % "All routes failed"
+                ui_log(error_msg, 100)
+                root_tk.after(0, window.mark_task_complete, _('lki.update.title'), False, error_msg)
+                return
 
             if window.is_cancelled():
                 return
@@ -233,8 +294,6 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
 
             # 启动并退出
             try:
-                # --- (这是修改的部分) ---
-
                 # 1. 获取当前 .exe 所在的目录 (sys.executable)
                 current_install_dir = Path(sys.executable).parent
 
@@ -242,7 +301,6 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
                 current_lang = settings.global_settings.language
 
                 # 3. 构建参数
-                # 我们使用 /SILENT 而不是 /VERYSILENT，以便用户可以看到进度
                 args_list = [
                     str(INSTALLER_PATH),
                     '/SILENT',
@@ -255,10 +313,8 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
                 # 4. 使用新的参数列表启动更新程序
                 subprocess.Popen(args_list)
 
-                # 5. 通知主应用在 500 毫秒后退出 (保持不变)
+                # 5. 通知主应用在 500 毫秒后退出
                 root_tk.after(500, root_tk.destroy)
-
-                # --- (修改结束) ---
 
             except Exception as e:
                 ui_log(_('lki.update.error.start_failed') % e, 100)
@@ -284,19 +340,41 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
             ui_log(_('lki.update.status.checking'), 10)
             proxies = get_configured_proxies()
 
-            if window.is_cancelled(): return
-            resp = requests.get(VERSION_URL, timeout=10, proxies=proxies)
-            resp.raise_for_status()
+            # 获取排序后的线路列表
+            update_routes = _get_prioritized_update_routes()
 
-            if window.is_cancelled(): return
+            remote_version = None
 
-            data = resp.json()
-            remote_version = data.get('version')
+            # --- 遍历线路查询版本 ---
+            for route in update_routes:
+                if window.is_cancelled(): return
 
-            if not remote_version or not semver.VersionInfo.is_valid(remote_version):
-                ui_log(_('lki.update.error.invalid_version'), 100)
+                version_url = route.get('version')
+                if not version_url: continue
+
+                try:
+                    logger_log(f"Checking version from: {version_url}")
+                    resp = requests.get(version_url, timeout=10, proxies=proxies)
+                    resp.raise_for_status()
+
+                    data = resp.json()
+                    ver_candidate = data.get('version')
+
+                    if ver_candidate and semver.VersionInfo.is_valid(ver_candidate):
+                        remote_version = ver_candidate
+                        logger_log(f"Found valid version {remote_version} via {version_url}")
+                        break  # 成功获取，停止尝试其他线路
+
+                except Exception as e:
+                    logger_log(f"Version check failed for {version_url}: {e}")
+                    continue
+            # --- 循环结束 ---
+
+            if not remote_version:
+                # 所有线路都无法获取版本
+                ui_log(_('lki.update.error.check_failed') % "All routes failed", 100)
                 root_tk.after(0, window.mark_task_complete, _('lki.update.title'), False,
-                              _('lki.update.error.invalid_version'))
+                              _('lki.update.error.check_failed') % "All routes failed")
                 return
 
             if semver.compare(remote_version, constants.APP_VERSION) > 0:
@@ -316,8 +394,12 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
                         return
 
                     if proceed:
-                        # 在新线程中开始下载
-                        threading.Thread(target=_download_and_run, args=(remote_version, proxies), daemon=True).start()
+                        # 在新线程中开始下载，并传入所有的线路列表以供重试
+                        threading.Thread(
+                            target=_download_and_run,
+                            args=(remote_version, proxies, update_routes),
+                            daemon=True
+                        ).start()
                     else:
                         # 用户点击了“否”
                         ui_log(_('lki.install.status.cancelled'), 100)

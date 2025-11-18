@@ -65,7 +65,8 @@ class SettingsTab(BaseTab):
             'gitee': _('lki.i18n.route.gitee'),
             'gitlab': _('lki.i18n.route.gitlab'),
             'github': _('lki.i18n.route.github'),
-            'cloudflare': _('lki.i18n.route.cloudflare')
+            'cloudflare': _('lki.i18n.route.cloudflare'),
+            'tencent': _('lki.i18n.route.tencent')
         }
 
         self._create_settings_tab_widgets()
@@ -278,8 +279,8 @@ class SettingsTab(BaseTab):
         for r_id in route_ids:
             display_names.append(self.route_id_to_name.get(r_id, r_id))
 
-        if len(display_names) > 3:
-            display_text = ", ".join(display_names[:3]) + ", ..."
+        if len(display_names) > 4:
+            display_text = ", ".join(display_names[:4]) + ", ..."
         else:
             display_text = ", ".join(display_names)
 

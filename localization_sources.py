@@ -136,6 +136,29 @@ JA_PT_ROUTES = {
     }
 }
 
+# 5. 字体包路由 (SrcWagon)
+FONTS_SRCWAGON_ROUTES = {
+    'tencent': {
+        'zip': 'http://lk-1251573974.cos.accelerate.myqcloud.com/fonts/srcwagon/SrcWagon-MK.zip',
+        'version': 'http://lk-1251573974.cos.accelerate.myqcloud.com/fonts/srcwagon/version_info.json'
+    },
+    "cloudflare": {
+        'zip': "https://dl.localizedkorabli.org/fonts/srcwagon/SrcWagon-MK.zip",
+        'version': "https://dl.localizedkorabli.org/fonts/srcwagon/version_info.json"
+    }
+}
+
+# 6. 软件本体更新路由 (LKI Next)
+LKI_UPDATE_ROUTES = {
+    'tencent': {
+        'version': "http://lk-1251573974.cos.accelerate.myqcloud.com/lki/lk-next/version_info.json",
+        'download': "http://lk-1251573974.cos.accelerate.myqcloud.com/lki/lk-next/lki_setup.exe"
+    },
+    'cloudflare': {
+        'version': "https://dl.localizedkorabli.org/lki/lk-next/version_info.json",
+        'download': "https://dl.localizedkorabli.org/lki/lk-next/lki_setup.exe"
+    }
+}
 
 
 class LocalizationSource:
@@ -144,7 +167,7 @@ class LocalizationSource:
     def __init__(self, source_id: str, name_key: str,
                  routes_live: dict, routes_pt: dict,
                  mods_url: Optional[str],
-                 requires_fonts: bool):  # <-- (1. 新增参数)
+                 requires_fonts: bool):
         self.id = source_id
         self.name_key = name_key
 
@@ -153,13 +176,12 @@ class LocalizationSource:
             'pts': routes_pt
         }
         self.mods_url = mods_url
-        self.requires_fonts = requires_fonts  # <-- (2. 新增属性)
+        self.requires_fonts = requires_fonts
 
     def get_routes_for_type(self, instance_type: str = 'production') -> Optional[dict]:
         """获取 'production' 或 'pts' 的下载路由字典"""
         return self.routes.get(instance_type)
 
-    # (已修改：现在返回完整的字典)
     def get_urls(self, instance_type: str, route_id: str) -> Optional[Dict[str, str]]:
         """
         根据实例类型和下载线路，获取 MO, EE 和 Version 的 URL。
@@ -214,7 +236,7 @@ class SourceManager:
             mods_url=MODS_URL_EN,
             requires_fonts=False
         )
-        
+
         # 3. 繁体中文
         self.add_source(
             source_id="zh_TW",
@@ -235,17 +257,14 @@ class SourceManager:
             requires_fonts=True
         )
 
-        self.global_assets["fonts_srcwagon"] = {
-            "cloudflare": {
-                "zip": "https://dl.localizedkorabli.org/fonts/srcwagon/SrcWagon-MK.zip",
-                "version": "https://dl.localizedkorabli.org/fonts/srcwagon/version_info.json"
-            }
-        }
+        # 注册全局资产 (字体包)
+        # 使用上面定义的全局常量，而不是硬编码
+        self.global_assets["fonts_srcwagon"] = FONTS_SRCWAGON_ROUTES
 
     def add_source(self, source_id: str, name_key: str, routes_live: dict, routes_pt: dict,
-                   mods_url: Optional[str], requires_fonts: bool):  # <-- (5. 新增参数)
+                   mods_url: Optional[str], requires_fonts: bool):
         self.sources[source_id] = LocalizationSource(source_id, name_key, routes_live, routes_pt, mods_url,
-                                                     requires_fonts)  # <-- (6. 传入参数)
+                                                     requires_fonts)
 
     def get_source(self, source_id: str) -> Optional[LocalizationSource]:
         return self.sources.get(source_id)
@@ -272,9 +291,10 @@ class SourceManager:
             for route_dict in source.routes.values():
                 all_keys.update(route_dict.keys())
 
-        # (新增) 也包括全局资产的路由
         for asset in self.global_assets.values():
             all_keys.update(asset.keys())
+
+        all_keys.update(LKI_UPDATE_ROUTES.keys())
 
         return sorted(list(all_keys))
 
@@ -285,32 +305,25 @@ class SourceManager:
             return source.mods_url
         return None
 
-    # --- (新增：获取全局资产 URL) ---
     def get_global_asset_urls(self, asset_id: str, route_id: str) -> Optional[Dict[str, str]]:
         """
         获取一个全局资产（如字体）的 URL 字典。
         """
         asset_routes = self.global_assets.get(asset_id)
         if asset_routes:
-            # (回退到第一个可用的路由)
             return asset_routes.get(route_id, next(iter(asset_routes.values()), None))
         return None
 
-    # --- (新增结束) ---
-
-    # --- (7. 新增您所请求的方法) ---
     def lang_code_requires_fonts(self, lang_code: str) -> bool:
         """
-        检查一个语言代码是否默认需要字体包。
+        检查一个语言代码是否可能需要字体包。
         """
         source = self.get_source(lang_code)
         if source:
-            return source.requires_fonts  # (在步骤 1 & 2 中添加)
+            return source.requires_fonts
 
         # (安全回退：如果未指定，则假设需要字体)
-        # 这对于迁移旧的、未指定此属性的预设很重要
         return True
-    # --- (新增结束) ---
 
 
 # 全局实例

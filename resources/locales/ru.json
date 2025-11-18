@@ -84,6 +84,7 @@
   "lki.i18n.route.gitee": "Gitee",
   "lki.i18n.route.github": "GitHub",
   "lki.i18n.route.gitlab": "GitLab",
+  "lki.i18n.route.tencent": "Tencent Cloud",
   "lki.install.debug.cache_check_failed": "Проверка кеша не удалась: %s",
   "lki.install.debug.cache_hit": "Попадание в кеш для %s",
   "lki.install.debug.cache_hit_ee": "Попадание в кеш для %s (ee.zip)",

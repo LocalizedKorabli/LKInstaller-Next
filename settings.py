@@ -68,26 +68,24 @@ class GlobalSettings:
         from localization_sources import global_source_manager
         all_available_routes = global_source_manager.get_all_available_route_ids()
 
-        # ... (时区和路由逻辑保持不变) ...
+        # Define route priority by timezone and language
         exact_lang, _ = get_system_language_codes()
         is_gmt8 = is_system_gmt8_timezone()
 
         if exact_lang == 'zh_CN' and is_gmt8:
-            preferred_routes = ['cloudflare', 'gitee', 'gitlab']
+            preferred_routes = ['tencent', 'cloudflare', 'gitee', 'gitlab', 'github']
         else:
-            preferred_routes = ['cloudflare', 'gitlab', 'github']
+            preferred_routes = ['cloudflare', 'gitlab', 'github', 'tencent', 'gitee']
 
         default_route_priority = list(preferred_routes)
         for route in all_available_routes:
             if route not in default_route_priority:
                 default_route_priority.append(route)
-        # --- (时区和路由逻辑结束) ---
 
-        # (修改：将系统语言检测移到前面)
         system_default_lang = select_locale_by_system_lang_code()
 
         defaults = {
-            'language': system_default_lang,  # (修改) 默认使用系统语言
+            'language': system_default_lang,
             'theme': 'light',
             'proxy': {
                 'mode': 'system',

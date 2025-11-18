@@ -138,7 +138,8 @@ class RoutePriorityWindow(BaseDialog):  # <-- 继承 BaseDialog
             'gitee': _('lki.i18n.route.gitee'),
             'gitlab': _('lki.i18n.route.gitlab'),
             'github': _('lki.i18n.route.github'),
-            'cloudflare': _('lki.i18n.route.cloudflare')  # <-- (新增)
+            'cloudflare': _('lki.i18n.route.cloudflare'),
+            'tencent': _('lki.i18n.route.tencent')
         }
         self.route_name_to_id = {v: k for k, v in self.route_id_to_name.items()}
 

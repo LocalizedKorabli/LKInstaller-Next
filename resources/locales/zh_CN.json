@@ -84,6 +84,7 @@
   "lki.i18n.route.gitee": "Gitee码云",
   "lki.i18n.route.github": "GitHub",
   "lki.i18n.route.gitlab": "GitLab",
+  "lki.i18n.route.tencent": "腾讯云",
   "lki.install.debug.cache_check_failed": "缓存检查失败: %s",
   "lki.install.debug.cache_hit": "缓存命中: %s",
   "lki.install.debug.cache_hit_ee": "缓存命中（体验增强包）: %s",
