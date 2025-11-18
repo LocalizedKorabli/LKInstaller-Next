@@ -16,6 +16,7 @@
 import glob
 import json
 import os
+from typing import Optional, Dict, Tuple
 
 import dirs
 
@@ -23,14 +24,26 @@ from logger import log
 
 locales_dir = dirs.base_path.joinpath('resources/locales')
 
+_best_fonts: Dict[str, Tuple[str, str]] = {
+    'zh_CN': ('Segoe UI', 'Microsoft YaHei'),
+    'zh_TW': ('Segoe UI', 'Microsoft JhengHei'),
+    'en': ('Segoe UI', 'Arial'),
+    'ja': ('Yu Gothic', 'MS Gothic'),
+    'ru': ('Aptos', 'Arial')
+}
+
 
 class Localizer:
-    def __init__(self, lang='en'):
+    def __init__(self, lang: Optional[str]):
         self.translations = {}
         self.current_lang = lang
         self.load_language(lang)
 
-    def load_language(self, language_code):
+    def load_language(self, language_code: Optional[str]):
+        should_log = True
+        if language_code is None:
+            language_code = 'en'
+            should_log = False
         file_path = os.path.join(locales_dir, f"{language_code}.json")
         default_file = os.path.join(locales_dir, 'en.json')
         try:
@@ -41,7 +54,8 @@ class Localizer:
                     target_translations = json.load(f)
                     self.translations.update(target_translations)
             self.current_lang = language_code
-            log(f"Loaded language: {language_code}")
+            if should_log:
+                log(f"Loaded language: {language_code}")
         except FileNotFoundError:
             log(f"Warning: Translation file not found for {language_code}. Falling back to default (en).")
         except json.JSONDecodeError:
@@ -50,10 +64,11 @@ class Localizer:
     def gettext(self, text):
         return self.translations.get(text, text)
 
+    # Currently not used
+    def get_language_defined_best_fonts(self) -> Tuple[str, str]:
+        return _best_fonts.get(self.current_lang, ('Segoe UI', 'Microsoft YaHei'))
 
-# 立即使用 'en' 初始化以打破循环导入。
-# main.py 将在 settings 加载后立即调用 load_language() 来设置正确的语言。
-global_translator = Localizer('en')
+global_translator = Localizer(None)
 _ = global_translator.gettext
 
 

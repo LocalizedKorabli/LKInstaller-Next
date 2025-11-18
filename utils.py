@@ -15,9 +15,12 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import locale
 import os
+import shutil
 import sys
 import time
 import tkinter as tk
+from os import PathLike
+from pathlib import Path
 from typing import Optional, Tuple, Set, Dict
 
 import dirs
@@ -92,16 +95,14 @@ def select_locale_by_system_lang_code():
         return 'en'
 
 
-# --- (已修改：简化逻辑) ---
 def determine_default_l10n_lang(ui_lang: str) -> str:
     """
     根据 UI 语言确定默认的*本地化*语言。
-    映射 UI 语言 (zh_CN) -> 本地化语言 (zh_CN)
     """
     mapping = {
         'zh_CN': 'zh_CN',
         'zh_TW': 'zh_TW',
-        'en': 'en'
+        'ja': 'ja'
     }
 
     # 回退到 'en'
@@ -165,6 +166,10 @@ def get_configured_proxies() -> Optional[Dict[str, str]]:
 
     return {'http': '', 'https': ''}  # (默认禁用)
 
+
+def copy_with_log(src: Path, dst: Path, *, follow_symlinks=True):
+    shutil.copy(src, dst, follow_symlinks=True)
+    logger_log(f'Copying {str(src.absolute())} to {str(dst.absolute())}...')
 
 # --- (NEW) Update Logic ---
 def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):

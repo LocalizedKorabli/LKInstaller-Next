@@ -20,6 +20,7 @@ from localizer import _
 MODS_URL_CHS = 'https://tapio.lanzn.com/b0nxzso2b'
 MODS_URL_EN = None
 MODS_URL_CHT = None
+MODS_URL_JA = None
 
 # 1. 简体中文路由
 CHS_LIVE_ROUTES = {
@@ -106,6 +107,32 @@ CHT_PT_ROUTES = {
         'mo': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT-PublicTest/raw/main/Localizations/latest/global.mo',
         'version': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT-PublicTest/raw/main/Localizations/latest/version.info',
         'ee': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT-PublicTest/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+    }
+}
+
+# 4. 日语路由
+JA_LIVE_ROUTES = {
+    'gitlab': {
+        'mo': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja/-/raw/main/Localizations/latest/global.mo',
+        'version': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja/-/raw/main/Localizations/latest/version.info',
+        'ee': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+    },
+    'github': {
+        'mo': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA/raw/main/Localizations/latest/global.mo',
+        'version': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA/raw/main/Localizations/latest/version.info',
+        'ee': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+    }
+}
+JA_PT_ROUTES = {
+    'gitlab': {
+        'mo': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja-pt/-/raw/main/Localizations/latest/global.mo',
+        'version': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja-pt/-/raw/main/Localizations/latest/version.info',
+        'ee': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja-pt/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+    },
+    'github': {
+        'mo': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA-PT/raw/main/Localizations/latest/global.mo',
+        'version': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA-PT/raw/main/Localizations/latest/version.info',
+        'ee': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA-PT/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
     }
 }
 
@@ -198,15 +225,22 @@ class SourceManager:
             requires_fonts=True
         )
 
-        # --- (新增：定义全局资产) ---
+        # 4. 日语
+        self.add_source(
+            source_id="ja",
+            name_key="lki.i18n.lang.ja.name",
+            routes_live=JA_LIVE_ROUTES,
+            routes_pt=JA_PT_ROUTES,
+            mods_url=MODS_URL_JA,
+            requires_fonts=True
+        )
+
         self.global_assets["fonts_srcwagon"] = {
             "cloudflare": {
                 "zip": "https://dl.localizedkorabli.org/fonts/srcwagon/SrcWagon-MK.zip",
                 "version": "https://dl.localizedkorabli.org/fonts/srcwagon/version_info.json"
             }
-            # (你将来可以在这里添加 'gitee', 'gitlab' 等)
         }
-        # --- (新增结束) ---
 
     def add_source(self, source_id: str, name_key: str, routes_live: dict, routes_pt: dict,
                    mods_url: Optional[str], requires_fonts: bool):  # <-- (5. 新增参数)

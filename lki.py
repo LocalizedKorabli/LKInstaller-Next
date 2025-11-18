@@ -23,26 +23,8 @@ import settings
 from instance import instance_manager
 from installation.installation_manager import InstallationManager, InstallationTask
 from instance.game_instance import GameInstance
-from localizer import global_translator, _
+from localizer import global_translator, _, _best_fonts
 from logger import setup_logger, log
-
-# HiDPI Awareness
-try:
-    import ctypes
-    if platform.system() == "Windows":
-        ver = float(platform.version().split('.')[0])
-        # Windows 8.1+ (version >= 6.3)
-        if ver >= 6.3:
-            ctypes.windll.shcore.SetProcessDpiAwareness(1)
-        else:
-            # Windows Vista / 7 / 8
-            ctypes.windll.user32.SetProcessDPIAware()
-except Exception as e:
-    log(f"Warning: Could not set DPI awareness: {e}")
-
-global_translator.load_language(settings.global_settings.language)
-from app import LocalizationInstallerApp
-
 
 def run_auto_execute(root, arg, run_client):
     """
@@ -117,6 +99,23 @@ def run_auto_execute(root, arg, run_client):
 
 if __name__ == '__main__':
     setup_logger()
+    # HiDPI Awareness
+    try:
+        import ctypes
+
+        if platform.system() == "Windows":
+            ver = float(platform.version().split('.')[0])
+            # Windows 8.1+ (version >= 6.3)
+            if ver >= 6.3:
+                ctypes.windll.shcore.SetProcessDpiAwareness(1)
+            else:
+                # Windows Vista / 7 / 8
+                ctypes.windll.user32.SetProcessDPIAware()
+    except Exception as e:
+        log(f"Warning: Could not set DPI awareness: {e}")
+
+    global_translator.load_language(settings.global_settings.language)
+    from app import LocalizationInstallerApp
     root = tk.Tk()
 
     auto_execute_arg = None

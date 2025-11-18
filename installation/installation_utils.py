@@ -22,13 +22,14 @@ import xml.etree.ElementTree as Et
 import zipfile
 from pathlib import Path
 from logger import log
-from typing import Dict, List, Union, Any, Optional, Tuple
+from typing import Dict, List, Union, Any, Optional, Tuple, Set
 
 import polib
 
 from dirs import CACHE_DIR, TEMP_DIR
+from utils import copy_with_log
 
-BUILTIN_LOCALE_CONFIG_ZH = '''<locale_config>
+BUILTIN_LOCALE_CONFIG_CJK = '''<locale_config>
     <locale_id>ru</locale_id>
     <text_path>../res/texts</text_path>
     <text_domain>global</text_domain>
@@ -138,12 +139,22 @@ def fix_paths_xml(build_dir: Path):
         log(f"Error modifying XML {xml_path}: {e}")
 
 
+def get_files_may_overwrite(bin_folder: Path) -> Set[Path]:
+    conflictables: List[Path] = [
+        bin_folder / 'res_mods' / 'locale_config.xml',
+        bin_folder / 'res_mods' / 'texts' / 'ru' / 'LC_MESSAGES' / 'global.mo',
+        bin_folder / 'mods' / 'MK_L10N_CHS.mkmod'
+    ]
+    return set([conflictable.absolute() for conflictable in conflictables])
+
+
 def get_locale_config_content(lang_code: str) -> Optional[str]:
     """获取特定语言的 locale_config.xml 内容"""
     # (已修改：使用重命名后的变量)
     lang2lconf = {
-        'zh_CN': BUILTIN_LOCALE_CONFIG_ZH,
-        'zh_TW': BUILTIN_LOCALE_CONFIG_ZH
+        'zh_CN': BUILTIN_LOCALE_CONFIG_CJK,
+        'zh_TW': BUILTIN_LOCALE_CONFIG_CJK,
+        'ja': BUILTIN_LOCALE_CONFIG_CJK
     }
     return lang2lconf.get(lang_code, None)
 
@@ -365,7 +376,7 @@ def process_mods_for_installation(instance_id: str, instance_path: Path, mo_file
                 elif item_name_lower.endswith(('.mo', '.l10nmod', '.i18nmod')):
                     unique_filename = f"{uuid.uuid4()}{item_path.suffix}"
                     final_path = TEMP_PROCESS_DIR / unique_filename
-                    shutil.copy(item_path, final_path)
+                    copy_with_log(item_path, final_path)
 
     # 5. 将收集到的文件分类 (位于 TEMP_PROCESS_DIR)
     for file in os.listdir(TEMP_PROCESS_DIR):

@@ -21,6 +21,8 @@ import threading
 import tkinter as tk
 import zipfile
 from pathlib import Path
+
+from installation.installation_utils import get_files_may_overwrite
 from logger import log
 from tkinter import messagebox
 from typing import List, Dict, Callable, Optional, Set, Tuple
@@ -743,36 +745,38 @@ class InstallationManager:
                 major_version = ".".join(exe_version.split('.')[:2])
 
                 mods_dir = version_folder.bin_folder_path / "mods"
-                dest_core_mod_path = mods_dir / "zz_lk_i18n_pack.mkmod"
-                dest_ee_mod_path = mods_dir / "zzz_lk_i18n_ee.mkmod"
-                dest_fo_mod_path = mods_dir / "srcwagon_mk.mkmod"
-                dest_mo_mod_path = mods_dir / "zzzz_lk_i18n_mo_mod.mkmod"
-                dest_json_mod_path = mods_dir / "zzzz_lk_i18n_json_mod.mkmod"
+                dest_core_mod_path = mods_dir / "aa_lk_i18n_pack.mkmod"
+                dest_ee_mod_path = mods_dir / "aaaa_lk_i18n_ee.mkmod"
+                dest_fo_mod_path = mods_dir / "aaa_srcwagon_mk.mkmod"
+                dest_mo_mod_path = mods_dir / "aaaa_lk_i18n_mo_mod.mkmod"
+                dest_json_mod_path = mods_dir / "aaaa_lk_i18n_json_mod.mkmod"
 
                 info_json_path = task.instance.path / "lki" / "info" / version_folder.bin_folder_name
                 info_file = info_json_path / "installation_info.json"
 
-                # --- (新增：来自 _uninstall_worker 的清理逻辑) ---
+                # Clean before installation
                 _log_task(task, _('lki.uninstall.status.removing_files_for') % version_folder.bin_folder_name, 5)
 
-                if info_file.is_file():  # (使用 is_file() 没问题，因为我们还没写入)
-                    files_to_delete: List[Path] = []
+                if info_file.is_file():
+                    bin_folder = version_folder.bin_folder_path
+                    # Remove potentially existing global.mo & locale_config.xml in the res_mods folder
+                    files_to_delete: Set[Path] = get_files_may_overwrite(bin_folder)
                     try:
                         with open(info_file, 'r', encoding='utf-8') as f:
                             data = json.load(f)
                         files_data = data.get("files", {})
                         for component_name, path_dict in files_data.items():
                             for relative_path in path_dict.keys():
-                                absolute_path = version_folder.bin_folder_path / relative_path
-                                files_to_delete.append(absolute_path)
+                                absolute_path = (bin_folder / relative_path).absolute()
+                                files_to_delete.add(absolute_path)
                     except Exception as e:
-                        # (已修改：本地化)
                         _log_task(task, _('lki.install.warn.cleanup_read_failed') % (info_file.name, e))
 
                     for file_path in files_to_delete:
                         try:
                             if file_path.is_file():
                                 os.remove(file_path)
+                                log(f'Deleting {str(file_path)}...') # Consider making this localized
                         except OSError as e:
                             # (已修改：本地化)
                             _log_task(task, _('lki.install.warn.cleanup_remove_failed') % (file_path.name, e))
@@ -798,8 +802,8 @@ class InstallationManager:
                         _log_task(task, _('lki.install.error.paths_xml_failed') % e)
                         log(f"Warning: Failed to fix paths.xml for {version_folder.bin_folder_path}: {e}")
 
-                    shutil.copy(core_mkmod_path, dest_core_mod_path)
-                    files_info = {"i18n": {}, "ee": {}, "font": {}, "mods": {}}
+                    root_utils.copy_with_log(core_mkmod_path, dest_core_mod_path)
+                    files_info = {'i18n': {}, 'ee': {}, 'font': {}, 'mods': {}}
                     try:
                         core_rel_path = f"mods/{dest_core_mod_path.name}"
                         files_info["i18n"][core_rel_path] = utils.get_sha256(dest_core_mod_path)
@@ -810,7 +814,7 @@ class InstallationManager:
                         # 2. EE (非关键)
                     if ee_mkmod_path and ee_mkmod_path.is_file():
                         try:
-                            shutil.copy(ee_mkmod_path, dest_ee_mod_path)
+                            root_utils.copy_with_log(ee_mkmod_path, dest_ee_mod_path)
                             ee_rel_path = f"mods/{dest_ee_mod_path.name}"
                             files_info["ee"][ee_rel_path] = utils.get_sha256(dest_ee_mod_path)
                         except Exception as e:
@@ -820,7 +824,7 @@ class InstallationManager:
                         # 3. Font (非关键)
                     if fo_mkmod_path and fo_mkmod_path.is_file():
                         try:
-                            shutil.copy(fo_mkmod_path, dest_fo_mod_path)
+                            root_utils.copy_with_log(fo_mkmod_path, dest_fo_mod_path)
                             font_rel_path = f"mods/{dest_fo_mod_path.name}"
                             files_info["font"][font_rel_path] = utils.get_sha256(dest_fo_mod_path)
                         except Exception as e:
@@ -830,7 +834,7 @@ class InstallationManager:
                         # 4. Mods (MO) (非关键)
                     if mods_mo_mkmod_path and mods_mo_mkmod_path.is_file():
                         try:
-                            shutil.copy(mods_mo_mkmod_path, dest_mo_mod_path)
+                            root_utils.copy_with_log(mods_mo_mkmod_path, dest_mo_mod_path)
                             mods_mo_rel_path = f"mods/{dest_mo_mod_path.name}"
                             files_info["mods"][mods_mo_rel_path] = utils.get_sha256(dest_mo_mod_path)
                         except Exception as e:
@@ -840,7 +844,7 @@ class InstallationManager:
                         # 5. Mods (JSON) (非关键)
                     if mods_json_mkmod_path and mods_json_mkmod_path.is_file():
                         try:
-                            shutil.copy(mods_json_mkmod_path, dest_json_mod_path)
+                            root_utils.copy_with_log(mods_json_mkmod_path, dest_json_mod_path)
                             mods_json_rel_path = f"mods/{dest_json_mod_path.name}"
                             files_info["mods"][mods_json_rel_path] = utils.get_sha256(dest_json_mod_path)
                         except Exception as e:
@@ -932,8 +936,8 @@ class InstallationManager:
                     _log_task(task, _('lki.uninstall.status.no_info_skip') % game_version.bin_folder_name, progress)
                     continue
 
-                # 1. 读取 info.json 来获取文件列表
-                files_to_delete: List[Path] = []
+                bin_folder = game_version.bin_folder_path
+                files_to_delete: Set[Path] = get_files_may_overwrite(bin_folder)
                 try:
                     with open(info_file, 'r', encoding='utf-8') as f:
                         data = json.load(f)
@@ -942,19 +946,18 @@ class InstallationManager:
                     for component_name, path_dict in files_data.items():
                         for relative_path in path_dict.keys():
                             # relative_path 是 "mods/lk_i18n_pack.mkmod"
-                            absolute_path = game_version.bin_folder_path / relative_path
-                            files_to_delete.append(absolute_path)
+                            absolute_path = bin_folder / relative_path
+                            files_to_delete.add(absolute_path)
 
                 except Exception as e:
-                    # (已修改：本地化)
                     _log_task(task, _('lki.uninstall.error.read_info_failed') % (info_file.name, e))
-                    # (即使读取失败，我们仍将尝试删除 info_file)
 
                 # 2. 删除所有引用的文件
                 for file_path in files_to_delete:
                     try:
                         if file_path.is_file():
                             os.remove(file_path)
+                            log(self, f'Deleting {str(file_path)}...')  # Consider making this localized
                     except OSError as e:
                         # (已修改：本地化)
                         _log_task(task, _('lki.uninstall.warn.remove_failed') % (file_path.name, e))
@@ -996,11 +999,10 @@ class InstallationManager:
         self._check_if_all_finished()
 
     def _check_if_all_finished(self):
-        from localizer import _  # <-- (修复 UnboundLocalError)
+        from localizer import _
         with self._lock:
             all_done = all(t.status in ["done", "failed"] for t in self.tasks)
             if all_done:
-                # (已修改：根据状态使用不同的完成字符串)
                 all_done_key = 'lki.uninstall.status.all_done' if self.is_uninstalling else 'lki.action.status.all_done'
                 _log_overall(self, _(all_done_key))
                 self.root_tk.after(0, self.window.all_tasks_finished)
