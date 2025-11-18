@@ -2,7 +2,7 @@
   "lki.action.status.all_done": "所有任务已完成。",
   "lki.add_instance.btn.browse": "浏览...",
   "lki.add_instance.error.empty_fields": "名称、路径和类型不能为空。",
-  "lki.add_instance.error.invalid_path": "路径无效。请确保路径指向包含[①Korabli.exe/WorldOfWarships.exe②bin目录③game_info.xml或steam_api64.dll]的游戏根目录。",
+  "lki.add_instance.error.invalid_path": "路径无效。请确保路径指向包含[①Korabli.exe②bin目录③game_info.xml或steam_api64.dll]的游戏根目录。",
   "lki.add_instance.error.path_exists": "该路径的实例已存在。",
   "lki.add_instance.name": "实例名称:",
   "lki.add_instance.path": "实例路径:",

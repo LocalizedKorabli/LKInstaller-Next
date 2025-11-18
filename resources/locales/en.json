@@ -2,7 +2,7 @@
   "lki.action.status.all_done": "All tasks finished.",
   "lki.add_instance.btn.browse": "Browse...",
   "lki.add_instance.error.empty_fields": "Name, Path, and Type cannot be empty.",
-  "lki.add_instance.error.invalid_path": "Invalid path. Please ensure the path points to a game root directory containing [①Korabli.exe/WorldOfWarships.exe ②bin/ folder ③game_info.xml or steam_api64.dll].",
+  "lki.add_instance.error.invalid_path": "Invalid path. Please ensure the path points to a game root directory containing [①Korabli.exe ②bin/ folder ③game_info.xml or steam_api64.dll].",
   "lki.add_instance.error.path_exists": "An instance with this path already exists.",
   "lki.add_instance.name": "Instance Name:",
   "lki.add_instance.path": "Instance Path:",

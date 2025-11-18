@@ -2,7 +2,7 @@
   "lki.action.status.all_done": "すべてのタスクが完了しました。",
   "lki.add_instance.btn.browse": "参照...",
   "lki.add_instance.error.empty_fields": "名前、パス、タイプは空にできません。",
-  "lki.add_instance.error.invalid_path": "無効なパスです。パスが[①Korabli.exe/WorldOfWarships.exe ②bin/ フォルダ ③game_info.xml または steam_api64.dll] を含むゲームのルートディレクトリを指していることを確認してください。",
+  "lki.add_instance.error.invalid_path": "無効なパスです。パスが[①Korabli.exe ②bin/ フォルダ ③game_info.xml または steam_api64.dll] を含むゲームのルートディレクトリを指していることを確認してください。",
   "lki.add_instance.error.path_exists": "このパスのインスタンスは既に存在します。",
   "lki.add_instance.name": "インスタンス名:",
   "lki.add_instance.path": "インスタンスパス:",

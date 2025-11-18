@@ -757,10 +757,11 @@ class InstallationManager:
                 # Clean before installation
                 _log_task(task, _('lki.uninstall.status.removing_files_for') % version_folder.bin_folder_name, 5)
 
+                bin_folder = version_folder.bin_folder_path
+                # Remove potentially existing global.mo & locale_config.xml in the res_mods folder
+                files_to_delete: Set[Path] = get_files_may_overwrite(bin_folder)
+
                 if info_file.is_file():
-                    bin_folder = version_folder.bin_folder_path
-                    # Remove potentially existing global.mo & locale_config.xml in the res_mods folder
-                    files_to_delete: Set[Path] = get_files_may_overwrite(bin_folder)
                     try:
                         with open(info_file, 'r', encoding='utf-8') as f:
                             data = json.load(f)
@@ -772,20 +773,18 @@ class InstallationManager:
                     except Exception as e:
                         _log_task(task, _('lki.install.warn.cleanup_read_failed') % (info_file.name, e))
 
-                    for file_path in files_to_delete:
-                        try:
-                            if file_path.is_file():
-                                os.remove(file_path)
-                                log(f'Deleting {str(file_path)}...') # Consider making this localized
-                        except OSError as e:
-                            # (已修改：本地化)
-                            _log_task(task, _('lki.install.warn.cleanup_remove_failed') % (file_path.name, e))
+                for file_path in files_to_delete:
+                    try:
+                        if file_path.is_file():
+                            os.remove(file_path)
+                            log(f'Deleting {str(file_path)}...') # Consider making this localized
+                    except OSError as e:
+                        _log_task(task, _('lki.install.warn.cleanup_remove_failed') % (file_path.name, e))
 
+                if info_file.is_file():
                     try:
                         os.remove(info_file)
                     except OSError as e:
-                        # (重要) 清理失败不应停止安装
-                        # (已修改：本地化)
                         _log_task(task, _('lki.install.warn.cleanup_remove_failed') % (info_file.name, e))
                 # --- (清理逻辑结束) ---
 

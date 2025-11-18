@@ -230,6 +230,6 @@ class ActionProgressWindow(BaseDialog):
         if not success:
             messagebox.showwarning(
                 _('lki.app.title'),
-                _('lki.game.error.play_failed') % ("lgc_api.exe", "Korabli.exe/WorldOfWarships.exe"),
+                _('lki.game.error.play_failed') % ("lgc_api.exe", "Korabli.exe"),
                 parent=self  # (已修改) 将此窗口设为父窗口
             )

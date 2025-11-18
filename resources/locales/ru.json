@@ -2,7 +2,7 @@
   "lki.action.status.all_done": "Все задачи завершены.",
   "lki.add_instance.btn.browse": "Обзор...",
   "lki.add_instance.error.empty_fields": "Имя, Путь и Тип не могут быть пустыми.",
-  "lki.add_instance.error.invalid_path": "Неверный путь. Убедитесь, что путь указывает на корневой каталог игры, содержащий [①Korabli.exe/WorldOfWarships.exe ②папку bin/ ③game_info.xml или steam_api64.dll].",
+  "lki.add_instance.error.invalid_path": "Неверный путь. Убедитесь, что путь указывает на корневой каталог игры, содержащий [①Korabli.exe ②папку bin/ ③game_info.xml или steam_api64.dll].",
   "lki.add_instance.error.path_exists": "Экземпляр с этим путем уже существует.",
   "lki.add_instance.name": "Имя экземпляра:",
   "lki.add_instance.path": "Путь к экземпляру:",

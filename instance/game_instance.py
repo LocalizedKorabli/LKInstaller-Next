@@ -79,10 +79,8 @@ class GameVersion:
         """
         exe_path_str = str(self.bin_folder_path / "bin64" / "Korabli64.exe")
         if not os.path.exists(exe_path_str):
-            exe_path_str = str(self.bin_folder_path / "bin64" / "WorldOfWarships64.exe")
-            if not os.path.exists(exe_path_str):
-                log(f"Warning: Did not find Korabli64.exe or WorldOfWarships64.exe in {self.bin_folder_path}")
-                return None
+            log(f"Warning: Did not find Korabli64.exe in {self.bin_folder_path}")
+            return None
 
         try:
             # 1. 获取语言和代码页
@@ -92,10 +90,10 @@ class GameVersion:
             str_info_path = f'\\StringFileInfo\\{lang:04x}{codepage:04x}\\ProductVersion'
 
             # 3. 查询 ProductVersion 字符串
-            product_version_string = win32api.GetFileVersionInfo(exe_path_str, str_info_path)
+            product_version_string = str(win32api.GetFileVersionInfo(exe_path_str, str_info_path))
 
             if product_version_string:
-                # 4. 清理字符串 (例如 "25,11,0,8828504" -> "25.11.0.8828504")
+                # 4. "25,11,0,8828504" -> "25.11.0.8828504"
                 clean_version = product_version_string.replace(',', '.').strip()
                 return clean_version
             else:
@@ -229,7 +227,7 @@ class GameInstance:
         Tries to launch the game executable.
         Returns (success, executable_name or None)
         """
-        executables_to_try = ["lgc_api.exe", "Korabli.exe", "WorldOfWarships.exe"]
+        executables_to_try = ["lgc_api.exe", "Korabli.exe"]
 
         for exe in executables_to_try:
             exe_path = self.path / exe
