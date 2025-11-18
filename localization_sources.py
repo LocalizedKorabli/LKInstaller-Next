@@ -190,7 +190,7 @@ class LocalizationSource:
         routes_for_type = self.get_routes_for_type(instance_type)
         if routes_for_type:
             # (回退到第一个可用的路由)
-            return routes_for_type.get(route_id, next(iter(routes_for_type.values()), None))
+            return routes_for_type.get(route_id)
         return None
 
     def get_available_route_ids(self) -> List[str]:
@@ -318,12 +318,11 @@ class SourceManager:
         """
         检查一个语言代码是否可能需要字体包。
         """
-        source = self.get_source(lang_code)
-        if source:
-            return source.requires_fonts
-
-        # (安全回退：如果未指定，则假设需要字体)
-        return True
+        # May reactivate this
+        # source = self.get_source(lang_code)
+        # if source:
+        #    return source.requires_fonts
+        return False
 
 
 # 全局实例

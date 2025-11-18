@@ -153,6 +153,7 @@ class LocalizationInstallerApp:
         self.tab_game.update_icons()
         self.tab_advanced.update_icons()
         self.tab_settings.update_icons()
+        self.tab_about.update_icons()
 
     def _on_instance_select(self, instance: Optional[GameInstance]):
         """

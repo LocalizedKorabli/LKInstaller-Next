@@ -39,7 +39,6 @@ class InstanceManager:
         normalized_path = os.path.normpath(os.path.abspath(path))
         return hashlib.sha256(normalized_path.encode('utf-8')).hexdigest()
 
-    # --- (已修改：采纳您的建议，使其具有语言依赖性) ---
     def _get_default_preset_data(self, lang_code: str) -> Dict[str, Any]:
         """
         返回一个标准的“默认预设”字典结构。
@@ -50,19 +49,16 @@ class InstanceManager:
         # 我们假设 global_source_manager 现在有这个方法
         try:
             default_fonts = global_source_manager.lang_code_requires_fonts(lang_code)
-        except AttributeError:
-            log(f"Warning: global_source_manager.lang_code_requires_fonts() not found. Defaulting use_fonts to True.")
-            default_fonts = True  # (回退到旧逻辑)
         except Exception as e:
-            log(f"Error checking font requirement for {lang_code}: {e}. Defaulting use_fonts to True.")
-            default_fonts = True
+            log(f"Error checking font requirement for {lang_code}: {e}. Defaulting use_fonts to False.")
+            default_fonts = False
 
         return {
             "name_key": "lki.preset.default.name",
             "lang_code": lang_code,
             "use_ee": True,
             "use_mods": True,
-            "use_fonts": default_fonts,  # (已修改)
+            "use_fonts": default_fonts,
             "is_default": True
         }
 
@@ -117,7 +113,7 @@ class InstanceManager:
                         try:
                             default_fonts = global_source_manager.lang_code_requires_fonts(lang_code)
                         except Exception:
-                            default_fonts = True  # (回退)
+                            default_fonts = False  # (回退)
 
                         log(
                             f"Migrating preset {preset_id} for {instance_id} (adding use_fonts: {default_fonts} for lang={lang_code})...")
@@ -125,10 +121,9 @@ class InstanceManager:
                         needs_save = True
 
             else:
-                # (3. 'presets' 键完全缺失, 创建全新的默认预设)
                 log(f"Migrating old instance data for {instance_id} (creating default preset)...")
 
-                default_lang_code = utils.select_locale_by_system_lang_code()  # (保持 load 方法中的硬编码回退)
+                default_lang_code = utils.select_locale_by_system_lang_code()
                 default_preset = self._get_default_preset_data(default_lang_code)
 
                 data['presets'] = {"default": default_preset}

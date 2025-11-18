@@ -290,7 +290,7 @@ class SettingsTab(BaseTab):
         self.route_priority_display_label.config(text=display_text)
 
     def _open_route_priority_window(self):
-        current_list = settings.global_settings.get('download_routes_priority', ['gitee', 'gitlab', 'github'])
+        current_list = settings.global_settings.get('download_routes_priority')
         all_routes = global_source_manager.get_all_available_route_ids()
 
         window = RoutePriorityWindow(

@@ -1,4 +1,7 @@
 {
+  "lki.about.contacts.discord": "加入團隊Discord伺服器",
+  "lki.about.contacts.github": "查看團隊GitHub頁面",
+  "lki.about.contacts.qq": "加入QQ群",
   "lki.action.status.all_done": "所有任務已完成。",
   "lki.add_instance.btn.browse": "瀏覽...",
   "lki.add_instance.error.empty_fields": "名稱、路徑和類型不能為空。",

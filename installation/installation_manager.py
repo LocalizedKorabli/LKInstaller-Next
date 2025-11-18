@@ -100,9 +100,7 @@ class InstallationManager:
         self.download_queue: queue.Queue = queue.Queue()
         self.download_jobs: Dict[str, DownloadJob] = {}
         self.window: Optional[ActionProgressWindow] = None
-
-        self.download_routes_priority: List[str] = settings.global_settings.get('download_routes_priority')
-
+        self.download_routes_priority: List[str] = []
         self._cancel_event = threading.Event()
         self._lock = threading.Lock()
         self.on_complete_callback: Optional[Callable] = None
@@ -123,6 +121,7 @@ class InstallationManager:
         self.on_complete_callback = on_complete_callback
         self.is_uninstalling = False  # (新增)
         self._install_phase_started = False  # <-- (修改 2: 重置标志)
+        self.download_routes_priority = settings.global_settings.get('download_routes_priority')
 
         tasks_data = {t.task_name : t.instance for t in self.tasks}
         # (已修改：传入 title 和 strings)
@@ -245,7 +244,7 @@ class InstallationManager:
             threading.Thread(target=self._download_worker, daemon=True).start()
 
     def _resolve_task_version(self, task: InstallationTask):
-        from localizer import _  # <-- (修复 UnboundLocalError)
+        from localizer import _
 
         if self._cancel_event.is_set(): return
 
@@ -264,9 +263,17 @@ class InstallationManager:
             self._mark_task_failed(task)
             return
 
-        version_info_url_map = source.get_urls(task.instance.type, 'gitee')  # (Gitee 仅用于获取结构)
-        if not version_info_url_map or 'version' not in version_info_url_map:
-            # (已修改：本地化)
+        available_route_ids = source.get_available_route_ids()
+        has_valid_config = False
+
+        for route_id in available_route_ids:
+            info_map = source.get_urls(task.instance.type, route_id)
+
+            if info_map and 'version' in info_map:
+                has_valid_config = True
+                break
+
+        if not has_valid_config:
             _log_task(task, _('lki.install.error.no_version_url') % task.lang_code)
             self._mark_task_failed(task)
             return

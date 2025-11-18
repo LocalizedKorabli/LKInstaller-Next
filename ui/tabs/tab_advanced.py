@@ -357,7 +357,7 @@ class AdvancedTab(BaseTab):
         self.preset_lang_label.config(text=f"{_('lki.preset.manager.language')} {lang_name}")
 
         # (已修改：从 global_settings 获取路由)
-        route_ids = settings.global_settings.get('download_routes_priority', ['gitee'])
+        route_ids = settings.global_settings.get('download_routes_priority', [])
         route_names = [self.route_id_to_name.get(rid, rid) for rid in route_ids]
         route_str = ", ".join(route_names)
         self.preset_route_label.config(text=f"{_('lki.preset.manager.route')} {route_str}")
