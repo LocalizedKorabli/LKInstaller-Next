@@ -143,6 +143,9 @@ def get_files_may_overwrite(bin_folder: Path) -> Set[Path]:
     conflictables: List[Path] = [
         bin_folder / 'res_mods' / 'locale_config.xml',
         bin_folder / 'res_mods' / 'texts' / 'ru' / 'LC_MESSAGES' / 'global.mo',
+        bin_folder / 'res_mods' / 'gui' / 'game_loading' / 'game_logo.svg',
+        bin_folder / 'res_mods' / 'gui' / 'game_loading' / 'game_logo_static.svg',
+        bin_folder / 'res_mods' / 'gui' / 'game_loading' / 'age_rating_icon.svg',
         bin_folder / 'mods' / 'MK_L10N_CHS.mkmod'
     ]
     return set([conflictable.absolute() for conflictable in conflictables])

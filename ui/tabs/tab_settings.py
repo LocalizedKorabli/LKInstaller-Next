@@ -24,7 +24,7 @@ import shutil  # (新增)
 import settings
 import logger
 from dirs import APP_DATA_PATH, base_path, CACHE_DIR, LOG_DIR
-from localization_sources import global_source_manager
+from localization_sources import global_source_manager, get_route_id_to_name
 from localizer import _, get_available_languages
 from logger import log
 from ui.dialogs import RoutePriorityWindow, BaseDialog
@@ -59,15 +59,6 @@ class SettingsTab(BaseTab):
                                                              self.available_ui_langs.get('en', 'English'))
 
         self.proxy_status_text = self._get_proxy_status_text()
-
-        # (新增：路由名称映射)
-        self.route_id_to_name = {
-            'gitee': _('lki.i18n.route.gitee'),
-            'gitlab': _('lki.i18n.route.gitlab'),
-            'github': _('lki.i18n.route.github'),
-            'cloudflare': _('lki.i18n.route.cloudflare'),
-            'tencent': _('lki.i18n.route.tencent')
-        }
 
         self._create_settings_tab_widgets()
 
@@ -277,7 +268,7 @@ class SettingsTab(BaseTab):
 
         display_names = []
         for r_id in route_ids:
-            display_names.append(self.route_id_to_name.get(r_id, r_id))
+            display_names.append(get_route_id_to_name().get(r_id, r_id))
 
         if len(display_names) > 4:
             display_text = ", ".join(display_names[:4]) + ", ..."

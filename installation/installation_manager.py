@@ -373,12 +373,11 @@ class InstallationManager:
             self.download_queue.task_done()
 
     def _perform_download(self, job: DownloadJob, task: InstallationTask) -> Tuple[bool, Optional[Path]]:
-        """执行单个下载作业，包括缓存检查。"""
         from localizer import _  # <-- (修复 UnboundLocalError)
 
         source = global_source_manager.get_source(job.lang_code)
 
-        # --- 1. MO 文件下载和缓存 ---
+        # MO
         if job.file_type == 'mo':
             cache_path = L10N_CACHE / job.lang_code / job.version_info['main'] / job.version_info['sub']
             mo_path = cache_path / "global.mo"
@@ -392,24 +391,23 @@ class InstallationManager:
                     actual_hash = utils.get_sha256(mo_path)
 
                     if expected_hash and actual_hash == expected_hash:
-                        # (已修改：本地化)
                         log(_('lki.install.debug.cache_hit') % job.job_id)
                         return True, mo_path
                 except Exception as e:
-                    # (已修改：本地化)
                     log(_('lki.install.debug.cache_check_failed') % e)
 
             utils.mkdir(cache_path)
 
             for route_id in self.download_routes_priority:
                 if self._cancel_event.is_set(): return False, None
-                urls = source.get_urls(task.instance.type, route_id)  # (类型特定)
+
+                urls = source.get_urls(task.instance.type, route_id)
                 if not urls or not urls.get('mo'):
                     continue
 
                 mo_url = urls.get('mo')
 
-                if self._download_file_with_retry(mo_url, mo_path, f"MO ({job.job_id})", 5):
+                if self._download_file_with_retry(mo_url, mo_path, f"MO ({job.job_id}) - {route_id}", 5):
                     dl_hash = utils.get_sha256(mo_path)
                     with open(info_path, 'w') as f:
                         json.dump({'file_sha256': dl_hash}, f)
@@ -417,20 +415,18 @@ class InstallationManager:
 
             return False, None
 
-        # --- 2. EE 文件下载和缓存 ---
+        # EE
         if job.file_type == 'ee':
-            # (Request 1) 按语言和客户端类型区分缓存
             cache_path = EE_CACHE / job.lang_code / task.instance.type
             ee_zip_path = cache_path / "ee.zip"
 
             utils.mkdir(cache_path)
 
-            # (新增: 检查 ee.zip 是否已下载)
             if ee_zip_path.is_file() and ee_zip_path.stat().st_size > 0:
-                # (已修改：本地化)
                 log(_('lki.install.debug.cache_hit_ee') % job.job_id)
                 return True, ee_zip_path
 
+            # 循环尝试所有路由
             for route_id in self.download_routes_priority:
                 if self._cancel_event.is_set(): return False, None
 
@@ -439,119 +435,107 @@ class InstallationManager:
                     continue
 
                 ee_url = urls.get('ee')
-                if self._download_file_with_retry(ee_url, ee_zip_path, f"EE ({job.job_id})", 5):
+                # 如果下载成功，返回 True；否则继续
+                if self._download_file_with_retry(ee_url, ee_zip_path, f"EE ({job.job_id}) - {route_id}", 5):
                     return True, ee_zip_path
 
             return False, None
 
-        # --- 3. 字体优化包 (.mkmod 缓存) ---
+        # Fonts
         if job.file_type == 'fonts':
-            from localizer import _  # (为日志导入)
-
-            asset_id = job.job_id  # (例如 "fonts_srcwagon")
-            urls = None
-
-            # 1. (新) 按优先级查找 URL
-            for route_id in self.download_routes_priority:
-                if self._cancel_event.is_set(): return False, None
-
-                urls = global_source_manager.get_global_asset_urls(asset_id, route_id)
-                if urls and urls.get('zip') and urls.get('version'):
-                    # (已修改：本地化)
-                    _log_task(task, _('lki.install.status.fonts_route') % route_id)  # <-- *** 修改点 1 ***
-                    break
-
-            if not urls:
-                # (已修改：本地化)
-                _log_task(task, _('lki.install.error.fonts_no_url'))  # <-- *** 修改点 2 ***
-                return False, None
-
-            VER_URL = urls.get('version')
-            ZIP_URL = urls.get('zip')
-
-            # --- (从这里开始，缓存逻辑与我之前的提议相同) ---
+            asset_id = job.job_id
             cache_dir = utils.FONTS_CACHE
             mkmod_path = cache_dir / "srcwagon_mk.mkmod"
             info_path = cache_dir / "cache_info.json"
             utils.mkdir(cache_dir)
 
             proxies = root_utils.get_configured_proxies()
-            remote_version = None
 
-            # 2. 获取远程版本
-            try:
-                resp = requests.get(VER_URL, timeout=5, proxies=proxies)
-                resp.raise_for_status()
-                remote_info = resp.json()
-                remote_version = remote_info.get('version')
-            except Exception as e:
-                # (已修改：本地化)
-                _log_task(task, _('lki.install.error.fonts_version_check') % e)  # <-- *** 修改点 3 ***
-                return False, None  # (继续尝试其他路由可能更健壮, 但目前保持简单)
+            for route_id in self.download_routes_priority:
+                if self._cancel_event.is_set(): return False, None
 
-            if not remote_version:
-                # (已修改：本地化)
-                _log_task(task, _('lki.install.error.fonts_version_invalid'))  # <-- *** 修改点 4 ***
-                return False, None
+                # URL
+                urls = global_source_manager.get_global_asset_urls(asset_id, route_id)
+                if not urls or not urls.get('zip') or not urls.get('version'):
+                    continue  # 当前路由配置无效，跳过
 
-            # 3. 检查缓存
-            if info_path.is_file() and mkmod_path.is_file():
+                VER_URL = urls.get('version')
+                ZIP_URL = urls.get('zip')
+
+                remote_version = None
+
+                # Version
                 try:
-                    with open(info_path, 'r', encoding='utf-8') as f:
-                        local_info = json.load(f)
-                    local_version = local_info.get('version')
-                    expected_hash = local_info.get('file_sha256')
-
-                    if local_version == remote_version:
-                        actual_hash = utils.get_sha256(mkmod_path)
-                        if actual_hash == expected_hash:
-                            # (已修改：本地化)
-                            log(_('lki.install.debug.cache_hit') % job.job_id)
-                            return True, mkmod_path
+                    _log_task(task, _('lki.install.status.fonts_route') % route_id)
+                    resp = requests.get(VER_URL, timeout=5, proxies=proxies)
+                    resp.raise_for_status()
+                    remote_info = resp.json()
+                    remote_version = remote_info.get('version')
                 except Exception as e:
-                    # (已修改：本地化)
-                    log(_('lki.install.debug.cache_check_failed') % e)
+                    # 当前路由连接失败，记录日志并尝试下一个路由
+                    _log_task(task, _('lki.install.error.fonts_version_check') % f"{route_id}: {e}")
+                    continue
 
-            # 4. 缓存未命中 - 下载并重新打包
-            _log_task(task, _('lki.install.status.packing_fonts'))  # <-- *** 修改点 5 ***
+                if not remote_version:
+                    _log_task(task, _('lki.install.error.fonts_version_invalid') + f" ({route_id})")
+                    continue
 
-            temp_zip_path = utils.TEMP_DIR / "fonts.zip"
-            # (注意：我们在这里使用已配置的代理)
-            if not self._download_file_with_retry(ZIP_URL, temp_zip_path, f"Fonts ({job.job_id})", 10):
-                return False, None
+                # Check cache
+                if info_path.is_file() and mkmod_path.is_file():
+                    try:
+                        with open(info_path, 'r', encoding='utf-8') as f:
+                            local_info = json.load(f)
+                        if local_info.get('version') == remote_version:
+                            actual_hash = utils.get_sha256(mkmod_path)
+                            expected_hash = local_info.get('file_sha256')
+                            if actual_hash == expected_hash:
+                                log(_('lki.install.debug.cache_hit') % job.job_id)
+                                return True, mkmod_path
+                    except Exception as e:
+                        log(_('lki.install.debug.cache_check_failed') % e)
 
-            unpack_dir = utils.FONTS_UNPACK_TEMP
-            if unpack_dir.exists():
-                shutil.rmtree(unpack_dir)
-            utils.mkdir(unpack_dir)
+                # Download
+                _log_task(task, _('lki.install.status.packing_fonts'))
+                temp_zip_path = utils.TEMP_DIR / "fonts.zip"
 
-            with zipfile.ZipFile(temp_zip_path, 'r') as zf:
-                utils.process_possible_gbk_zip(zf).extractall(unpack_dir)
+                if not self._download_file_with_retry(ZIP_URL, temp_zip_path, f"Fonts ({job.job_id}) - {route_id}", 15):
+                    continue
 
-            files_to_add: Dict[str, Path] = {}
-            for root, _, files in os.walk(unpack_dir):
-                for file in files:
-                    local_path = Path(root) / file
-                    arcname = str(local_path.relative_to(unpack_dir)).replace("\\", "/")
-                    files_to_add[arcname] = local_path
+                try:
+                    unpack_dir = utils.FONTS_UNPACK_TEMP
+                    if unpack_dir.exists():
+                        shutil.rmtree(unpack_dir)
+                    utils.mkdir(unpack_dir)
 
-            if not files_to_add:
-                # (已修改：本地化)
-                _log_task(task, _('lki.install.error.fonts_zip_empty'))  # <-- *** 修改点 6 ***
-                return False, None
+                    with zipfile.ZipFile(temp_zip_path, 'r') as zf:
+                        utils.process_possible_gbk_zip(zf).extractall(unpack_dir)
 
-            utils.create_mkmod(mkmod_path, files_to_add)
+                    files_to_add: Dict[str, Path] = {}
+                    for root, _, files in os.walk(unpack_dir):
+                        for file in files:
+                            local_path = Path(root) / file
+                            arcname = str(local_path.relative_to(unpack_dir)).replace("\\", "/")
+                            files_to_add[arcname] = local_path
 
-            # 5. 写入新缓存信息
-            new_hash = utils.get_sha256(mkmod_path)
-            try:
-                with open(info_path, 'w', encoding='utf-8') as f:
-                    json.dump({'version': remote_version, 'file_sha256': new_hash}, f)
-            except Exception as e:
-                # (已修改：本地化)
-                log(_('lki.install.error.fonts_cache_write') % e)
+                    if not files_to_add:
+                        raise Exception("Empty zip file")
 
-            return True, mkmod_path
+                    utils.create_mkmod(mkmod_path, files_to_add)
+
+                    new_hash = utils.get_sha256(mkmod_path)
+                    with open(info_path, 'w', encoding='utf-8') as f:
+                        json.dump({'version': remote_version, 'file_sha256': new_hash}, f)
+
+                    return True, mkmod_path
+
+                except Exception as e:
+                    _log_task(task, f"Fonts packing failed for {route_id}, retrying next: {e}")
+                    # 打包失败（可能是zip损坏），继续尝试下一个路由
+                    continue
+
+            # 如果所有路由都尝试完毕仍未返回 True
+            _log_task(task, _('lki.install.error.fonts_no_url'))
+            return False, None
         # --- (新增结束) ---
 
         return False, None

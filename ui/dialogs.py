@@ -22,6 +22,7 @@ from pathlib import Path  # (新增)
 
 import dirs
 import utils
+from localization_sources import get_route_id_to_name
 from localizer import _
 from logger import log
 
@@ -133,15 +134,7 @@ class RoutePriorityWindow(BaseDialog):  # <-- 继承 BaseDialog
         self.icons = icons
         self.on_save_callback = on_save_callback
 
-        # 准备显示名称
-        self.route_id_to_name = {
-            'gitee': _('lki.i18n.route.gitee'),
-            'gitlab': _('lki.i18n.route.gitlab'),
-            'github': _('lki.i18n.route.github'),
-            'cloudflare': _('lki.i18n.route.cloudflare'),
-            'tencent': _('lki.i18n.route.tencent')
-        }
-        self.route_name_to_id = {v: k for k, v in self.route_id_to_name.items()}
+        self.route_name_to_id = {v: k for k, v in get_route_id_to_name().items()}
 
         main_frame = ttk.Frame(self, padding=10)
         main_frame.pack(fill='both', expand=True)
@@ -207,7 +200,7 @@ class RoutePriorityWindow(BaseDialog):  # <-- 继承 BaseDialog
 
         # 填充 listbox
         for r_id in final_route_ids:
-            name = self.route_id_to_name.get(r_id, r_id)
+            name = get_route_id_to_name().get(r_id, r_id)
             self.route_listbox.insert('end', name)
 
     def _on_route_listbox_select(self, event=None):

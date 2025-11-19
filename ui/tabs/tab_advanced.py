@@ -24,7 +24,7 @@ import settings
 import utils
 from instance import instance_manager
 from instance.game_instance import GameInstance
-from localization_sources import global_source_manager
+from localization_sources import global_source_manager, get_route_id_to_name
 from localizer import _
 from logger import log
 from ui.dialogs import CustomAskStringDialog, BaseDialog, AutoUpdateConfigDialog  # (已修改)
@@ -55,12 +55,6 @@ class AdvancedTab(BaseTab):
         self.display_name_to_preset_id = {}
 
         self.l10n_id_to_name, self.l10n_name_to_id = global_source_manager.get_display_maps()
-        self.route_id_to_name = {
-            'gitee': _('lki.i18n.route.gitee'),
-            'gitlab': _('lki.i18n.route.gitlab'),
-            'github': _('lki.i18n.route.github'),
-            'cloudflare': _('lki.i18n.route.cloudflare')
-        }
 
         self.advanced_tab_placeholder = self._create_placeholder_label(_('lki.advanced.please_select'))
         self.advanced_tab_placeholder.pack(pady=20, padx=20)
@@ -358,7 +352,7 @@ class AdvancedTab(BaseTab):
 
         # (已修改：从 global_settings 获取路由)
         route_ids = settings.global_settings.get('download_routes_priority', [])
-        route_names = [self.route_id_to_name.get(rid, rid) for rid in route_ids]
+        route_names = [get_route_id_to_name().get(rid, rid) for rid in route_ids]
         route_str = ", ".join(route_names)
         self.preset_route_label.config(text=f"{_('lki.preset.manager.route')} {route_str}")
 

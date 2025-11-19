@@ -160,6 +160,14 @@ LKI_UPDATE_ROUTES = {
     }
 }
 
+def get_route_id_to_name():
+    return {
+        'gitee': _('lki.i18n.route.gitee'),
+        'gitlab': _('lki.i18n.route.gitlab'),
+        'github': _('lki.i18n.route.github'),
+        'cloudflare': _('lki.i18n.route.cloudflare'),
+        'tencent': _('lki.i18n.route.tencent')
+    }
 
 class LocalizationSource:
     """存储一个可安装本地化包的数据。"""
