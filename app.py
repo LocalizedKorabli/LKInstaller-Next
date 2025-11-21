@@ -55,7 +55,7 @@ class LocalizationInstallerApp:
             code: _(f"lki.game.client_type.{code}") for code in self.instance_type_keys
         }
 
-        self._setup_styles(initial_theme == 'dark')
+        self._setup_styles(initial_theme == 'dark', font_family)
 
         self.notebook = ttk.Notebook(master)
         self.notebook.pack(pady=10, padx=10, expand=True, fill='both')
@@ -80,7 +80,7 @@ class LocalizationInstallerApp:
 
         self.master.after(100, self.run_initial_detection)
 
-    def _setup_styles(self, is_dark: bool):
+    def _setup_styles(self, is_dark: bool, font_family: str):
         """定义自定义字体和样式"""
         self.style = ttk.Style()
         self.select_bg = "#66bdff" if is_dark else "#0078d4"
@@ -143,7 +143,7 @@ class LocalizationInstallerApp:
         """由 SettingsTab 调用的回调。"""
         self.master.call('set_theme', selected_theme, self.font_family)
 
-        self._setup_styles(selected_theme == 'dark')
+        self._setup_styles(selected_theme == 'dark', self.font_family)
 
         self.icons.set_active_theme(selected_theme)
         self._update_all_icons()

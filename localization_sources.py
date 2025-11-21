@@ -327,9 +327,9 @@ class SourceManager:
         检查一个语言代码是否可能需要字体包。
         """
         # May reactivate this
-        # source = self.get_source(lang_code)
-        # if source:
-        #    return source.requires_fonts
+        source = self.get_source(lang_code)
+        if source:
+          return source.requires_fonts
         return False
 
 

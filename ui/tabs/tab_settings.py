@@ -68,17 +68,19 @@ class SettingsTab(BaseTab):
         # 配置主选项卡（self）的列
         self.columnconfigure(0, weight=1)
 
-        # --- “外观”设置组 ---
+        # --- “外观”设置组 (row=0) ---
         appearance_frame = ttk.LabelFrame(self, text=_('lki.settings.category.appearance'), padding=10)
         appearance_frame.grid(row=0, column=0, sticky='we', pady=(0, 5))
+        # 允许第1列（输入区）扩展，将右侧的第2列（按钮）推开
         appearance_frame.columnconfigure(1, weight=1)
 
-        # 语言设置
+        # 语言设置 (row=0)
         lang_label = ttk.Label(appearance_frame, text=_('lki.settings.language'))
         lang_label.grid(row=0, column=0, sticky='e', padx=(0, 10), pady=10)
 
         lang_frame = ttk.Frame(appearance_frame)
-        lang_frame.grid(row=0, column=1, sticky='we', pady=10)
+        # 扩展到第2列 (columnspan=2)
+        lang_frame.grid(row=0, column=1, columnspan=2, sticky='we', pady=10)
 
         self.lang_combobox = ttk.Combobox(lang_frame, values=list(self.get_available_ui_langs()), state='readonly')
         self.lang_combobox.set(self.current_lang_name)
@@ -87,21 +89,32 @@ class SettingsTab(BaseTab):
         self.lang_combobox.bind("<<ComboboxSelected>>", self._on_language_select)
 
         self.lang_reload_label = ttk.Label(appearance_frame, text="", foreground='gray')
-        self.lang_reload_label.grid(row=1, column=1, sticky='w', padx=5, pady=(0, 10))
+        # 扩展到第2列 (columnspan=2)
+        self.lang_reload_label.grid(row=1, column=1, columnspan=2, sticky='w', padx=5, pady=(0, 10))
 
-        # 主题设置
+        # 主题设置 (row=2)
         theme_label = ttk.Label(appearance_frame, text=_('lki.settings.theme'))
         theme_label.grid(row=2, column=0, sticky='e', padx=(0, 10), pady=(10, 0))
 
         rb_light = ttk.Radiobutton(appearance_frame, text=_('lki.settings.theme.light'), variable=self.theme_var,
                                    value='light', command=self._on_theme_select)
-        rb_light.grid(row=2, column=1, sticky='w', pady=(10, 5))  # 调整了pady
+        # 扩展到第2列 (columnspan=2)
+        rb_light.grid(row=2, column=1, columnspan=2, sticky='w', pady=(10, 5))
 
+        # Dark Radiobutton (row=3, column=1)
         rb_dark = ttk.Radiobutton(appearance_frame, text=_('lki.settings.theme.dark'), variable=self.theme_var,
                                   value='dark', command=self._on_theme_select)
+        # 保持在 column 1
         rb_dark.grid(row=3, column=1, sticky='w', pady=(0, 10))
 
-        # --- “下载”设置组 ---
+        # --- (移动后的重载按钮) ---
+        self.reload_btn = ttk.Button(appearance_frame, text=_('lki.settings.btn.reload'),
+                                     command=self._on_reload_click, style="Link.TButton")
+        # 放置在 row=3, column=2, sticky='se' (右下角), 且与 rb_dark 使用相同的 pady=(0, 10)
+        self.reload_btn.grid(row=3, column=2, sticky='se', padx=(10, 0), pady=(0, 10))
+        # -------------------------
+
+        # --- “下载”设置组 (row=1) ---
         download_frame = ttk.LabelFrame(self, text=_('lki.settings.category.download'), padding=10)
         download_frame.grid(row=1, column=0, sticky='we', pady=5)
         download_frame.columnconfigure(1, weight=1)
@@ -135,7 +148,7 @@ class SettingsTab(BaseTab):
                                            command=self._open_route_priority_window)
         self.route_config_btn.grid(row=0, column=1, sticky='e')
 
-        # --- (新增) “文件”设置组 ---
+        # --- “文件”设置组 (row=2) ---
         files_frame = ttk.LabelFrame(self, text=_('lki.settings.category.files'), padding=10)
         files_frame.grid(row=2, column=0, sticky='we', pady=5)
         files_frame.columnconfigure(1, weight=1)
@@ -183,22 +196,16 @@ class SettingsTab(BaseTab):
         self.clear_cache_btn = ttk.Button(clear_frame, text=_('lki.settings.btn.clear_cache'),
                                           command=self._on_clear_cache)
         self.clear_cache_btn.pack(side='right')
-        # --- (新增结束) ---
 
-        # --- 占位和重载按钮 ---
+        # --- 占位和初始化摘要 ---
 
-        # 垂直占位
-        self.rowconfigure(3, weight=1)  # (已修改：2 -> 3)
+        # 垂直占位，将上方所有内容推到选项卡顶部
+        # 这一行保持不变，将下载、文件等框架推到顶部
+        self.rowconfigure(3, weight=1)
 
-        # 重载按钮
-        reload_frame = ttk.Frame(self)
-        reload_frame.grid(row=4, column=0, columnspan=2, sticky='se', pady=(20, 0))  # (已修改：3 -> 4)
+        # (原底部重载按钮的代码已被移除，现在位于外观框架内)
 
-        self.reload_btn = ttk.Button(reload_frame, text=_('lki.settings.btn.reload'),
-                                     command=self._on_reload_click, style="Link.TButton")
-        self.reload_btn.pack(side='right')
-
-        # (新增：初始化摘要)
+        # (初始化摘要)
         self._update_route_priority_display()
 
         if ToolTip:

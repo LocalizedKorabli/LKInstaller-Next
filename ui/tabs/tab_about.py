@@ -33,6 +33,7 @@ class AboutTab(BaseTab):
     def __init__(self, master):
         super().__init__(master, padding='10 10 10 10')
         self.app_master = master.master
+        self.agpl_image = None
         self.logo_image = None
         self.update_window: Optional[ActionProgressWindow] = None
         self.update_thread: Optional[threading.Thread] = None
@@ -44,10 +45,9 @@ class AboutTab(BaseTab):
         content_frame = ttk.Frame(self)
         # 使用 anchor='n' 确保内容在垂直拉伸时靠上对齐，避免分散
         content_frame.pack(expand=True, fill='both', anchor='n')
-
+        imgs_path = dirs.base_path / 'resources' / 'imgs'
         # 1. Logo
-        logo_path = dirs.base_path.joinpath('resources/imgs/lki.png')
-
+        logo_path = imgs_path / 'lki.png'
         try:
             if logo_path.is_file():
                 self.logo_image = PhotoImage(file=logo_path)
@@ -63,7 +63,7 @@ class AboutTab(BaseTab):
             logo_label.pack(pady=(30, 10))
 
         # 2. App Name
-        title_text = _('lki.app.title')
+        title_text = _('lki.app.title.full')
         title_label = ttk.Label(content_frame, text=title_text)
         title_label.pack(pady=(0, 15))
 
@@ -74,7 +74,7 @@ class AboutTab(BaseTab):
         self.btn_social_github = ttk.Button(
             social_frame,
             image=self.icons.github,
-            command=lambda: webbrowser.open('https://github.com/LocalizedKorabli'),
+            command=lambda: webbrowser.open('https://github.com/LocalizedKorabli/LKInstaller-Next'),
             style="Toolbutton",
             cursor="hand2"
         )
@@ -113,11 +113,31 @@ class AboutTab(BaseTab):
                                       command=self._check_for_updates)
         check_update_btn.pack(side='left', padx=(20, 0))
 
-        # (新增) 5. 底部版权信息
+        # 5. 底部版权信息
         copyright_text = "Copyright © 2025 LocalizedKorabli"
         copyright_label = ttk.Label(content_frame, text=copyright_text, foreground='gray')
         # 使用 side='bottom' 将其推到最下方（虽然在 anchor='n' 的 frame 里效果不明显，但结构更清晰）
-        copyright_label.pack(side='bottom', pady=(20, 20))
+        copyright_label.pack(side='bottom', pady=(0, 20))
+
+        agpl_path = imgs_path / 'agpl_v3.png'
+        agpl_url = 'https://www.gnu.org/licenses/agpl-3.0.html'
+
+        # 6. AGPL logo above
+        try:
+            if agpl_path.is_file():
+                self.agpl_image = PhotoImage(file=agpl_path)
+                agpl_label = ttk.Label(content_frame, image=self.agpl_image, cursor="hand2")
+            else:
+                # 如果找不到图标，显示可点击的文本链接作为替代
+                agpl_label = ttk.Label(content_frame, text=f"GNU AGPL v3 License ({agpl_url})", cursor="hand2")
+
+            # 绑定点击事件: 左键点击 (<Button-1>) 时，打开指定的 URL
+            agpl_label.bind('<Button-1>', lambda e: webbrowser.open('https://www.gnu.org/licenses/agpl-3.0.html'))
+            agpl_label.pack(side='bottom', pady=(15, 0))
+            ToolTip(agpl_label, msg=_('lki.about.license.tooltip'))
+        except Exception as e:
+            # 记录加载或绑定错误
+            log(f"Error loading AGPL image or binding: {e}")
 
     def _check_for_updates(self):
         """(修改) 在新线程中启动更新检查。"""
