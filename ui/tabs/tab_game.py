@@ -27,11 +27,7 @@ import settings
 import utils
 from ui.tabs.tab_base import BaseTab
 
-try:
-    from tktooltip import ToolTip
-except ImportError:
-    log("Warning: tktooltip not found. Tooltips will be disabled.")
-    ToolTip = None
+from tktooltip import ToolTip
 
 from instance import instance_manager
 from localizer import _
@@ -166,16 +162,15 @@ class GameTab(BaseTab):
         self._bind_mousewheel(self.canvas)
         self._bind_mousewheel(self.client_list_frame)
 
-        if ToolTip:
-            ToolTip(self.btn_import, _('lki.tooltip.add_instance'))
-            ToolTip(self.btn_rename, _('lki.tooltip.edit_instance'))
-            ToolTip(self.btn_remove, _('lki.tooltip.remove_instance'))
-            ToolTip(self.btn_auto_import, _('lki.tooltip.detect_instances'))
-            ToolTip(self.btn_move_up, _('lki.tooltip.move_up'))
-            ToolTip(self.btn_move_down, _('lki.tooltip.move_down'))
-            ToolTip(self.btn_open_folder, _('lki.tooltip.open_folder'))
-            ToolTip(self.btn_refresh, _('lki.tooltip.refresh_list'))
-            ToolTip(self.btn_play, _('lki.tooltip.play_instance'))
+        ToolTip(self.btn_import, _('lki.tooltip.add_instance'))
+        ToolTip(self.btn_rename, _('lki.tooltip.edit_instance'))
+        ToolTip(self.btn_remove, _('lki.tooltip.remove_instance'))
+        ToolTip(self.btn_auto_import, _('lki.tooltip.detect_instances'))
+        ToolTip(self.btn_move_up, _('lki.tooltip.move_up'))
+        ToolTip(self.btn_move_down, _('lki.tooltip.move_down'))
+        ToolTip(self.btn_open_folder, _('lki.tooltip.open_folder'))
+        ToolTip(self.btn_refresh, _('lki.tooltip.refresh_list'))
+        ToolTip(self.btn_play, _('lki.tooltip.play_instance'))
 
     def _load_and_display_instances(self):
         """从管理器加载实例数据。"""

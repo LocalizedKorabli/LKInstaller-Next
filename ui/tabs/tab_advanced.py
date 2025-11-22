@@ -31,12 +31,7 @@ from ui.dialogs import CustomAskStringDialog, BaseDialog, AutoUpdateConfigDialog
 from ui.tabs.tab_base import BaseTab
 from utils import determine_default_l10n_lang
 
-try:
-    from tktooltip import ToolTip
-except ImportError:
-    log("Warning: tktooltip not found. Tooltips will be disabled.")
-    ToolTip = None
-
+from tktooltip import ToolTip
 
 class AdvancedTab(BaseTab):
     """
@@ -465,10 +460,9 @@ class PresetManagerWindow(BaseDialog):
 
         self.mods_dir_tooltip = None
 
-        if ToolTip:
-            self.mods_dir_tooltip = _('lki.preset.manager.tooltip_open_mods_dir')
-            ToolTip(self.btn_open_mods_dir, lambda: self.mods_dir_tooltip)
-            ToolTip(self.btn_download_mods, _('lki.preset.manager.tooltip_download_mods'))
+        self.mods_dir_tooltip = _('lki.preset.manager.tooltip_open_mods_dir')
+        ToolTip(self.btn_open_mods_dir, lambda: self.mods_dir_tooltip)
+        ToolTip(self.btn_download_mods, _('lki.preset.manager.tooltip_download_mods'))
 
         self.cb_use_fonts = ttk.Checkbutton(self.details_frame, text=_('lki.preset.manager.use_fonts'),
                                             variable=self.use_fonts_var)

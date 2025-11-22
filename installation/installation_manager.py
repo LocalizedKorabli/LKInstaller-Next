@@ -34,7 +34,7 @@ import settings
 import installation.installation_utils as utils
 import utils as root_utils
 from instance.game_instance import GameInstance
-from localization_sources import global_source_manager
+from localization_sources import global_source_manager, get_route_id_to_name
 from ui.windows.window_action import ActionProgressWindow
 
 # (从 utils 导入常量)
@@ -286,7 +286,7 @@ class InstallationManager:
             if not route_urls: continue
 
             v_url = route_urls.get('version')
-            _log_task(task, _('lki.install.status.getting_version_from') % route_id)
+            _log_task(task, _('lki.install.status.getting_version_from') % get_route_id_to_name().get(route_id, route_id))
 
             try:
                 proxies = root_utils.get_configured_proxies()
@@ -466,7 +466,7 @@ class InstallationManager:
 
                 # Version
                 try:
-                    _log_task(task, _('lki.install.status.fonts_route') % route_id)
+                    _log_task(task, _('lki.install.status.fonts_route') % get_route_id_to_name().get(route_id, route_id))
                     resp = requests.get(VER_URL, timeout=5, proxies=proxies)
                     resp.raise_for_status()
                     remote_info = resp.json()

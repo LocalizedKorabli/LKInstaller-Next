@@ -30,12 +30,7 @@ from logger import log
 from ui.dialogs import RoutePriorityWindow, BaseDialog
 from ui.tabs.tab_base import BaseTab
 
-try:
-    from tktooltip import ToolTip
-except ImportError:
-    log("Warning: tktooltip not found. Tooltips will be disabled.")
-    ToolTip = None
-
+from tktooltip import ToolTip
 
 class SettingsTab(BaseTab):
     """
@@ -109,7 +104,7 @@ class SettingsTab(BaseTab):
 
         # --- (移动后的重载按钮) ---
         self.reload_btn = ttk.Button(appearance_frame, text=_('lki.settings.btn.reload'),
-                                     command=self._on_reload_click, style="Link.TButton")
+                                     command=self._on_reload_click, style='Link.TButton')
         # 放置在 row=3, column=2, sticky='se' (右下角), 且与 rb_dark 使用相同的 pady=(0, 10)
         self.reload_btn.grid(row=3, column=2, sticky='se', padx=(10, 0), pady=(0, 10))
         # -------------------------
@@ -208,9 +203,8 @@ class SettingsTab(BaseTab):
         # (初始化摘要)
         self._update_route_priority_display()
 
-        if ToolTip:
-            ToolTip(self.work_path_display, work_path)
-            ToolTip(self.data_path_display, app_data_path)
+        ToolTip(self.work_path_display, work_path)
+        ToolTip(self.data_path_display, app_data_path)
 
     def get_available_ui_langs(self) -> List[str]:
         # Consider the user base

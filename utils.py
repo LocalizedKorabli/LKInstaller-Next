@@ -305,7 +305,8 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
                     str(INSTALLER_PATH),
                     '/SILENT',
                     f'/DIR={str(current_install_dir)}',
-                    f'/LANG={current_lang}'
+                    f'/LANG={current_lang}',
+                    '/MERGETASKS="!desktopicon"'
                 ]
 
                 logger_log(f"Starting updater with args: {args_list}")

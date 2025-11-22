@@ -26,18 +26,9 @@ from localization_sources import get_route_id_to_name
 from localizer import _
 from logger import log
 
-try:
-    from tktooltip import ToolTip
-except ImportError:
-    log("Warning: tktooltip not found. Tooltips will be disabled.")
-    ToolTip = None
+from tktooltip import ToolTip
 
-# (新增)
-try:
-    import win32com.client
-except ImportError:
-    log("Warning: pywin32 not installed. Shortcut creation will be disabled.")
-    win32com = None
+import win32com.client
 
 
 class BaseDialog(tk.Toplevel):
@@ -167,9 +158,8 @@ class RoutePriorityWindow(BaseDialog):  # <-- 继承 BaseDialog
                                          command=self._move_route_down, state='disabled')
         self.btn_route_down.pack(pady=2)
 
-        if ToolTip:
-            ToolTip(self.btn_route_up, _('lki.tooltip.route_up'))
-            ToolTip(self.btn_route_down, _('lki.tooltip.route_down'))
+        ToolTip(self.btn_route_up, _('lki.tooltip.route_up'))
+        ToolTip(self.btn_route_down, _('lki.tooltip.route_down'))
 
         ttk.Label(route_frame, text=_('lki.routes.hint'), style="Hint.TLabel", wraplength=utils.scale_dpi(self, 220)) \
             .grid(row=1, column=0, columnspan=3, sticky='w', padx=5, pady=(5, 0))
