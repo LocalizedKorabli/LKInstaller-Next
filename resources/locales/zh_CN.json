@@ -92,7 +92,6 @@
   "lki.i18n.route.tencent": "腾讯云",
   "lki.install.debug.cache_check_failed": "缓存检查失败: %s",
   "lki.install.debug.cache_hit": "缓存命中: %s",
-  "lki.install.debug.cache_hit_ee": "缓存命中（体验增强包）: %s",
   "lki.install.debug.hash_failed": "[%s]无法计算mkmod的哈希值: %s",
   "lki.install.error.ee_pack_failed": "体验增强包打包失败: %s",
   "lki.install.error.fonts_cache_write": "写入字体优化包缓存信息时出错: %s",

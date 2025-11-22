@@ -92,7 +92,6 @@
   "lki.i18n.route.tencent": "Tencent",
   "lki.install.debug.cache_check_failed": "Проверка кеша не удалась: %s",
   "lki.install.debug.cache_hit": "Попадание в кеш для %s",
-  "lki.install.debug.cache_hit_ee": "Попадание в кеш для %s (ee.zip)",
   "lki.install.debug.hash_failed": "[%s] Не удалось вычислить хеш mkmod: %s",
   "lki.install.error.ee_pack_failed": "Ошибка пакета EE: %s",
   "lki.install.error.fonts_cache_write": "Ошибка записи информации кеша шрифтов: %s",

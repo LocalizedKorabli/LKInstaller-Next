@@ -421,11 +421,6 @@ class InstallationManager:
             ee_zip_path = cache_path / "ee.zip"
 
             utils.mkdir(cache_path)
-
-            if ee_zip_path.is_file() and ee_zip_path.stat().st_size > 0:
-                log(_('lki.install.debug.cache_hit_ee') % job.job_id)
-                return True, ee_zip_path
-
             # 循环尝试所有路由
             for route_id in self.download_routes_priority:
                 if self._cancel_event.is_set(): return False, None

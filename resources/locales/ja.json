@@ -92,7 +92,6 @@
   "lki.i18n.route.tencent": "Tencent",
   "lki.install.debug.cache_check_failed": "キャッシュチェックに失敗しました: %s",
   "lki.install.debug.cache_hit": "%s のキャッシュヒット",
-  "lki.install.debug.cache_hit_ee": "%s (ee.zip) のキャッシュヒット",
   "lki.install.debug.hash_failed": "[%s] mkmod ハッシュの計算に失敗しました: %s",
   "lki.install.error.ee_pack_failed": "EE パックに失敗しました: %s",
   "lki.install.error.fonts_cache_write": "フォントキャッシュ情報の書き込みエラー: %s",

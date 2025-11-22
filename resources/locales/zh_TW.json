@@ -92,7 +92,6 @@
   "lki.i18n.route.tencent": "騰訊雲",
   "lki.install.debug.cache_check_failed": "快取檢查失敗: %s",
   "lki.install.debug.cache_hit": "快取命中: %s",
-  "lki.install.debug.cache_hit_ee": "快取命中（體驗增強包）: %s",
   "lki.install.debug.hash_failed": "[%s]無法計算mkmod的雜湊值: %s",
   "lki.install.error.ee_pack_failed": "體驗增強包打包失敗: %s",
   "lki.install.error.fonts_cache_write": "寫入字型優化包快取資訊時出錯: %s",
