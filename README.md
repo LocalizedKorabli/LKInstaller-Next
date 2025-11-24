@@ -1,11 +1,26 @@
-# 澪刻·本地化安装器Next
+<div align=center>
+  
+  <img width="200" alt="logo" src="https://github.com/user-attachments/assets/7bf8c1be-2abe-47d0-b8d9-78394a2a3312" />
+  
+  <h2>澪刻・本地化安装器Next</h2>
+  
+  [![stars](https://img.shields.io/github/stars/LocalizedKorabli/LKInstaller-Next.svg?style=for-the-badge)](https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/stargazers)
+  [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-purple.svg?style=for-the-badge)](https://www.gnu.org/licenses/agpl-3.0)
+  [![last-commit](https://img.shields.io/github/last-commit/LocalizedKorabli/LKInstaller-Next.svg?style=for-the-badge)](https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/commit)
+  
+  [![QQ群](https://img.shields.io/badge/项目-源代码-orange?style=for-the-badge)](https://qm.qq.com/q/oLZZH47TRA)
+  [![Discord](https://img.shields.io/discord/1275430075369656381?style=for-the-badge)](https://discord.gg/3d9k2mkWy4)
+  [![QQ群](https://img.shields.io/badge/QQ-发布群-red?style=for-the-badge)](https://qm.qq.com/q/oLZZH47TRA)
+
+  
+</div>
 
 ## 简介
 
-本项目是对[澪刻·汉化安装器](https://github.com/LocalizedKorabli/L10nInstallerGUI)的完全重写。
+澪刻・本地化安装器Next（以下简称**澪刻Next**）是对[澪刻・汉化安装器](https://github.com/LocalizedKorabli/L10nInstallerGUI)的完全重写。
 
 <details><summary style="font-size: 12px;">新特性</summary>
-<h4>相较于澪刻·汉化安装器，澪刻Next引入的新功能：</h4>
+<h4>相较于澪刻・汉化安装器，澪刻Next引入的新功能：</h4>
 
 - 支持安装多个语言的本地化包：简体中文、繁体中文、英文、日文；
 - 支持为Steam上的Mir Korabley客户端安装本地化包；
@@ -23,13 +38,13 @@
 - 支持更细致地调节代理选项；
 - 支持切换应用界面语言、浅色/深色主题。
 
-<h4>相较于澪刻·汉化安装器，澪刻Next的功能改动：</h4>
+<h4>相较于澪刻・汉化安装器，澪刻Next的功能改动：</h4>
 
 - 版本识别机制已被优化，现在总是只为远程仓库定义的活跃版本安装本地化包；
 - 所有内容现在均以Mir Korabley新引入的.mkmod格式安装；
-- 本地化修改包（原汉化修改包）现在总是以Mir Korabley新引入的“MO挂载机制”安装。
+- 本地化修改包（原汉化修改包）现在总是以Mir Korabley新引入的“MO挂载”机制安装。
 
-<h4>相较于澪刻·汉化安装器，澪刻Next删除的功能：</h4>
+<h4>相较于澪刻・汉化安装器，澪刻Next删除的功能：</h4>
 
 - 由于极少被使用且易误导用户，向直营服/国服安装本地化包的功能已被删除。
 
@@ -172,12 +187,15 @@ Chrome（已阻止可疑下载操作）：
 
 ## 鸣谢
 
-[Python](https://www.python.org/)——本应用所使用的编程语言
+- 参与本项目内部测试的所有用户
 
-[Tkinter](https://docs.python.org/3/library/tkinter.html)——本应用所使用的GUI框架
+- [Python](https://www.python.org/)——本应用所使用的编程语言
 
-[Azure theme for ttk](https://github.com/rdbende/Azure-ttk-theme)——本应用界面所使用的ttk主题
+- [Tkinter](https://docs.python.org/3/library/tkinter.html)——本应用所使用的GUI框架
 
-[Inno Setup](https://jrsoftware.org/isinfo.php)和[PyInstaller](https://pyinstaller.org/)——为本应用提供了便捷的打包方式
+- [Google Gemini](https://gemini.google.com/)——将本应用的开发时间缩短了约70%
 
-[Google Gemini](https://gemini.google.com/)——将本应用的开发时间缩短了约70%
+- [Azure theme for ttk](https://github.com/rdbende/Azure-ttk-theme)——本应用界面所使用的ttk主题
+
+- [Inno Setup](https://jrsoftware.org/isinfo.php)和[PyInstaller](https://pyinstaller.org/)——为本应用提供了便捷的打包方案
+
