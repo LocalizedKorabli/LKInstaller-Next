@@ -19,7 +19,7 @@
 
 澪刻・本地化安装器Next（以下简称**澪刻Next**）是对[澪刻・汉化安装器](https://github.com/LocalizedKorabli/L10nInstallerGUI)的完全重写。
 
-<details><summary style="font-size: 12px;">新特性</summary>
+<details><summary style="font-size: 12px;">澪刻Next新特性</summary>
 <h4>相较于澪刻・汉化安装器，澪刻Next引入的新功能：</h4>
 
 - 支持安装多个语言的本地化包：简体中文、繁体中文、英文、日文；
@@ -57,13 +57,16 @@
 - [官方下载线路-中国大陆](https://lk-1251573974.cos.accelerate.myqcloud.com/lki/lk-next/lki_setup.exe)
 - [官方下载线路-海外地区](https://dl.localizedkorabli.org/lki/lk-next/lki_setup.exe)
 
-### 浏览器阻止下载并出现以下提示时的操作方法
-Microsoft Edge（通常不会下载 lki_setup.exe。请在打开前确保信任 lki_setup.exe）：
-- 鼠标移至文件对应的下载项上，点击在右侧出现的以“3个点”（...）为图标的按钮，再点击**保留**选项；
-- 弹出“打开前请确保信任 lki_setup.exe”子窗口后，从蓝色**删除**按钮最右侧打开下拉栏，点击**仍然保留**选项。
+<details><summary style="font-size: 12px;"><b>浏览器阻止下载时的操作方法</b></summary>
 
-Chrome（已阻止可疑下载操作）：
-- 点击文件对应的下载项，再点击**下载可疑文件**选项。
+- Microsoft Edge（通常不会下载 lki_setup.exe。请在打开前确保信任 lki_setup.exe）：
+  - 鼠标移至文件对应的下载项上，点击在右侧出现的以“3个点”（...）为图标的按钮，再点击**保留**选项；
+  - 弹出“打开前请确保信任 lki_setup.exe”子窗口后，从蓝色**删除**按钮最右侧打开下拉栏，点击**仍然保留**选项。
+
+- Chrome（已阻止可疑下载操作）：
+  - 点击文件对应的下载项，再点击**下载可疑文件**选项。
+
+</details>
 
 ### 安装应用
 - 打开您下载的安装包文件，选择安装时使用的语言（此语言也会被设为澪刻Next的默认显示语言及安装本地化包的默认语言），并根据指示完成安装。
