@@ -54,7 +54,7 @@
 
 ### 下载线路
 - [蓝奏云分享](https://tapio.lanzouu.com/b0nzmcv9i)
-- [官方下载线路-中国大陆](http://lk-1251573974.cos.accelerate.myqcloud.com/lki/lk-next/lki_setup.exe)
+- [官方下载线路-中国大陆](https://lk-1251573974.cos.accelerate.myqcloud.com/lki/lk-next/lki_setup.exe)
 - [官方下载线路-海外地区](https://dl.localizedkorabli.org/lki/lk-next/lki_setup.exe)
 
 ### 浏览器阻止下载并出现以下提示时的操作方法
