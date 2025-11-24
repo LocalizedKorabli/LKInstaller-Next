@@ -19,7 +19,6 @@ import shutil
 import sys
 import time
 import tkinter as tk
-from os import PathLike
 from pathlib import Path
 from typing import Optional, Tuple, Set, Dict, List
 

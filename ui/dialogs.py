@@ -13,22 +13,20 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+import os  # (新增)
+import sys  # (新增)
 import tkinter as tk
+from pathlib import Path  # (新增)
 from tkinter import ttk, messagebox, filedialog  # (已修改)
 from typing import List, Callable
-import sys  # (新增)
-import os  # (新增)
-from pathlib import Path  # (新增)
+
+import win32com.client
+from tktooltip import ToolTip
 
 import dirs
 import utils
 from localization_sources import get_route_id_to_name
 from localizer import _
-from logger import log
-
-from tktooltip import ToolTip
-
-import win32com.client
 
 
 class BaseDialog(tk.Toplevel):
