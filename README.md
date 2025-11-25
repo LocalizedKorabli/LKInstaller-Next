@@ -8,7 +8,7 @@
   [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-purple.svg?style=for-the-badge)](https://www.gnu.org/licenses/agpl-3.0)
   [![last-commit](https://img.shields.io/github/last-commit/LocalizedKorabli/LKInstaller-Next.svg?style=for-the-badge)](https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/commit)
   
-  [![QQ群](https://img.shields.io/badge/项目-源代码-orange?style=for-the-badge)](https://qm.qq.com/q/oLZZH47TRA)
+  [![源代码](https://img.shields.io/badge/项目-源代码-orange?style=for-the-badge)](https://github.com/LocalizedKorabli/LKInstaller-Next/tree/dev)
   [![Discord](https://img.shields.io/discord/1275430075369656381?style=for-the-badge)](https://discord.gg/3d9k2mkWy4)
   [![QQ群](https://img.shields.io/badge/QQ-发布群-red?style=for-the-badge)](https://qm.qq.com/q/oLZZH47TRA)
 
