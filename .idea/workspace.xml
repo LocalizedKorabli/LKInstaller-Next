@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="9262902f-bc2f-41c7-939f-24eb29e83ccb" name="更改" comment=":art: Format">
+      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/version_file.txt" beforeDir="false" afterPath="$PROJECT_DIR$/assets/version_file.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/constants.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inno/pack.iss" beforeDir="false" afterPath="$PROJECT_DIR$/inno/pack.iss" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/instance/game_instance.py" beforeDir="false" afterPath="$PROJECT_DIR$/instance/game_instance.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;MikhailTapio&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/LocalizedKorabli/LKInstaller-Next.git&quot;,
+    &quot;accountId&quot;: &quot;a8c76b34-911b-4788-b26a-1bdcaedb0640&quot;
+  }
+}</component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$USER_HOME$/AppData/Local/Programs/Python/Python38/Lib/typing.py" root0="SKIP_INSPECTION" />
+  </component>
+  <component name="NamedScopeManager">
+    <scope name="LKI" pattern="file:*.py" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6
+}</component>
+  <component name="ProjectId" id="34CBwr55dw56J294DJPsJQ66aEd" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python._compile.executor": "Run",
+    "Python.app.executor": "Run",
+    "Python.compile.executor": "Run",
+    "Python.dialogs.executor": "Run",
+    "Python.lki-auto.executor": "Run",
+    "Python.lki.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.main_test.executor": "Run",
+    "Python.settings.executor": "Run",
+    "Python.steam-test.executor": "Run",
+    "Python.tab_settings.executor": "Run",
+    "Python.test.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "dev",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Users/HoloI/Documents/dev/lesta/LKInstaller-Next",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\HoloI\Documents\dev\lesta\LKInstaller-Next" />
+      <recent name="C:\Users\HoloI\Documents\dev\lesta\LKInstaller-Next\resources\imgs" />
+      <recent name="C:\Users\HoloI\Documents\dev\lesta\LKInstaller-Next\resources\icons\dark" />
+      <recent name="C:\Users\HoloI\Documents\dev\lesta\LKInstaller-Next\resources\icons\light" />
+      <recent name="C:\Users\HoloI\Documents\dev\lesta\LKInstaller-Next\resources\theme\azure" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\HoloI\Documents\dev\lesta\LKInstaller-Next\.venv\Scripts" />
+      <recent name="C:\Users\HoloI\Documents\dev\lesta\LKInstaller-Next\src" />
+      <recent name="C:\Users\HoloI\Documents\dev\lesta\LKInstaller-Next" />
+      <recent name="C:\Users\HoloI\Documents\dev\lesta\LKInstaller-Next\app" />
+      <recent name="C:\Users\HoloI\Documents\dev\lesta\LKInstaller-Next\ui\windows" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="_compile" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="LKInstaller-Next" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="SDK_NAME" value="Python 3.8 (LKInstaller-Next)" />
+      <option name="WORKING_DIRECTORY" value="C:\Users\HoloI\Documents\dev\lesta\LKInstaller-Next" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/_compile.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-53e2683a6804-9cdd278e9d02-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-251.26094.141" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="9262902f-bc2f-41c7-939f-24eb29e83ccb" name="更改" comment="" />
+      <created>1760707915383</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1760707915383</updated>
+    </task>
+    <task id="LOCAL-00021" summary=":recycle: Reorganizing">
+      <option name="closed" value="true" />
+      <created>1762113744173</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1762113744173</updated>
+    </task>
+    <task id="LOCAL-00022" summary=":recycle: Optimization">
+      <option name="closed" value="true" />
+      <created>1762116598968</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1762116598968</updated>
+    </task>
+    <task id="LOCAL-00023" summary=":tada: Update logic">
+      <option name="closed" value="true" />
+      <created>1762120288585</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1762120288585</updated>
+    </task>
+    <task id="LOCAL-00024" summary=":tada: Fix SemVer &amp; Enhance action display logic">
+      <option name="closed" value="true" />
+      <created>1762122150178</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1762122150178</updated>
+    </task>
+    <task id="LOCAL-00025" summary=":tada: Enhance locales">
+      <option name="closed" value="true" />
+      <created>1762123302922</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1762123302922</updated>
+    </task>
+    <task id="LOCAL-00026" summary=":tada: Incomplete impl of auto i18n updating">
+      <option name="closed" value="true" />
+      <created>1762124640793</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1762124640793</updated>
+    </task>
+    <task id="LOCAL-00027" summary=":tada: Finish logic of i18n auto update">
+      <option name="closed" value="true" />
+      <created>1762127483597</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1762127483597</updated>
+    </task>
+    <task id="LOCAL-00028" summary=":tada: Enhance locales">
+      <option name="closed" value="true" />
+      <created>1762131305250</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1762131305250</updated>
+    </task>
+    <task id="LOCAL-00029" summary=":tada: Enhance locales">
+      <option name="closed" value="true" />
+      <created>1762131344507</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1762131344507</updated>
+    </task>
+    <task id="LOCAL-00030" summary=":sparkles: Minor fix">
+      <option name="closed" value="true" />
+      <created>1762131382300</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1762131382300</updated>
+    </task>
+    <task id="LOCAL-00031" summary=":tada: Impl Trad.Chinese">
+      <option name="closed" value="true" />
+      <created>1762131855391</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1762131855391</updated>
+    </task>
+    <task id="LOCAL-00032" summary=":page_facing_up: LICENSE">
+      <option name="closed" value="true" />
+      <created>1762135446996</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1762135446996</updated>
+    </task>
+    <task id="LOCAL-00033" summary=":page_facing_up: Attach LICENSE">
+      <option name="closed" value="true" />
+      <created>1762135568388</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1762135568388</updated>
+    </task>
+    <task id="LOCAL-00034" summary=":tada: inno setup enhancement">
+      <option name="closed" value="true" />
+      <created>1762137524665</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1762137524665</updated>
+    </task>
+    <task id="LOCAL-00035" summary=":tada: Fixed: Win7 compatibility, shortcut generation, scaling">
+      <option name="closed" value="true" />
+      <created>1762169623460</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1762169623460</updated>
+    </task>
+    <task id="LOCAL-00036" summary=":wrench: Fix a bug where newly-created and selected preset not set to active preset while clicking Save and Select.">
+      <option name="closed" value="true" />
+      <created>1762175924389</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1762175924389</updated>
+    </task>
+    <task id="LOCAL-00037" summary=":construction: Incomplete Impl for buttons in ActionProgressWindow">
+      <option name="closed" value="true" />
+      <created>1762181036284</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1762181036284</updated>
+    </task>
+    <task id="LOCAL-00038" summary=":tada: Full Impl for buttons in ActionProgressWindow">
+      <option name="closed" value="true" />
+      <created>1762182038755</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1762182038755</updated>
+    </task>
+    <task id="LOCAL-00039" summary=":tada: New localizations and enhancement">
+      <option name="closed" value="true" />
+      <created>1762193381946</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1762193381946</updated>
+    </task>
+    <task id="LOCAL-00040" summary=":tada: Fix wrong default path for generating shortcuts">
+      <option name="closed" value="true" />
+      <created>1762194443921</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1762194443921</updated>
+    </task>
+    <task id="LOCAL-00041" summary=":tada: Stop Windows 7~10 from using ugly bitmap fonts">
+      <option name="closed" value="true" />
+      <created>1762200314137</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1762200314137</updated>
+    </task>
+    <task id="LOCAL-00042" summary=":tada: 0.0.3">
+      <option name="closed" value="true" />
+      <created>1762200352918</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1762200352918</updated>
+    </task>
+    <task id="LOCAL-00043" summary=":recycle: 0.0.3">
+      <option name="closed" value="true" />
+      <created>1762200379497</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1762200379497</updated>
+    </task>
+    <task id="LOCAL-00044" summary=":tada: 0.0.4, attach preset name to shortcut default name">
+      <option name="closed" value="true" />
+      <created>1762238058968</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1762238058968</updated>
+    </task>
+    <task id="LOCAL-00045" summary=":tada: Implemented logger, recursive i18n mod searching; Fixed a bug where theme cannot be switched without restarting the app.">
+      <option name="closed" value="true" />
+      <created>1762344014626</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1762344014626</updated>
+    </task>
+    <task id="LOCAL-00046" summary=":tada: log relevant">
+      <option name="closed" value="true" />
+      <created>1762357157479</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1762357157479</updated>
+    </task>
+    <task id="LOCAL-00047" summary=":tada: pre-update locales">
+      <option name="closed" value="true" />
+      <created>1762357916035</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1762357916035</updated>
+    </task>
+    <task id="LOCAL-00048" summary=":tada: Add file relevant elements">
+      <option name="closed" value="true" />
+      <created>1762359833625</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1762359833625</updated>
+    </task>
+    <task id="LOCAL-00049" summary=":tada: Incomplete log impl">
+      <option name="closed" value="true" />
+      <created>1762360726914</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1762360726914</updated>
+    </task>
+    <task id="LOCAL-00050" summary=":tada: Log impl &amp; copyright info cleaning">
+      <option name="closed" value="true" />
+      <created>1762363558811</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1762363558811</updated>
+    </task>
+    <task id="LOCAL-00051" summary=":tada: Minor optimization on logs">
+      <option name="closed" value="true" />
+      <created>1762363694067</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1762363694067</updated>
+    </task>
+    <task id="LOCAL-00052" summary=":tada: Remove emoji that cannot be rendered on Microsoft YaHei">
+      <option name="closed" value="true" />
+      <created>1762364365662</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1762364365662</updated>
+    </task>
+    <task id="LOCAL-00053" summary=":tada: 0.0.5, now calling a function to patch paths.xml">
+      <option name="closed" value="true" />
+      <created>1762367416698</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1762367416699</updated>
+    </task>
+    <task id="LOCAL-00054" summary=":tada: Use gif-based theme">
+      <option name="closed" value="true" />
+      <created>1762408496305</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1762408496306</updated>
+    </task>
+    <task id="LOCAL-00055" summary=":wrench: Fixed a bug where the l10n mods directory button opened the l10n mod directory of [preset l10n language], instead of the language selected in the dropdown.">
+      <option name="closed" value="true" />
+      <created>1762410130222</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1762410130222</updated>
+    </task>
+    <task id="LOCAL-00056" summary=":tada: 0.0.6">
+      <option name="closed" value="true" />
+      <created>1762410523809</created>
+      <option name="number" value="00056" />
+      <option name="presentableId" value="LOCAL-00056" />
+      <option name="project" value="LOCAL" />
+      <updated>1762410523809</updated>
+    </task>
+    <task id="LOCAL-00057" summary=":tada: Fix update failure">
+      <option name="closed" value="true" />
+      <created>1762411266642</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1762411266642</updated>
+    </task>
+    <task id="LOCAL-00058" summary=":tada: Remove unused placeholder">
+      <option name="closed" value="true" />
+      <created>1762926955101</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1762926955101</updated>
+    </task>
+    <task id="LOCAL-00059" summary=":construction: Make font opt. disabled by default">
+      <option name="closed" value="true" />
+      <created>1763044452105</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1763044452105</updated>
+    </task>
+    <task id="LOCAL-00060" summary=":tada: 0.0.8, enhance cleaning logic">
+      <option name="closed" value="true" />
+      <created>1763437190904</created>
+      <option name="number" value="00060" />
+      <option name="presentableId" value="LOCAL-00060" />
+      <option name="project" value="LOCAL" />
+      <updated>1763437190904</updated>
+    </task>
+    <task id="LOCAL-00061" summary=":tada: 0.0.9, enhance instance detection &amp; remove WoWs-relevant checks">
+      <option name="closed" value="true" />
+      <created>1763445542371</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1763445542371</updated>
+    </task>
+    <task id="LOCAL-00062" summary=":tada: 0.0.10, support Tencent cloud for srcwagon &amp; app update">
+      <option name="closed" value="true" />
+      <created>1763457206226</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1763457206226</updated>
+    </task>
+    <task id="LOCAL-00063" summary=":tada: 0.0.11, fix route priority not even or not promptly applied &amp; attach social buttons to the about tab">
+      <option name="closed" value="true" />
+      <created>1763469595063</created>
+      <option name="number" value="00063" />
+      <option name="presentableId" value="LOCAL-00063" />
+      <option name="project" value="LOCAL" />
+      <updated>1763469595063</updated>
+    </task>
+    <task id="LOCAL-00064" summary=":tada: 0.0.12, allow retries while downloading srcwagon &amp; enhance clean logic &amp; fix routes not translated in some tabs">
+      <option name="closed" value="true" />
+      <created>1763519457260</created>
+      <option name="number" value="00064" />
+      <option name="presentableId" value="LOCAL-00064" />
+      <option name="project" value="LOCAL" />
+      <updated>1763519457260</updated>
+    </task>
+    <task id="LOCAL-00065" summary=":tada: 0.1.0, Enable srcwagon by default &amp; fix &quot;Reload App&quot; button invisible &amp; append license logo to the about tab">
+      <option name="closed" value="true" />
+      <created>1763749938986</created>
+      <option name="number" value="00065" />
+      <option name="presentableId" value="LOCAL-00065" />
+      <option name="project" value="LOCAL" />
+      <updated>1763749938986</updated>
+    </task>
+    <task id="LOCAL-00066" summary=":tada: Minor fix">
+      <option name="closed" value="true" />
+      <created>1763781224819</created>
+      <option name="number" value="00066" />
+      <option name="presentableId" value="LOCAL-00066" />
+      <option name="project" value="LOCAL" />
+      <updated>1763781224819</updated>
+    </task>
+    <task id="LOCAL-00067" summary=":tada: 0.1.1, remove incorrect cache logic of EE">
+      <option name="closed" value="true" />
+      <created>1763803873253</created>
+      <option name="number" value="00067" />
+      <option name="presentableId" value="LOCAL-00067" />
+      <option name="project" value="LOCAL" />
+      <updated>1763803873253</updated>
+    </task>
+    <task id="LOCAL-00068" summary=":recycle: Sync">
+      <option name="closed" value="true" />
+      <created>1763803959791</created>
+      <option name="number" value="00068" />
+      <option name="presentableId" value="LOCAL-00068" />
+      <option name="project" value="LOCAL" />
+      <updated>1763803959791</updated>
+    </task>
+    <task id="LOCAL-00069" summary=":art: Format">
+      <option name="closed" value="true" />
+      <created>1763983598511</created>
+      <option name="number" value="00069" />
+      <option name="presentableId" value="LOCAL-00069" />
+      <option name="project" value="LOCAL" />
+      <updated>1763983598511</updated>
+    </task>
+    <option name="localTasksCounter" value="70" />
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value=":tada: Implemented logger, recursive i18n mod searching; Fixed a bug where theme cannot be switched without restarting the app." />
+    <MESSAGE value=":tada: log relevant" />
+    <MESSAGE value=":tada: pre-update locales" />
+    <MESSAGE value=":tada: Add file relevant elements" />
+    <MESSAGE value=":tada: Incomplete log impl" />
+    <MESSAGE value=":tada: Log impl &amp; copyright info cleaning" />
+    <MESSAGE value=":tada: Minor optimization on logs" />
+    <MESSAGE value=":tada: Remove emoji that cannot be rendered on Microsoft YaHei" />
+    <MESSAGE value=":tada: 0.0.5, now calling a function to patch paths.xml" />
+    <MESSAGE value=":tada: Use gif-based theme" />
+    <MESSAGE value=":wrench: Fixed a bug where the l10n mods directory button opened the l10n mod directory of [preset l10n language], instead of the language selected in the dropdown." />
+    <MESSAGE value=":tada: 0.0.6" />
+    <MESSAGE value=":tada: Fix update failure" />
+    <MESSAGE value=":tada: Remove unused placeholder" />
+    <MESSAGE value=":construction: Make font opt. disabled by default" />
+    <MESSAGE value=":tada: 0.0.8, enhance cleaning logic" />
+    <MESSAGE value=":tada: 0.0.9, enhance instance detection &amp; remove WoWs-relevant checks" />
+    <MESSAGE value=":tada: 0.0.10, support Tencent cloud for srcwagon &amp; app update" />
+    <MESSAGE value=":tada: 0.0.11, fix route priority not even or not promptly applied &amp; attach social buttons to the about tab" />
+    <MESSAGE value=":tada: 0.0.12, allow retries while downloading srcwagon &amp; enhance clean logic &amp; fix routes not translated in some tabs" />
+    <MESSAGE value=":tada: 0.1.0, Enable srcwagon by default &amp; fix &quot;Reload App&quot; button invisible &amp; append license logo to the about tab" />
+    <MESSAGE value=":tada: Minor fix" />
+    <MESSAGE value=":tada: 0.1.1, remove incorrect cache logic of EE" />
+    <MESSAGE value=":recycle: Sync" />
+    <MESSAGE value=":art: Format" />
+    <option name="LAST_COMMIT_MESSAGE" value=":art: Format" />
+  </component>
+</project>

@@ -16,10 +16,10 @@
 import hashlib
 import json
 import os
-import subprocess  # (新增)
+import subprocess
 from pathlib import Path
 from logger import log
-from typing import Dict, Optional, List, Tuple  # (新增 Tuple)
+from typing import Dict, Optional, List, Tuple
 
 import win32api
 
@@ -211,7 +211,10 @@ class GameInstance:
                     log(f"Found game version folder: {folder_name}")
                     self.versions.append(GameVersion(folder_path, self.path))
 
-        self.versions.sort(key=lambda v: v.exe_version or "0.0", reverse=True)
+        self.versions.sort(
+            key=lambda v: [int(x) for x in (v.exe_version or "0.0.0.0").split('.')],
+            reverse=True
+        )
 
     def get_latest_version(self) -> Optional[GameVersion]:
         """
