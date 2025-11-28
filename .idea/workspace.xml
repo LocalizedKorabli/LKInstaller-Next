@@ -4,13 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9262902f-bc2f-41c7-939f-24eb29e83ccb" name="更改" comment=":art: Format">
-      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/version_file.txt" beforeDir="false" afterPath="$PROJECT_DIR$/assets/version_file.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/constants.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/inno/pack.iss" beforeDir="false" afterPath="$PROJECT_DIR$/inno/pack.iss" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/instance/game_instance.py" beforeDir="false" afterPath="$PROJECT_DIR$/instance/game_instance.py" afterDir="false" />
+    <list default="true" id="9262902f-bc2f-41c7-939f-24eb29e83ccb" name="更改" comment=":tada: 0.1.2, fix wrong version parsing, attach venv &amp; .idea to git">
+      <change beforePath="$PROJECT_DIR$/_compile.py" beforeDir="false" afterPath="$PROJECT_DIR$/_compile.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -135,14 +130,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1760707915383</updated>
-    </task>
-    <task id="LOCAL-00021" summary=":recycle: Reorganizing">
-      <option name="closed" value="true" />
-      <created>1762113744173</created>
-      <option name="number" value="00021" />
-      <option name="presentableId" value="LOCAL-00021" />
-      <option name="project" value="LOCAL" />
-      <updated>1762113744173</updated>
     </task>
     <task id="LOCAL-00022" summary=":recycle: Optimization">
       <option name="closed" value="true" />
@@ -528,7 +515,15 @@
       <option name="project" value="LOCAL" />
       <updated>1763983598511</updated>
     </task>
-    <option name="localTasksCounter" value="70" />
+    <task id="LOCAL-00070" summary=":tada: 0.1.2, fix wrong version parsing, attach venv &amp; .idea to git">
+      <option name="closed" value="true" />
+      <created>1764161740994</created>
+      <option name="number" value="00070" />
+      <option name="presentableId" value="LOCAL-00070" />
+      <option name="project" value="LOCAL" />
+      <updated>1764161740994</updated>
+    </task>
+    <option name="localTasksCounter" value="71" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -543,7 +538,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value=":tada: Implemented logger, recursive i18n mod searching; Fixed a bug where theme cannot be switched without restarting the app." />
     <MESSAGE value=":tada: log relevant" />
     <MESSAGE value=":tada: pre-update locales" />
     <MESSAGE value=":tada: Add file relevant elements" />
@@ -568,6 +562,7 @@
     <MESSAGE value=":tada: 0.1.1, remove incorrect cache logic of EE" />
     <MESSAGE value=":recycle: Sync" />
     <MESSAGE value=":art: Format" />
-    <option name="LAST_COMMIT_MESSAGE" value=":art: Format" />
+    <MESSAGE value=":tada: 0.1.2, fix wrong version parsing, attach venv &amp; .idea to git" />
+    <option name="LAST_COMMIT_MESSAGE" value=":tada: 0.1.2, fix wrong version parsing, attach venv &amp; .idea to git" />
   </component>
 </project>

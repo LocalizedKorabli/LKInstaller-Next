@@ -37,7 +37,7 @@ def run_build():
         '--clean',  # 构建前清理
         '--uac-admin',  # 请求管理员权限
         '--add-data',
-        f"resources{os.pathsep}resources",
+        f'resources{os.pathsep}resources',
         '-i', os.path.join('resources', 'logo', 'logo.ico'),
         # --version-file
         '--version-file', os.path.join('assets', 'version_file.txt')
