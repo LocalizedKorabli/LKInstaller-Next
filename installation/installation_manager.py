@@ -248,17 +248,8 @@ class InstallationManager:
 
         if self._cancel_event.is_set(): return
 
-        latest_version_obj = task.instance.get_latest_version()
-        if not latest_version_obj or not latest_version_obj.exe_version:
-            _log_task(task, _('lki.install.status.no_version_info'))
-            self._mark_task_failed(task)
-            return
-
-        major_version = ".".join(latest_version_obj.exe_version.split('.')[:2])
-
         source = global_source_manager.get_source(task.lang_code)
         if not source:
-            # (已修改：本地化)
             _log_task(task, _('lki.install.error.no_source') % task.lang_code)
             self._mark_task_failed(task)
             return
@@ -278,61 +269,73 @@ class InstallationManager:
             self._mark_task_failed(task)
             return
 
-        sub_version = None
-        for route_id in self.download_routes_priority:
+        for game_version_obj in task.instance.versions:
             if self._cancel_event.is_set(): return
 
-            route_urls = source.get_urls(task.instance.type, route_id)
-            if not route_urls: continue
+            if not game_version_obj or not game_version_obj.exe_version:
+                log(f"Warning: No valid executable version found in {game_version_obj.bin_folder_name}. Skipping.")
+                continue
 
-            v_url = route_urls.get('version')
-            _log_task(task, _('lki.install.status.getting_version_from') % get_route_id_to_name().get(route_id, route_id))
+            major_version = ".".join(game_version_obj.exe_version.split('.')[:2])
 
-            try:
-                proxies = root_utils.get_configured_proxies()
-                resp = requests.get(v_url, timeout=5, proxies=proxies)
-                resp.raise_for_status()
-                lines = resp.text.splitlines()
-                if len(lines) >= 2 and lines[1].strip() == major_version:
-                    sub_version = lines[0].strip()
-                    _log_task(task, _('lki.install.status.version_match_found') % sub_version)
-                    break
-                else:
-                    _log_task(task, _('lki.install.status.version_mismatch') % (lines[1].strip(), major_version))
+            log(f"Attempting to find remote version for local major version: {major_version}")
 
-            except requests.exceptions.RequestException as e:
-                _log_task(task, f"{_('lki.install.status.failed')}: {route_id} ({e})")
+            sub_version = None
+            for route_id in self.download_routes_priority:
+                if self._cancel_event.is_set(): return
 
-        if not sub_version:
-            _log_task(task, _('lki.install.status.no_compatible_version'))
-            self._mark_task_failed(task)
-            return
+                route_urls = source.get_urls(task.instance.type, route_id)
+                if not route_urls: continue
 
-        mo_job_id = f"{task.lang_code}_{major_version}_{sub_version}"
-        task.mo_job_id = mo_job_id
+                v_url = route_urls.get('version')
+                _log_task(task,
+                          _('lki.install.status.getting_version_from') % get_route_id_to_name().get(route_id, route_id))
 
-        with self._lock:
-            if mo_job_id not in self.download_jobs:
-                job = DownloadJob(mo_job_id, 'mo', task.lang_code)
-                job.version_info = {'main': major_version, 'sub': sub_version}
-                self.download_jobs[mo_job_id] = job
-            self.download_jobs[mo_job_id].dependent_tasks.add(task)
+                try:
+                    proxies = root_utils.get_configured_proxies()
+                    resp = requests.get(v_url, timeout=5, proxies=proxies)
+                    resp.raise_for_status()
+                    lines = resp.text.splitlines()
+                    if len(lines) >= 2 and lines[1].strip() == major_version:
+                        sub_version = lines[0].strip()
+                        _log_task(task, _('lki.install.status.version_match_found') % sub_version)
+                        break
+                    else:
+                        remote_major = lines[1].strip() if len(lines) >= 2 else "N/A"
+                        _log_task(task, _('lki.install.status.version_mismatch') % (remote_major, major_version))
 
-            if task.use_ee and task.ee_job_id not in self.download_jobs:
-                ee_job = DownloadJob(task.ee_job_id, 'ee', task.lang_code)
-                self.download_jobs[task.ee_job_id] = ee_job
-            if task.use_ee:
-                self.download_jobs[task.ee_job_id].dependent_tasks.add(task)
+                except requests.exceptions.RequestException as e:
+                    _log_task(task, f"{_('lki.install.status.failed')}: {route_id} ({e})")
 
-            # --- (新增：字体任务) ---
-            if task.use_fonts and task.fo_job_id not in self.download_jobs:
-                fo_job = DownloadJob(task.fo_job_id, 'fonts', 'global')
-                self.download_jobs[task.fo_job_id] = fo_job
-            if task.use_fonts:
-                self.download_jobs[task.fo_job_id].dependent_tasks.add(task)
-            # --- (新增结束) ---
+            if sub_version:
+                mo_job_id = f"{task.lang_code}_{major_version}_{sub_version}"
+                task.mo_job_id = mo_job_id
 
-            task.status = "downloading"
+                with self._lock:
+                    if mo_job_id not in self.download_jobs:
+                        job = DownloadJob(mo_job_id, 'mo', task.lang_code)
+                        job.version_info = {'main': major_version, 'sub': sub_version}
+                        self.download_jobs[mo_job_id] = job
+                    self.download_jobs[mo_job_id].dependent_tasks.add(task)
+
+                    if task.use_ee and task.ee_job_id not in self.download_jobs:
+                        ee_job = DownloadJob(task.ee_job_id, 'ee', task.lang_code)
+                        self.download_jobs[task.ee_job_id] = ee_job
+                    if task.use_ee:
+                        self.download_jobs[task.ee_job_id].dependent_tasks.add(task)
+
+                    if task.use_fonts and task.fo_job_id not in self.download_jobs:
+                        fo_job = DownloadJob(task.fo_job_id, 'fonts', 'global')
+                        self.download_jobs[task.fo_job_id] = fo_job
+                    if task.use_fonts:
+                        self.download_jobs[task.fo_job_id].dependent_tasks.add(task)
+
+                    task.status = "downloading"
+                return
+
+        # Compatible version not found
+        _log_task(task, _('lki.install.status.no_compatible_version'))
+        self._mark_task_failed(task)
 
     def _download_worker(self):
         from localizer import _  # <-- (修复 UnboundLocalError)
@@ -349,8 +352,6 @@ class InstallationManager:
                 self.download_queue.task_done()
                 continue
 
-            # (新增) 为下载函数选择一个“代表性”任务以进行日志记录
-            # 这对于 _log_task 来说是必需的
             try:
                 representative_task = next(iter(job.dependent_tasks))
             except StopIteration:
