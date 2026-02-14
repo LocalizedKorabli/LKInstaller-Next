@@ -19,6 +19,7 @@ import shutil
 import sys
 import time
 import tkinter as tk
+import urllib.request
 from pathlib import Path
 from typing import Optional, Tuple, Set, Dict, List
 
@@ -127,7 +128,7 @@ def get_configured_proxies() -> Optional[Dict[str, str]]:
     """
     从全局设置中读取代理配置，并返回 requests 库所需的字典。
     - 'disabled': 返回 {'http': None, 'https': None}
-    - 'system':   返回 None (requests 会自动检测)
+    - 'system':   返回 urllib.request.getproxies()
     - 'manual':   返回 {'http': '...', 'https': '...'}
     """
     import settings  # Local import
@@ -139,7 +140,7 @@ def get_configured_proxies() -> Optional[Dict[str, str]]:
         return {'http': '', 'https': ''}
 
     if proxy_mode == 'system':
-        return None  # requests 库会自动处理
+        return urllib.request.getproxies()
 
     if proxy_mode == 'manual':
         host = settings.global_settings.get('proxy.host', '')
