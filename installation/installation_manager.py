@@ -950,14 +950,13 @@ class InstallationManager:
                         raise Exception(_('lki.uninstall.warn.remove_failed') % (file_path.name, e))
 
                 # 3. (最后) 删除 info.json 文件本身
-                if not error_in_deletion:
-                    try:
-                        os.remove(info_file)
-                    except OSError as e:
-                        # (已修改：本地化)
-                        _log_task(task, _('lki.uninstall.error.remove_info_failed') % (info_file.name, e))
-                        # (已修改：本地化)
-                        raise Exception(_('lki.uninstall.error.remove_info_failed_critical') % info_file.name)
+                try:
+                    os.remove(info_file)
+                except OSError as e:
+                    # (已修改：本地化)
+                    _log_task(task, _('lki.uninstall.error.remove_info_failed') % (info_file.name, e))
+                    # (已修改：本地化)
+                    raise Exception(_('lki.uninstall.error.remove_info_failed_critical') % info_file.name)
 
 
             # (所有版本循环完毕)
