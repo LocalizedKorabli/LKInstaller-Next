@@ -678,7 +678,7 @@ class InstallationManager:
                     mods_json_mkmod_path = None
 
             _log_task(task, _('lki.install.status.writing_config'), 25)
-            locale_config_path = utils.write_locale_config_to_temp(task.lang_code)
+            locale_config_path = utils.write_locale_config_to_temp(task.lang_code, task.use_fonts)
 
             # --- 关键打包 ---
             _log_task(task, _('lki.install.status.packing_core'), 40)
@@ -947,15 +947,18 @@ class InstallationManager:
                     except OSError as e:
                         # (已修改：本地化)
                         _log_task(task, _('lki.uninstall.warn.remove_failed') % (file_path.name, e))
+                        raise Exception(_('lki.uninstall.warn.remove_failed') % (file_path.name, e))
 
                 # 3. (最后) 删除 info.json 文件本身
-                try:
-                    os.remove(info_file)
-                except OSError as e:
-                    # (已修改：本地化)
-                    _log_task(task, _('lki.uninstall.error.remove_info_failed') % (info_file.name, e))
-                    # (已修改：本地化)
-                    raise Exception(_('lki.uninstall.error.remove_info_failed_critical') % info_file.name)
+                if not error_in_deletion:
+                    try:
+                        os.remove(info_file)
+                    except OSError as e:
+                        # (已修改：本地化)
+                        _log_task(task, _('lki.uninstall.error.remove_info_failed') % (info_file.name, e))
+                        # (已修改：本地化)
+                        raise Exception(_('lki.uninstall.error.remove_info_failed_critical') % info_file.name)
+
 
             # (所有版本循环完毕)
             _log_task(task, _('lki.uninstall.status.done'), 100)

@@ -45,13 +45,7 @@ class InstanceManager:
         'use_fonts' 的值取决于语言。
         """
 
-        # (修改：从 localization_sources 查询默认值)
-        # 我们假设 global_source_manager 现在有这个方法
-        try:
-            default_fonts = global_source_manager.lang_code_requires_fonts(lang_code)
-        except Exception as e:
-            log(f"Error checking font requirement for {lang_code}: {e}. Defaulting use_fonts to False.")
-            default_fonts = False
+        default_fonts = global_source_manager.lang_code_requires_fonts(lang_code)
 
         return {
             "name_key": "lki.preset.default.name",
@@ -212,7 +206,6 @@ class InstanceManager:
 
         default_lang_code = determine_default_l10n_lang(current_ui_lang)
 
-        # (已修改：调用辅助方法，自动获取正确的 use_fonts)
         default_preset_data = self._get_default_preset_data(default_lang_code)
 
         self.instances[instance_id] = {

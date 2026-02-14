@@ -151,21 +151,20 @@ def get_files_may_overwrite(bin_folder: Path) -> Set[Path]:
     return set([conflictable.absolute() for conflictable in conflictables])
 
 
-def get_locale_config_content(lang_code: str) -> Optional[str]:
-    """获取特定语言的 locale_config.xml 内容"""
-    # (已修改：使用重命名后的变量)
+def get_locale_config_content(lang_code: str, use_fonts: bool) -> Optional[str]:
     lang2lconf = {
         'zh_CN': BUILTIN_LOCALE_CONFIG_CJK,
         'zh_TW': BUILTIN_LOCALE_CONFIG_CJK,
         'ja': BUILTIN_LOCALE_CONFIG_CJK
     }
-    return lang2lconf.get(lang_code, None)
+    # Use LC_CJK by default if font is selected
+    return lang2lconf.get(lang_code, BUILTIN_LOCALE_CONFIG_CJK if use_fonts else None)
 
 
 # (新增)
-def write_locale_config_to_temp(lang_code: str) -> Optional[Path]:
+def write_locale_config_to_temp(lang_code: str, use_fonts: bool) -> Optional[Path]:
     """将 locale_config 写入临时文件并返回路径"""
-    content = get_locale_config_content(lang_code)
+    content = get_locale_config_content(lang_code, use_fonts)
     if content is None:
         return None
 
