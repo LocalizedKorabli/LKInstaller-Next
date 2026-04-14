@@ -71,6 +71,13 @@ class AboutTab(BaseTab):
         social_frame = ttk.Frame(content_frame)
         social_frame.pack(pady=(0, 20))
 
+        self.btn_social_official = ttk.Button(
+            social_frame,
+            image=self.icons.official,
+            command=lambda: webbrowser.open('https://localizedkorabli.org/'),
+            style="Toolbutton",
+            cursor="hand2"
+        )
         self.btn_social_github = ttk.Button(
             social_frame,
             image=self.icons.github,
@@ -92,9 +99,11 @@ class AboutTab(BaseTab):
             style="Toolbutton",
             cursor="hand2"
         )
+        self.btn_social_official.pack(side='left', padx=8)
         self.btn_social_github.pack(side='left', padx=8)
         self.btn_social_qq.pack(side='left', padx=8)
         self.btn_social_discord.pack(side='left', padx=8)
+        ToolTip(self.btn_social_official, msg=_('lki.about.contacts.official'))
         ToolTip(self.btn_social_github, msg=_('lki.about.contacts.github'))
         ToolTip(self.btn_social_qq, msg=_('lki.about.contacts.qq'))
         ToolTip(self.btn_social_discord, msg=_('lki.about.contacts.discord'))
@@ -173,6 +182,7 @@ class AboutTab(BaseTab):
 
     def update_icons(self):
         """当主题更改时更新此选项卡上的图标"""
+        self.btn_social_official.config(image=self.icons.official)
         self.btn_social_github.config(image=self.icons.github)
         self.btn_social_qq.config(image=self.icons.qq)
         self.btn_social_discord.config(image=self.icons.discord)

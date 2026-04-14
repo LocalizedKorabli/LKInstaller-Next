@@ -244,13 +244,12 @@ class SettingsTab(BaseTab):
         self.on_theme_change_callback(selected_theme)
 
     def _get_proxy_status_text(self):
-        proxy_mode = settings.global_settings.get('proxy.mode', 'disabled')
+        proxy_mode = settings.global_settings.get('proxy.mode', 'system')
         key_map = {
-            'disabled': 'lki.settings.proxy.disabled',
             'system': 'lki.settings.proxy.system',
             'manual': 'lki.settings.proxy.manual',
         }
-        return _(key_map.get(proxy_mode, 'lki.settings.proxy.disabled'))
+        return _(key_map.get(proxy_mode, 'lki.settings.proxy.system'))
 
     def _open_proxy_window(self):
         window = ProxyConfigWindow(self.master.master, self._on_proxy_config_saved)
@@ -392,7 +391,7 @@ class ProxyConfigWindow(BaseDialog):
 
         self.title(_('lki.proxy.title'))
 
-        self.mode_var = tk.StringVar(value=settings.global_settings.get('proxy.mode', 'disabled'))
+        self.mode_var = tk.StringVar(value=settings.global_settings.get('proxy.mode', 'system'))
         self.host_var = tk.StringVar(value=settings.global_settings.get('proxy.host', ''))
         self.port_var = tk.StringVar(value=settings.global_settings.get('proxy.port', ''))
         self.user_var = tk.StringVar(value=settings.global_settings.get('proxy.user', ''))
@@ -405,7 +404,6 @@ class ProxyConfigWindow(BaseDialog):
         mode_frame.pack(fill='x', pady=5)
 
         modes = [
-            (_('lki.settings.proxy.disabled'), 'disabled'),
             (_('lki.settings.proxy.system'), 'system'),
             (_('lki.settings.proxy.manual'), 'manual')
         ]

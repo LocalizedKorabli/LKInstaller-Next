@@ -42,6 +42,7 @@ class IconManager:
         self.up = None
         self.down = None
 
+        self.official = None
         self.github = None
         self.discord = None
         self.qq = None
@@ -50,7 +51,7 @@ class IconManager:
         """加载特定主题的图标集"""
         from tkinter import PhotoImage
         icon_names = ['import', 'rename', 'remove', 'detect', 'manage', 'folder', 'download', 'copy', 'up', 'down',
-                      'refresh', 'play', 'github', 'discord', 'qq']
+                      'refresh', 'play', 'official', 'github', 'discord', 'qq']
 
         for name in icon_names:
             path = dirs.base_path.joinpath(f'resources/icons/{theme_name}/{name}.png')
@@ -80,6 +81,7 @@ class IconManager:
         self.play = self.icons[theme_name]['play']
         self.up = self.icons[theme_name]['up']
         self.down = self.icons[theme_name]['down']
+        self.official = self.icons[theme_name]['official']
         self.github = self.icons[theme_name]['github']
         self.discord = self.icons[theme_name]['discord']
         self.qq = self.icons[theme_name]['qq']

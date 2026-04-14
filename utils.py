@@ -19,7 +19,6 @@ import shutil
 import sys
 import time
 import tkinter as tk
-import urllib.request
 from pathlib import Path
 from typing import Optional, Tuple, Set, Dict, List
 
@@ -127,20 +126,16 @@ def scale_dpi(widget: tk.Misc, value: int) -> int:
 def get_configured_proxies() -> Optional[Dict[str, str]]:
     """
     从全局设置中读取代理配置，并返回 requests 库所需的字典。
-    - 'disabled': 返回 {'http': None, 'https': None}
-    - 'system':   返回 urllib.request.getproxies()
+    - 'system':   返回 None，由 requests 自行读取环境变量代理
     - 'manual':   返回 {'http': '...', 'https': '...'}
     """
     import settings  # Local import
     from localizer import _  # Local import
 
-    proxy_mode = settings.global_settings.get('proxy.mode', 'disabled')
-
-    if proxy_mode == 'disabled':
-        return {'http': '', 'https': ''}
+    proxy_mode = settings.global_settings.get('proxy.mode', 'system')
 
     if proxy_mode == 'system':
-        return urllib.request.getproxies()
+        return None
 
     if proxy_mode == 'manual':
         host = settings.global_settings.get('proxy.host', '')
@@ -165,7 +160,7 @@ def get_configured_proxies() -> Optional[Dict[str, str]]:
             'https': proxy_url
         }
 
-    return {'http': '', 'https': ''}  # (默认禁用)
+    return None  # (默认：由 requests 自行处理)
 
 
 def copy_with_log(src: Path, dst: Path, *, follow_symlinks=True):

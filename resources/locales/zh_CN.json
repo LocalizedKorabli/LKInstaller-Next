@@ -1,6 +1,7 @@
 {
   "lki.about.contacts.discord": "加入团队Discord服务器",
   "lki.about.contacts.github": "查看GitHub上的源代码仓库",
+  "lki.about.contacts.official": "访问官方网站",
   "lki.about.contacts.qq": "加入QQ群",
   "lki.about.license.tooltip": "本应用采用GNU Affero通用公共许可证第3版进行授权。点击图标即可查看完整协议。",
   "lki.action.status.all_done": "所有任务已完成。",
@@ -198,7 +199,6 @@
   "lki.settings.paths.data_path": "应用数据路径:",
   "lki.settings.paths.work_path": "应用工作路径:",
   "lki.settings.proxy": "代理:",
-  "lki.settings.proxy.disabled": "不使用代理",
   "lki.settings.proxy.manual": "自定义",
   "lki.settings.proxy.system": "使用系统代理",
   "lki.settings.theme": "主题:",

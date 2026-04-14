@@ -1,6 +1,7 @@
 {
   "lki.about.contacts.discord": "Join Discord Server",
   "lki.about.contacts.github": "View the source code repository on GitHub",
+  "lki.about.contacts.official": "Visit the official website",
   "lki.about.contacts.qq": "Join QQ Group",
   "lki.about.license.tooltip": "This application is licensed under the GNU Affero General Public License v3 or later. Click to access the full text of the license.",
   "lki.action.status.all_done": "All tasks finished.",
@@ -198,7 +199,6 @@
   "lki.settings.paths.data_path": "App Data Path:",
   "lki.settings.paths.work_path": "Work Path:",
   "lki.settings.proxy": "Proxy:",
-  "lki.settings.proxy.disabled": "Disabled",
   "lki.settings.proxy.manual": "Manual",
   "lki.settings.proxy.system": "Use System Proxy",
   "lki.settings.theme": "Theme:",
