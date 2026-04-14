@@ -247,6 +247,7 @@ class SettingsTab(BaseTab):
         proxy_mode = settings.global_settings.get('proxy.mode', 'system')
         key_map = {
             'system': 'lki.settings.proxy.system',
+            'disabled': 'lki.settings.proxy.disabled',
             'manual': 'lki.settings.proxy.manual',
         }
         return _(key_map.get(proxy_mode, 'lki.settings.proxy.system'))
@@ -405,6 +406,7 @@ class ProxyConfigWindow(BaseDialog):
 
         modes = [
             (_('lki.settings.proxy.system'), 'system'),
+            (_('lki.settings.proxy.disabled'), 'disabled'),
             (_('lki.settings.proxy.manual'), 'manual')
         ]
         for text, value in modes:

@@ -134,8 +134,6 @@ class GlobalSettings:
         # ... (其余的加载逻辑) ...
         if 'proxy' in saved_data:
             self.data['proxy'].update(saved_data.get('proxy', {}))
-        if self.data['proxy'].get('mode') == 'disabled':
-            self.data['proxy']['mode'] = 'system'
 
         if 'ever_launched' in saved_data:
             self.data['ever_launched'] = saved_data['ever_launched']

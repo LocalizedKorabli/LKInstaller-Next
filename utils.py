@@ -137,6 +137,9 @@ def get_configured_proxies() -> Optional[Dict[str, str]]:
     if proxy_mode == 'system':
         return None
 
+    if proxy_mode == 'disabled':
+        return {'http': '', 'https': ''}
+
     if proxy_mode == 'manual':
         host = settings.global_settings.get('proxy.host', '')
         port = settings.global_settings.get('proxy.port', '')
@@ -350,8 +353,7 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
 
                 try:
                     logger_log(f"Checking version from: {version_url}")
-                    resp = requests.get(version_url, timeout=10, proxies=proxies) \
-                        if proxies is not None else requests.get(version_url, timeout=10)
+                    resp = requests.get(version_url, timeout=10, proxies=proxies)
                     resp.raise_for_status()
 
                     data = resp.json()

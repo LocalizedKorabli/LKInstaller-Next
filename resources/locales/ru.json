@@ -199,6 +199,7 @@
   "lki.settings.paths.data_path": "Путь данных:",
   "lki.settings.paths.work_path": "Рабочий путь:",
   "lki.settings.proxy": "Прокси:",
+  "lki.settings.proxy.disabled": "Отключено",
   "lki.settings.proxy.manual": "Ручной",
   "lki.settings.proxy.system": "Использовать системный прокси",
   "lki.settings.theme": "Тема:",

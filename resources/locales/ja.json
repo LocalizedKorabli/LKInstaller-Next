@@ -199,6 +199,7 @@
   "lki.settings.paths.data_path": "データパス:",
   "lki.settings.paths.work_path": "作業パス:",
   "lki.settings.proxy": "プロキシ:",
+  "lki.settings.proxy.disabled": "無効",
   "lki.settings.proxy.manual": "手動",
   "lki.settings.proxy.system": "システムプロキシを使用",
   "lki.settings.theme": "テーマ:",

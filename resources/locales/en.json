@@ -199,6 +199,7 @@
   "lki.settings.paths.data_path": "App Data Path:",
   "lki.settings.paths.work_path": "Work Path:",
   "lki.settings.proxy": "Proxy:",
+  "lki.settings.proxy.disabled": "Disabled",
   "lki.settings.proxy.manual": "Manual",
   "lki.settings.proxy.system": "Use System Proxy",
   "lki.settings.theme": "Theme:",

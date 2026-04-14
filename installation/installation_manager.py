@@ -293,8 +293,7 @@ class InstallationManager:
 
                 try:
                     proxies = root_utils.get_configured_proxies()
-                    resp = requests.get(v_url, timeout=5, proxies=proxies) \
-                        if proxies is not None else requests.get(v_url, timeout=5)
+                    resp = requests.get(v_url, timeout=5, proxies=proxies)
                     resp.raise_for_status()
                     lines = resp.text.splitlines()
                     if len(lines) >= 2 and lines[1].strip() == major_version:
@@ -464,8 +463,7 @@ class InstallationManager:
                 # Version
                 try:
                     _log_task(task, _('lki.install.status.fonts_route') % get_route_id_to_name().get(route_id, route_id))
-                    resp = requests.get(VER_URL, timeout=5, proxies=proxies) \
-                        if proxies is not None else requests.get(VER_URL, timeout=5)
+                    resp = requests.get(VER_URL, timeout=5, proxies=proxies)
                     resp.raise_for_status()
                     remote_info = resp.json()
                     remote_version = remote_info.get('version')
@@ -546,8 +544,7 @@ class InstallationManager:
             _log_overall(self, f"{log_prefix}: {_('lki.install.status.connecting') % url}")
             proxies = root_utils.get_configured_proxies()
 
-            response = requests.get(url, stream=True, proxies=proxies, timeout=timeout) \
-                if proxies is not None else requests.get(url, stream=True, timeout=timeout)
+            response = requests.get(url, stream=True, proxies=proxies, timeout=timeout)
             response.raise_for_status()
 
             with open(dest, 'wb') as f:
