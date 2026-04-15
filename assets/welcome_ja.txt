@@ -1,6 +1,6 @@
-澪刻·Localization Installer Nextをご利用いただきありがとうございます。
-プログラムに関するご提案は、https://github.com/OpenKorabli/OpenL10nInstaller/issues でIssueを作成してOpenKorabliにご連絡ください。
-プログラムに関するご提案は、https://github.com/LocalizedKorabli/LKInstaller-Next/issues でIssueを作成してご連絡ください。
+澪刻 Next - Mir Korabley オンライン自動インストーラーをご利用いただきありがとうございます。
+プログラムに関するご提案は、https://github.com/OpenKorabli/OpenL10nInstaller/issues で Issue を作成して OpenKorabli にご連絡ください。
+プログラムに関するご提案は、https://github.com/LocalizedKorabli/LKInstaller-Next/issues で Issue を作成してご連絡ください。
 「次へ」をクリックすると、セットアップが開始されます。
 
 ゲームをお楽しみください〜

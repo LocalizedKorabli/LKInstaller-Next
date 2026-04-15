@@ -1,4 +1,4 @@
-歡迎使用澪刻·在地化安裝器！
+歡迎使用 澪刻 Next — Mir Korabley 在地化安裝器！
 
 若對本程式有任何意見或建議，请於https://github.com/OpenKorabli/OpenL10nInstaller/issues創建議題。
 若對安裝器有任何意見或建議，请於https://github.com/LocalizedKorabli/LKInstaller-Next/issues創建議題。

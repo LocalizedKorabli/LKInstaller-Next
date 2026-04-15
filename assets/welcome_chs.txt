@@ -1,4 +1,4 @@
-欢迎使用澪刻·本地化安装器Next！
+欢迎使用 澪刻 Next — Mir Korabley 本地化安装器！
 
 若对本程序有任何意见或建议，请加入QQ群（875113509）反馈，或在https://github.com/OpenKorabli/OpenL10nInstaller/issues创建议题。
 若对安装器有任何意见或建议，请加入QQ群（875113509）反馈，或在https://github.com/LocalizedKorabli/LKInstaller-Next/issues创建议题。

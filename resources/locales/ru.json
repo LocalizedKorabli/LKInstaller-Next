@@ -23,7 +23,7 @@
   "lki.advanced.preset_details": "Конфигурация пресета",
   "lki.advanced.preset_label": "Пресет установки:",
   "lki.app.title": "ЛК Next",
-  "lki.app.title.full": "ЛК Установщик Локализации Next",
+  "lki.app.title.full": "ЛК Next — Установщик локализации «Мира кораблей»",
   "lki.autoupdate.btn.browse": "Обзор...",
   "lki.autoupdate.error.create_failed": "Не удалось создать ярлык: %s",
   "lki.autoupdate.error.no_path": "Пожалуйста, выберите место для сохранения ярлыка.",

@@ -23,7 +23,7 @@
   "lki.advanced.preset_details": "Preset Configuration",
   "lki.advanced.preset_label": "Install Preset:",
   "lki.app.title": "LK Next",
-  "lki.app.title.full": "LK I18n Installer Next",
+  "lki.app.title.full": "LK Next - Mir Korabley L10n Installer",
   "lki.autoupdate.btn.browse": "Browse...",
   "lki.autoupdate.error.create_failed": "Failed to create shortcut: %s",
   "lki.autoupdate.error.no_path": "Please select a location to save the shortcut.",

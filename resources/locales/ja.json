@@ -23,7 +23,7 @@
   "lki.advanced.preset_details": "プリセット設定",
   "lki.advanced.preset_label": "インストールプリセット:",
   "lki.app.title": "澪刻 Next",
-  "lki.app.title.full": "澪刻 I18n インストーラー Next",
+  "lki.app.title.full": "澪刻 Next - Mir Korabley オンライン自動インストーラー",
   "lki.autoupdate.btn.browse": "参照...",
   "lki.autoupdate.error.create_failed": "ショートカットの作成に失敗しました: %s",
   "lki.autoupdate.error.no_path": "ショートカットを保存する場所を選択してください。",
