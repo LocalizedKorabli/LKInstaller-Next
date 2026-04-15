@@ -477,7 +477,7 @@ class ProxyConfigWindow(BaseDialog):
             settings.global_settings.set('proxy.user', user)
             settings.global_settings.set('proxy.password', password)
             from core.settings import save_proxy_credentials
-        save_proxy_credentials(user, password)
+            save_proxy_credentials(user, password)
 
         self.on_save_callback()
         self.destroy()
