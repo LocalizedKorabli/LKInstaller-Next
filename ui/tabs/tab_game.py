@@ -18,24 +18,24 @@ import subprocess
 import threading
 import tkinter as tk
 import webbrowser
-from logger import log
+from core.logger import log
 from pathlib import Path
 from tkinter import ttk, messagebox, filedialog
 from typing import List, Dict, Optional, Set
 
-import settings
-import utils
+from core import settings
+from core import utils
 from ui.tabs.tab_base import BaseTab
 
 from tktooltip import ToolTip
 
 from instance import instance_manager
-from localizer import _
+from core.localizer import _
 from instance.game_instance import GameInstance
 from ui.dialogs import BaseDialog
 from instance.instance_detector import find_instances_for_auto_import, get_instance_type_from_path
 from installation.installation_manager import InstallationManager, InstallationTask  # <-- (新增)
-from localization_sources import global_source_manager
+from installation.localization_sources import global_source_manager
 
 
 class GameTab(BaseTab):

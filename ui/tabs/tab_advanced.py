@@ -20,16 +20,16 @@ import webbrowser
 from tkinter import ttk, messagebox
 from typing import Optional
 
-import settings
-import utils
+from core import settings
+from core import utils
 from instance import instance_manager
 from instance.game_instance import GameInstance
-from localization_sources import global_source_manager, get_route_id_to_name
-from localizer import _
-from logger import log
+from installation.localization_sources import global_source_manager, get_route_id_to_name
+from core.localizer import _
+from core.logger import log
 from ui.dialogs import CustomAskStringDialog, BaseDialog, AutoUpdateConfigDialog  # (已修改)
 from ui.tabs.tab_base import BaseTab
-from utils import determine_default_l10n_lang
+from core.utils import determine_default_l10n_lang
 
 from tktooltip import ToolTip
 

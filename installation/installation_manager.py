@@ -23,18 +23,18 @@ import zipfile
 from pathlib import Path
 
 from installation.installation_utils import get_files_may_overwrite
-from logger import log
+from core.logger import log
 from tkinter import messagebox
 from typing import List, Dict, Callable, Optional, Set, Tuple
 
 import requests
 
 # (移除 _ 的顶层导入)
-import settings
+from core import settings
 import installation.installation_utils as utils
-import utils as root_utils
+from core import utils as root_utils
 from instance.game_instance import GameInstance
-from localization_sources import global_source_manager, get_route_id_to_name
+from installation.localization_sources import global_source_manager, get_route_id_to_name
 from ui.windows.window_action import ActionProgressWindow
 
 # (从 utils 导入常量)
@@ -60,7 +60,7 @@ class InstallationTask:
     """代表一个要安装到单个实例的完整任务。"""
 
     def __init__(self, instance: GameInstance, preset_data: dict, root_tk: tk.Tk):
-        from localizer import _  # (新增局部导入)
+        from core.localizer import _  # (新增局部导入)
         self.instance = instance
         self.preset = preset_data
         self.root_tk = root_tk  # (新增)
@@ -108,7 +108,7 @@ class InstallationManager:
         self._install_phase_started = False  # <-- (修改 1: 新增标志)
 
     def start_installation(self, tasks: List[InstallationTask], on_complete_callback: Optional[Callable] = None):
-        from localizer import _  # (为 Messagebox 导入)
+        from core.localizer import _  # (为 Messagebox 导入)
 
         # (检查是否有任务已在进行)
         if self.window and self.window.winfo_exists():
@@ -149,7 +149,7 @@ class InstallationManager:
         threading.Thread(target=self._control_thread, daemon=True).start()
 
     def cancel_installation(self):
-        from localizer import _  # (为日志导入)
+        from core.localizer import _  # (为日志导入)
         # (已修改：根据状态使用不同的字符串)
         cancel_key = 'lki.uninstall.status.cancelling' if self.is_uninstalling else 'lki.install.status.cancelling'
         _log_overall(self, _(cancel_key))
@@ -161,7 +161,7 @@ class InstallationManager:
                 break
 
     def start_uninstallation(self, tasks: List[InstallationTask], on_complete_callback: Optional[Callable] = None):
-        from localizer import _
+        from core.localizer import _
 
         if self.window and self.window.winfo_exists():
             messagebox.showwarning(_('lki.uninstall.title'), _('lki.install.error.already_running'))
@@ -199,7 +199,7 @@ class InstallationManager:
 
     # (新增：卸载控制线程)
     def _uninstall_control_thread(self):
-        from localizer import _
+        from core.localizer import _
         _log_overall(self, _('lki.uninstall.status.starting'))
 
         for task in self.tasks:
@@ -208,7 +208,7 @@ class InstallationManager:
             threading.Thread(target=self._uninstall_worker, args=(task,), daemon=True).start()
 
     def _control_thread(self):
-        from localizer import _  # <-- (修复 UnboundLocalError)
+        from core.localizer import _  # <-- (修复 UnboundLocalError)
 
         _log_overall(self, _('lki.install.status.preparing_files'))
         utils.clear_temp_dir()
@@ -244,7 +244,7 @@ class InstallationManager:
             threading.Thread(target=self._download_worker, daemon=True).start()
 
     def _resolve_task_version(self, task: InstallationTask):
-        from localizer import _
+        from core.localizer import _
 
         if self._cancel_event.is_set(): return
 
@@ -338,7 +338,7 @@ class InstallationManager:
         self._mark_task_failed(task)
 
     def _download_worker(self):
-        from localizer import _  # <-- (修复 UnboundLocalError)
+        from core.localizer import _  # <-- (修复 UnboundLocalError)
 
         while not self.download_queue.empty():
             if self._cancel_event.is_set(): return
@@ -374,7 +374,7 @@ class InstallationManager:
             self.download_queue.task_done()
 
     def _perform_download(self, job: DownloadJob, task: InstallationTask) -> Tuple[bool, Optional[Path]]:
-        from localizer import _  # <-- (修复 UnboundLocalError)
+        from core.localizer import _  # <-- (修复 UnboundLocalError)
 
         source = global_source_manager.get_source(job.lang_code)
 
@@ -538,7 +538,7 @@ class InstallationManager:
 
     def _download_file_with_retry(self, url: str, dest: Path, log_prefix: str, timeout: int) -> bool:
         """使用 requests 下载文件。"""
-        from localizer import _  # <-- (修复 UnboundLocalError)
+        from core.localizer import _  # <-- (修复 UnboundLocalError)
         try:
             # (已修改：修复 %s 格式化)
             _log_overall(self, f"{log_prefix}: {_('lki.install.status.connecting') % url}")
@@ -563,7 +563,7 @@ class InstallationManager:
 
     def _on_download_complete(self, job: Optional[DownloadJob], success: bool):
         """(在主线程中) 在下载完成后更新任务状态。"""
-        from localizer import _  # <-- (修复 UnboundLocalError)
+        from core.localizer import _  # <-- (修复 UnboundLocalError)
 
         if self._cancel_event.is_set(): return
 
@@ -580,7 +580,7 @@ class InstallationManager:
                         task.fo_ready = True  # <-- (新增)
                     tasks_to_check.append(task)
         elif job:  # 下载失败
-            from localizer import _  # (为日志导入)
+            from core.localizer import _  # (为日志导入)
             for task in job.dependent_tasks:
                 with self._lock:
                     if job.file_type == 'mo':
@@ -619,7 +619,7 @@ class InstallationManager:
 
     def _install_worker(self, task: InstallationTask):
         """(在线程中) 为单个实例执行文件打包和复制。"""
-        from localizer import _
+        from core.localizer import _
 
         # (新增) 跟踪非关键错误
         non_critical_errors: List[str] = []
@@ -898,7 +898,7 @@ class InstallationManager:
 
     def _uninstall_worker(self, task: InstallationTask):
         """(在线程中) 为单个实例执行文件删除。"""
-        from localizer import _
+        from core.localizer import _
         import os
         import json
 
@@ -970,7 +970,7 @@ class InstallationManager:
             self._mark_task_failed(task, str(e))
 
     def _mark_task_failed(self, task: InstallationTask, reason: str = ""):
-        from localizer import _
+        from core.localizer import _
         with self._lock:
             task.status = "failed"
             # (已修改：根据状态使用不同的失败字符串)
@@ -979,7 +979,7 @@ class InstallationManager:
             _log_task(task, status_text, 100)  # (日志现在也使用最终文本)
 
     def _mark_task_finished(self, task: InstallationTask, success: bool, status_key: str = 'lki.install.status.done'):
-        from localizer import _
+        from core.localizer import _
         with self._lock:
             task.status = "done"  # (如果 success=True，我们总是设置 "done")
             status_text = _(status_key)  # (获取 "完成" 或 "完成（有警告）")
@@ -987,7 +987,7 @@ class InstallationManager:
         self._check_if_all_finished()
 
     def _check_if_all_finished(self):
-        from localizer import _
+        from core.localizer import _
         with self._lock:
             all_done = all(t.status in ["done", "failed"] for t in self.tasks)
             if all_done:
@@ -1002,7 +1002,7 @@ class InstallationManager:
 
 def _log_overall(manager: InstallationManager, message: str):
     """安全地记录到主 UI。"""
-    from localizer import _  # (新增局部导入)
+    from core.localizer import _  # (新增局部导入)
     # (已修改：本地化)
     log(f"[{_('lki.log.overall')}] {message}")
     if manager.window:

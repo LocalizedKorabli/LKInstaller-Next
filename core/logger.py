@@ -23,7 +23,7 @@ from typing import Optional
 
 import atexit  # 导入 atexit
 
-import dirs
+from core import dirs
 
 current_log_file_name: str = ''
 
@@ -100,17 +100,14 @@ def log(*args, sep=' ', end='\n'):
 def setup_logger():
     global current_log_file_name, _log_file_handle, _original_stdout, _original_stderr
 
-    # --- 路径设置 (与您原版文件一致) ---
-    base_path = Path('')
+    # --- 路径设置 ---
+    base_path = Path(getattr(sys, '_MEIPASS', str(Path(__file__).parent.parent)))
     try:
-        base_path = Path(getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__))))
         APP_DATA_PATH = Path(os.getenv('LOCALAPPDATA', '')) / 'LocalizedKorabli' / 'LKInstallerNext'
         if not os.access(os.getenv('LOCALAPPDATA', ''), os.W_OK):
             raise Exception("LocalAppData not writable")
         os.makedirs(APP_DATA_PATH, exist_ok=True)
     except Exception:
-        if 'base_path' not in locals():
-            base_path = Path(getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__))))
         APP_DATA_PATH = base_path / 'lki_data'
         os.makedirs(APP_DATA_PATH, exist_ok=True)
 

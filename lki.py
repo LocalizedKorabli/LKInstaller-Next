@@ -18,13 +18,13 @@ import tkinter as tk
 import sys
 from pathlib import Path
 
-import dirs
-import settings
+from core import dirs
+from core import settings
 from instance import instance_manager
 from installation.installation_manager import InstallationManager, InstallationTask
 from instance.game_instance import GameInstance
-from localizer import global_translator, _, _best_fonts
-from logger import setup_logger, log
+from core.localizer import global_translator, _, _best_fonts
+from core.logger import setup_logger, log
 
 def run_auto_execute(root, arg, run_client):
     """
@@ -115,7 +115,7 @@ if __name__ == '__main__':
         log(f"Warning: Could not set DPI awareness: {e}")
 
     global_translator.load_language(settings.global_settings.language)
-    from app import LocalizationInstallerApp
+    from ui.app import LocalizationInstallerApp
     root = tk.Tk()
 
     auto_execute_arg = None

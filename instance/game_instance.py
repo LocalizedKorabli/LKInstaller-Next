@@ -18,7 +18,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from logger import log
+from core.logger import log
 from typing import Dict, Optional, List, Tuple
 
 import win32api

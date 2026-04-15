@@ -23,10 +23,10 @@ from typing import List, Callable
 import win32com.client
 from tktooltip import ToolTip
 
-import dirs
-import utils
-from localization_sources import get_route_id_to_name
-from localizer import _
+from core import dirs
+from core import utils
+from installation.localization_sources import get_route_id_to_name
+from core.localizer import _
 
 
 class BaseDialog(tk.Toplevel):

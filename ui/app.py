@@ -18,12 +18,12 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import Dict, Optional
 
-import settings
-import utils
+from core import settings
+from core import utils
 from instance import instance_manager
 from instance.game_instance import GameInstance
-from localizer import _, global_translator
-from logger import log
+from core.localizer import _, global_translator
+from core.logger import log
 from ui.tabs.tab_about import AboutTab
 from ui.tabs.tab_advanced import AdvancedTab
 from ui.tabs.tab_game import GameTab

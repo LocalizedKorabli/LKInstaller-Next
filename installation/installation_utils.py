@@ -21,13 +21,13 @@ import uuid
 import xml.etree.ElementTree as Et
 import zipfile
 from pathlib import Path
-from logger import log
+from core.logger import log
 from typing import Dict, List, Union, Any, Optional, Tuple, Set
 
 import polib
 
-from dirs import CACHE_DIR, TEMP_DIR
-from utils import copy_with_log
+from core.dirs import CACHE_DIR, TEMP_DIR
+from core.utils import copy_with_log
 
 BUILTIN_LOCALE_CONFIG_CJK = '''<locale_config>
     <locale_id>ru</locale_id>

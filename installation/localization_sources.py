@@ -15,7 +15,7 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Dict, Optional, List
 
-from localizer import _
+from core.localizer import _
 
 MODS_URL_CHS = 'https://tapio.lanzn.com/b0nxzso2b'
 MODS_URL_EN = None

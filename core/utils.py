@@ -22,8 +22,8 @@ import tkinter as tk
 from pathlib import Path
 from typing import Optional, Tuple, Set, Dict, List
 
-import dirs
-from logger import log as logger_log
+from core import dirs
+from core.logger import log as logger_log
 from ui.windows.window_action import ActionProgressWindow
 
 major2exact: Dict[str, str] = {
@@ -154,8 +154,8 @@ def get_configured_proxies() -> Optional[Dict[str, str]]:
     - 'system':   返回 None，由 requests 自行读取环境变量代理
     - 'manual':   返回 {'http': '...', 'https': '...'}
     """
-    import settings  # Local import
-    from localizer import _  # Local import
+    from core import settings  # Local import
+    from core.localizer import _  # Local import
 
     proxy_mode = settings.global_settings.get('proxy.mode', 'system')
 
@@ -201,8 +201,8 @@ def _get_prioritized_update_routes() -> List[Dict[str, str]]:
     获取按优先级排序的更新线路列表。
     列表中的每一项都是一个字典 {'version': url, 'download': url}。
     """
-    import settings
-    from localization_sources import LKI_UPDATE_ROUTES
+    from core import settings
+    from installation.localization_sources import LKI_UPDATE_ROUTES
 
     priority_keys = settings.global_settings.get('download_routes_priority', [])
 
@@ -232,12 +232,12 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
     """
     import requests
     import semver
-    import constants
     import subprocess
     import threading
-    from localizer import _  # 局部导入
+    from core import constants
+    from core.localizer import _  # 局部导入
     from tkinter import messagebox  # 局部导入
-    import settings
+    from core import settings
 
     # (新增导入)
     from pathlib import Path
@@ -425,7 +425,7 @@ def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
                             daemon=True
                         ).start()
                     else:
-                        # 用户点击了“否”
+                        # 用户点击了"否"
                         ui_log(_('lki.install.status.cancelled'), 100)
                         root_tk.after(1000, window.destroy)
 

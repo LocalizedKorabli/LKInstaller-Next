@@ -21,12 +21,12 @@ import sys  # (新增)
 import subprocess  # (新增)
 import shutil  # (新增)
 
-import settings
-import logger
-from dirs import APP_DATA_PATH, base_path, CACHE_DIR, LOG_DIR
-from localization_sources import global_source_manager, get_route_id_to_name
-from localizer import _, get_available_languages
-from logger import log
+from core import settings
+from core import logger
+from core.dirs import APP_DATA_PATH, base_path, CACHE_DIR, LOG_DIR
+from installation.localization_sources import global_source_manager, get_route_id_to_name
+from core.localizer import _, get_available_languages
+from core.logger import log
 from ui.dialogs import RoutePriorityWindow, BaseDialog
 from ui.tabs.tab_base import BaseTab
 
@@ -476,7 +476,8 @@ class ProxyConfigWindow(BaseDialog):
             settings.global_settings.set('proxy.port', port)
             settings.global_settings.set('proxy.user', user)
             settings.global_settings.set('proxy.password', password)
-            settings.save_proxy_credentials(user, password)
+            from core.settings import save_proxy_credentials
+        save_proxy_credentials(user, password)
 
         self.on_save_callback()
         self.destroy()

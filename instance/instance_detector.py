@@ -19,7 +19,7 @@ import winreg
 import xml.etree.ElementTree as Et
 from pathlib import Path
 import vdf
-from logger import log
+from core.logger import log
 from typing import List, Optional, Tuple, Set
 
 MK_STEAM_APP_ID = '3114940'

@@ -29,10 +29,10 @@ except ImportError:
 # (修改：导入 localizer 以便验证语言)
 import keyring
 
-from utils import select_locale_by_system_lang_code, get_system_language_codes, is_system_gmt8_timezone, is_running_as_msix
-from dirs import SETTINGS_DIR
-from localizer import get_available_languages
-from logger import log
+from core.utils import select_locale_by_system_lang_code, get_system_language_codes, is_system_gmt8_timezone, is_running_as_msix
+from core.dirs import SETTINGS_DIR
+from core.localizer import get_available_languages
+from core.logger import log
 
 PROXY_KEYRING_SERVICE = "LKInstallerNext"
 
@@ -90,7 +90,7 @@ def _read_installer_language_from_registry() -> Optional[str]:
 
 class GlobalSettings:
     def __init__(self):
-        from localization_sources import global_source_manager
+        from installation.localization_sources import global_source_manager
         all_available_routes = global_source_manager.get_all_available_route_ids()
 
         # Define route priority by timezone and language

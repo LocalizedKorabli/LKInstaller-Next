@@ -15,8 +15,8 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Optional
 
-import dirs
-from logger import log
+from core import dirs
+from core.logger import log
 
 
 class IconManager:

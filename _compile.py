@@ -23,7 +23,7 @@ from pathlib import Path
 
 import semver
 
-import constants
+from core import constants
 
 def run_build():
     pyinstaller_exe = os.path.join('.venv', 'Scripts', 'pyinstaller.exe')

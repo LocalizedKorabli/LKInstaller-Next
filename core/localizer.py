@@ -18,9 +18,8 @@ import json
 import os
 from typing import Optional, Dict, Tuple
 
-import dirs
-
-from logger import log
+from core import dirs
+from core.logger import log
 
 locales_dir = dirs.base_path.joinpath('resources/locales')
 

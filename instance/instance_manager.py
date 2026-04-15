@@ -20,11 +20,11 @@ import uuid
 from pathlib import Path
 from typing import Dict, Any, Optional
 
-import utils
-from localization_sources import global_source_manager  # (确保这个导入存在)
-from logger import log
-from utils import determine_default_l10n_lang
-from dirs import SETTINGS_DIR
+from core import utils
+from installation.localization_sources import global_source_manager  # (确保这个导入存在)
+from core.logger import log
+from core.utils import determine_default_l10n_lang
+from core.dirs import SETTINGS_DIR
 
 instances_path: Path = SETTINGS_DIR / 'instances.json'
 

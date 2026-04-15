@@ -19,11 +19,11 @@ from tkinter import ttk, PhotoImage
 from typing import Optional
 from tktooltip import ToolTip
 
-import dirs
-import constants
-import utils
-from localizer import _
-from logger import log
+from core import dirs
+from core import constants
+from core import utils
+from core.localizer import _
+from core.logger import log
 from ui.tabs.tab_base import BaseTab
 from ui.ui_manager import get_icon_manager  # (新增) 用于获取图标
 from ui.windows.window_action import ActionProgressWindow

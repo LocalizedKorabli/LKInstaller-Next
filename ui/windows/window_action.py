@@ -21,9 +21,9 @@ from functools import partial
 from tkinter import ttk, messagebox
 from typing import Callable, Dict, Any, Optional
 
-import utils
-from localizer import _
-from logger import log
+from core import utils
+from core.localizer import _
+from core.logger import log
 from ui.dialogs import BaseDialog
 from instance.game_instance import GameInstance
 from ui.ui_manager import get_icon_manager

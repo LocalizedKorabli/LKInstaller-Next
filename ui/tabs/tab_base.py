@@ -17,7 +17,7 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Optional
 
-import utils
+from core import utils
 
 
 class BaseTab(ttk.Frame):

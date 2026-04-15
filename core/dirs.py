@@ -17,7 +17,9 @@ import os
 import sys
 from pathlib import Path
 
-base_path: Path = Path(getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__))))
+# In development: __file__ is project_root/core/dirs.py, so .parent.parent = project_root
+# In PyInstaller: sys._MEIPASS points to the extraction directory directly
+base_path: Path = Path(getattr(sys, '_MEIPASS', str(Path(__file__).parent.parent)))
 
 try:
     # Use LocalAppData for settings/cache if available
