@@ -152,6 +152,12 @@ class AboutTab(BaseTab):
         """(修改) 在新线程中启动更新检查。"""
         log("Checking for updates...")
 
+        # MSIX 包内运行时不执行自更新，直接跳转商店页面
+        if utils.is_running_as_msix():
+            log("Running as MSIX package, redirecting to MS Store for updates.")
+            webbrowser.open(utils.MSIX_STORE_URL)
+            return
+
         # (新增) 防止打开多个更新窗口
         if self.update_window and self.update_window.winfo_exists():
             self.update_window.focus_force()

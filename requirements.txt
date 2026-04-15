@@ -6,3 +6,4 @@ urllib3==1.25.11
 pyinstaller~=6.17.0
 polib~=1.2.0
 tkinter-tooltip~=3.1.2
+keyring~=25.5.0

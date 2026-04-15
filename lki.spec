@@ -33,7 +33,6 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     version='assets\\version_file.txt',
-    uac_admin=True,
     icon=['resources\\logo\\logo.ico'],
 )
 coll = COLLECT(

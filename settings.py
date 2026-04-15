@@ -27,10 +27,35 @@ except ImportError:
     winreg = None  # 保证在非 Windows 系统或 pywin32 未安装时不会崩溃
 
 # (修改：导入 localizer 以便验证语言)
-from utils import select_locale_by_system_lang_code, get_system_language_codes, is_system_gmt8_timezone
+import keyring
+
+from utils import select_locale_by_system_lang_code, get_system_language_codes, is_system_gmt8_timezone, is_running_as_msix
 from dirs import SETTINGS_DIR
 from localizer import get_available_languages
 from logger import log
+
+PROXY_KEYRING_SERVICE = "LKInstallerNext"
+
+
+def save_proxy_credentials(user: str, password: str) -> None:
+    """将代理凭据存入 Windows Credential Manager（通过 keyring）。"""
+    try:
+        keyring.set_password(PROXY_KEYRING_SERVICE, "proxy_user", user)
+        keyring.set_password(PROXY_KEYRING_SERVICE, "proxy_password", password)
+    except Exception as e:
+        log(f"Warning: Could not save proxy credentials to keyring: {e}")
+
+
+def load_proxy_credentials() -> tuple:
+    """从 Windows Credential Manager 读取代理凭据，返回 (user, password)。"""
+    try:
+        user = keyring.get_password(PROXY_KEYRING_SERVICE, "proxy_user") or ""
+        password = keyring.get_password(PROXY_KEYRING_SERVICE, "proxy_password") or ""
+        return user, password
+    except Exception as e:
+        log(f"Warning: Could not load proxy credentials from keyring: {e}")
+        return "", ""
+
 
 settings_path: Path = SETTINGS_DIR / 'global.json'
 
@@ -109,7 +134,7 @@ class GlobalSettings:
 
         is_first_launch = not saved_data.get('ever_launched', False)
 
-        if is_first_launch:
+        if is_first_launch and not is_running_as_msix():
             log("First launch detected, checking for installer language...")
             installer_lang = _read_installer_language_from_registry()
 
@@ -134,6 +159,17 @@ class GlobalSettings:
         # ... (其余的加载逻辑) ...
         if 'proxy' in saved_data:
             self.data['proxy'].update(saved_data.get('proxy', {}))
+
+        # 从 Credential Manager 加载代理凭据（用户名和密码均不写入 JSON）
+        keyring_user, keyring_password = load_proxy_credentials()
+        # 回退到 JSON 中的旧值（迁移兼容：旧版本可能将 user 写在 JSON 里）
+        mem_user = keyring_user or self.data['proxy'].get('user', '')
+        mem_password = keyring_password or self.data['proxy'].get('password', '')
+        self.data['proxy']['user'] = mem_user
+        self.data['proxy']['password'] = mem_password
+        # 若凭据来自旧 JSON 而非 keyring，自动迁移到 Credential Manager
+        if (not keyring_user and mem_user) or (not keyring_password and mem_password):
+            save_proxy_credentials(mem_user, mem_password)
 
         if 'ever_launched' in saved_data:
             self.data['ever_launched'] = saved_data['ever_launched']
@@ -193,10 +229,15 @@ class GlobalSettings:
         current[parts[-1]] = value
 
     def save(self):
-        """将所有设置保存到 JSON 文件"""
+        """将所有设置保存到 JSON 文件（代理密码不写入 JSON）"""
+        import copy
         os.makedirs(settings_path.parent, exist_ok=True)
+        data_to_save = copy.deepcopy(self.data)
+        proxy = data_to_save.get('proxy', {})
+        proxy.pop('user', None)
+        proxy.pop('password', None)
         with open(settings_path, 'w', encoding='utf-8') as f:
-            json.dump(self.data, f, indent=2, ensure_ascii=False)
+            json.dump(data_to_save, f, indent=2, ensure_ascii=False)
 
 
 global_settings = GlobalSettings()

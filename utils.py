@@ -31,6 +31,31 @@ major2exact: Dict[str, str] = {
     'en': 'en'
 }
 
+MSIX_STORE_URL = 'ms-windows-store://pdp/?ProductId=9P6S2T9MJTXQ'
+
+_msix_cache: Optional[bool] = None
+
+def is_running_as_msix() -> bool:
+    """
+    检测当前进程是否以 MSIX 包身份运行。
+    使用 GetCurrentPackageFullName Win32 API：
+    - 返回 ERROR_INSUFFICIENT_BUFFER (122) → 有包身份 → MSIX
+    - 返回 APPMODEL_ERROR_NO_PACKAGE (15700) → 无包身份 → 普通 EXE
+    结果会缓存，多次调用无额外开销。
+    """
+    global _msix_cache
+    if _msix_cache is not None:
+        return _msix_cache
+    try:
+        import ctypes
+        import ctypes.wintypes
+        length = ctypes.c_uint32(0)
+        rc = ctypes.windll.kernel32.GetCurrentPackageFullName(ctypes.byref(length), None)
+        _msix_cache = (rc != 15700)  # 15700 = APPMODEL_ERROR_NO_PACKAGE
+    except Exception:
+        _msix_cache = False
+    return _msix_cache
+
 
 def get_system_language_codes() -> Tuple[Optional[str], Optional[str]]:
     try:

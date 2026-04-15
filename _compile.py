@@ -35,7 +35,6 @@ def run_build():
     pyinstaller_args = [
         '-w',  # 窗口化 (无控制台)
         '--clean',  # 构建前清理
-        '--uac-admin',  # 请求管理员权限
         '--add-data',
         f'resources{os.pathsep}resources',
         '-i', os.path.join('resources', 'logo', 'logo.ico'),
