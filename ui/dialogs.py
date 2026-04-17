@@ -318,7 +318,7 @@ class AutoUpdateConfigDialog(BaseDialog):
             self.shortcut_path_var.set(os.path.normpath(save_path))
 
     def _on_ok(self):
-        """创建快捷方式"""
+        """创建快捷方式（兼容 MSIX 与 普通模式）"""
         save_path = self.shortcut_path_var.get()
         if not save_path:
             messagebox.showwarning(_('lki.autoupdate.title'), _('lki.autoupdate.error.no_path'), parent=self)
@@ -329,27 +329,43 @@ class AutoUpdateConfigDialog(BaseDialog):
             return
 
         try:
-            # 1. 获取正在运行的可执行文件路径 (lki.exe)
-            target_exe = sys.executable
-            # 2. 获取它所在的目录 (用于 WorkingDirectory)
-            target_dir = str(Path(target_exe).parent)
-            # 3. 获取图标路径
-            icon_path = str(dirs.base_path / 'resources' / 'logo' / 'logo.ico')
+            # --- 尝试从实例目录获取 Korabli.exe 作为图标 ---
+            from instance import instance_manager
+            instance_data = instance_manager.global_instance_manager.get_instance(self.instance_id)
+            korabli_exe = Path(instance_data['path']) / 'Korabli.exe' if instance_data else None
 
-            # 4. 构建参数
+            if utils.is_running_as_msix():
+                # MSIX 模式：使用注册的别名
+                target_exe = "LKNext.exe"
+                # WorkingDirectory 在 MSIX 下建议设为用户目录
+                target_dir = os.path.expanduser("~")
+            else:
+                # 普通模式（开发/绿色版）：使用当前运行的实际路径
+                target_exe = sys.executable
+                target_dir = str(Path(target_exe).parent)
+
+            if korabli_exe and korabli_exe.is_file():
+                icon_location = f"{korabli_exe}, 0"
+            elif utils.is_running_as_msix():
+                icon_location = "LKNext.exe, 0"
+            else:
+                icon_path = str(dirs.base_path / 'resources' / 'logo' / 'logo.ico')
+                icon_location = f"{icon_path}, 0"
+
+            # --- 通用参数构建 ---
             preset_arg = f'--auto-execute-preset "{self.instance_id}:{self.preset_id}"'
             run_arg = "--runclient" if self.start_game_var.get() else ""
             full_args = f"{preset_arg} {run_arg}".strip()
 
-            # 5. 创建快捷方式
+            # --- 执行创建 ---
             shell = win32com.client.Dispatch("WScript.Shell")
             shortcut = shell.CreateShortCut(save_path)
+            
             shortcut.TargetPath = target_exe
             shortcut.Arguments = full_args
             shortcut.WorkingDirectory = target_dir
-            # IconLocation 格式为 "path,index"
-            shortcut.IconLocation = f"{icon_path}, 0"
-            shortcut.Description = f"Launch {self.instance_name} with LKI auto-update"
+            shortcut.IconLocation = icon_location
+            shortcut.Description = _('lki.autoupdate.shortcut_description') % self.instance_name
             shortcut.Save()
 
             messagebox.showinfo(

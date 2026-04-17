@@ -16,14 +16,14 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import List
-import os  # (新增)
-import sys  # (新增)
-import subprocess  # (新增)
-import shutil  # (新增)
+import os
+import sys
+import subprocess
+import shutil
 
 from core import settings
 from core import logger
-from core.dirs import APP_DATA_PATH, base_path, CACHE_DIR, LOG_DIR
+from core.dirs import APP_DATA_PATH, CACHE_DIR, LOG_DIR
 from installation.localization_sources import global_source_manager, get_route_id_to_name
 from core.localizer import _, get_available_languages
 from core.logger import log
@@ -148,28 +148,12 @@ class SettingsTab(BaseTab):
         files_frame.grid(row=2, column=0, sticky='we', pady=5)
         files_frame.columnconfigure(1, weight=1)
 
-        # 工作路径
-        work_path_label = ttk.Label(files_frame, text=_('lki.settings.paths.work_path'))
-        work_path_label.grid(row=0, column=0, sticky='e', padx=(0, 10), pady=10)
-
-        work_path_frame = ttk.Frame(files_frame)
-        work_path_frame.grid(row=0, column=1, sticky='we', pady=10)
-        work_path_frame.columnconfigure(0, weight=1)
-
-        work_path = os.getcwd()
-        self.work_path_display = ttk.Label(work_path_frame, text=self._truncate_path(work_path, 30))
-        self.work_path_display.grid(row=0, column=0, sticky='w', padx=5)
-
-        work_path_btn = ttk.Button(work_path_frame, text=_('lki.btn.open_dir'),
-                                   command=lambda: self._open_directory(base_path))
-        work_path_btn.grid(row=0, column=1, sticky='e')
-
         # 数据路径
         data_path_label = ttk.Label(files_frame, text=_('lki.settings.paths.data_path'))
-        data_path_label.grid(row=1, column=0, sticky='e', padx=(0, 10), pady=10)
+        data_path_label.grid(row=0, column=0, sticky='e', padx=(0, 10), pady=10)
 
         data_path_frame = ttk.Frame(files_frame)
-        data_path_frame.grid(row=1, column=1, sticky='we', pady=10)
+        data_path_frame.grid(row=0, column=1, sticky='we', pady=10)
         data_path_frame.columnconfigure(0, weight=1)
 
         app_data_path = str(APP_DATA_PATH.absolute())
@@ -182,7 +166,7 @@ class SettingsTab(BaseTab):
 
         # 清除按钮
         clear_frame = ttk.Frame(files_frame)
-        clear_frame.grid(row=2, column=0, columnspan=2, sticky='e', pady=(10, 5))
+        clear_frame.grid(row=1, column=0, columnspan=2, sticky='e', pady=(10, 5))
 
         self.clear_logs_btn = ttk.Button(clear_frame, text=_('lki.settings.btn.clear_logs'),
                                          command=self._on_clear_logs)
@@ -203,7 +187,6 @@ class SettingsTab(BaseTab):
         # (初始化摘要)
         self._update_route_priority_display()
 
-        ToolTip(self.work_path_display, work_path)
         ToolTip(self.data_path_display, app_data_path)
 
     def get_available_ui_langs(self) -> List[str]:
