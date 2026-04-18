@@ -39,6 +39,7 @@ class IconManager:
         self.copy = None
         self.refresh = None
         self.play = None
+        self.auto_upgrade = None
         self.up = None
         self.down = None
 
@@ -51,7 +52,7 @@ class IconManager:
         """加载特定主题的图标集"""
         from tkinter import PhotoImage
         icon_names = ['import', 'rename', 'remove', 'detect', 'manage', 'folder', 'download', 'copy', 'up', 'down',
-                      'refresh', 'play', 'official', 'github', 'discord', 'qq']
+                      'refresh', 'play', 'auto_upgrade', 'official', 'github', 'discord', 'qq']
 
         for name in icon_names:
             path = dirs.base_path.joinpath(f'resources/icons/{theme_name}/{name}.png')
@@ -79,6 +80,7 @@ class IconManager:
         self.copy = self.icons[theme_name]['copy']
         self.refresh = self.icons[theme_name]['refresh']
         self.play = self.icons[theme_name]['play']
+        self.auto_upgrade = self.icons[theme_name]['auto_upgrade']
         self.up = self.icons[theme_name]['up']
         self.down = self.icons[theme_name]['down']
         self.official = self.icons[theme_name]['official']

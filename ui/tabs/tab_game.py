@@ -32,7 +32,7 @@ from tktooltip import ToolTip
 from instance import instance_manager
 from core.localizer import _
 from instance.game_instance import GameInstance
-from ui.dialogs import BaseDialog
+from ui.dialogs import BaseDialog, AutoUpdateConfigDialog
 from instance.instance_detector import find_instances_for_auto_import, get_instance_type_from_path
 from installation.installation_manager import InstallationManager, InstallationTask  # <-- (新增)
 from installation.localization_sources import global_source_manager
@@ -141,7 +141,12 @@ class GameTab(BaseTab):
 
         self.btn_play = ttk.Button(bottom_buttons_frame, image=self.icons.play, style="Toolbutton",
                                    command=self._on_play_instance, state='disabled')
-        self.btn_play.pack(side='left', padx=(2, 0))
+        self.btn_play.pack(side='left', padx=2)
+
+        self.btn_auto_update_shortcut = ttk.Button(bottom_buttons_frame, image=self.icons.auto_upgrade,
+                                                   style="Toolbutton",
+                                                   command=self._open_auto_update_shortcut_dialog, state='disabled')
+        self.btn_auto_update_shortcut.pack(side='left', padx=(2, 0))
 
         list_container = ttk.Frame(self)
         list_container.pack(fill='both', expand=True)
@@ -171,6 +176,7 @@ class GameTab(BaseTab):
         ToolTip(self.btn_open_folder, _('lki.tooltip.open_folder'))
         ToolTip(self.btn_refresh, _('lki.tooltip.refresh_list'))
         ToolTip(self.btn_play, _('lki.tooltip.play_instance'))
+        ToolTip(self.btn_auto_update_shortcut, _('lki.tooltip.auto_update_shortcut'))
 
     def _load_and_display_instances(self):
         """从管理器加载实例数据。"""
@@ -262,6 +268,17 @@ class GameTab(BaseTab):
         type_info_label = ttk.Label(text_frame, text=type_info_text, style="Path.TLabel", cursor="hand2")
         type_info_label.pack(anchor='w', fill='x')
 
+        instance_data = self.instance_manager.get_instance(instance.instance_id)
+        active_preset_id = instance_data.get('active_preset_id', 'default') if instance_data else 'default'
+        preset_data = (instance_data.get('presets', {}).get(active_preset_id, {}) if instance_data else {})
+        if preset_data.get('is_default'):
+            preset_display_name = _(preset_data['name_key'])
+        else:
+            preset_display_name = preset_data.get('name', active_preset_id)
+        preset_info_text = f"{_('lki.game.preset_label')} {preset_display_name}"
+        preset_info_label = ttk.Label(text_frame, text=preset_info_text, style="Path.TLabel", cursor="hand2")
+        preset_info_label.pack(anchor='w', fill='x')
+
         versions_to_display = instance.versions[:2]
 
         def on_click(event, frame=item_frame, id=instance.instance_id):
@@ -271,6 +288,7 @@ class GameTab(BaseTab):
         name_label.bind("<Button-1>", on_click)
         path_label.bind("<Button-1>", on_click)
         type_info_label.bind("<Button-1>", on_click)
+        preset_info_label.bind("<Button-1>", on_click)
 
         self._bind_mousewheel(item_frame)
         self._bind_mousewheel(checkbutton)
@@ -278,6 +296,7 @@ class GameTab(BaseTab):
         self._bind_mousewheel(name_label)
         self._bind_mousewheel(path_label)
         self._bind_mousewheel(type_info_label)
+        self._bind_mousewheel(preset_info_label)
 
         if not versions_to_display:
             status_text = _('lki.game.version_not_found')
@@ -307,10 +326,6 @@ class GameTab(BaseTab):
                         l10n_lang_name = self.l10n_id_to_name.get(l10n_lang_code, l10n_lang_code)
                         lang_str = f"{l10n_lang_name} " if l10n_lang_name else ""
 
-                        # (新增) 加载预设以进行智能检查
-                        instance_data = self.instance_manager.get_instance(instance.instance_id)
-                        active_preset_id = instance_data.get('active_preset_id', 'default')
-                        preset_data = instance_data.get('presets', {}).get(active_preset_id, {})
                         preset_use_ee = preset_data.get("use_ee", False)
                         preset_use_fonts = preset_data.get("use_fonts", False)
                         preset_use_mods = preset_data.get("use_mods", False)
@@ -394,6 +409,7 @@ class GameTab(BaseTab):
         self.btn_remove.config(state='normal')
         self.btn_open_folder.config(state='normal')
         self.btn_play.config(state='normal')
+        self.btn_auto_update_shortcut.config(state='normal')
 
         keys = list(self.game_instances.keys())
         try:
@@ -454,6 +470,7 @@ class GameTab(BaseTab):
         self.btn_open_folder.config(image=self.icons.folder)
         self.btn_refresh.config(image=self.icons.refresh)
         self.btn_play.config(image=self.icons.play)
+        self.btn_auto_update_shortcut.config(image=self.icons.auto_upgrade)
 
     def _clear_selection_and_refresh(self, default_checked_ids: Optional[Set[str]] = None):
         """内部助手，用于清除选择、刷新列表并通知 App"""
@@ -466,6 +483,7 @@ class GameTab(BaseTab):
         self.btn_move_down.config(state='disabled')
         self.btn_open_folder.config(state='disabled')
         self.btn_play.config(state='disabled')
+        self.btn_auto_update_shortcut.config(state='disabled')
         self.selected_client_widget = None
 
         # 2. 清除旧的数据缓存 (GameInstance 对象)
@@ -843,6 +861,33 @@ class GameTab(BaseTab):
                 _('lki.game.error.play_failed') % ("lgc_api.exe", "Korabli.exe"),
                 parent=self.app_master
             )
+
+    def _open_auto_update_shortcut_dialog(self):
+        """点击"生成自动更新快捷方式"按钮的回调。"""
+        if not self.selected_instance_id:
+            return
+
+        instance_data = self.instance_manager.get_instance(self.selected_instance_id)
+        if not instance_data:
+            return
+
+        instance_name = instance_data.get('name', self.selected_instance_id)
+        active_preset_id = instance_data.get('active_preset_id', 'default')
+        presets = instance_data.get('presets', {})
+        preset_data = presets.get(active_preset_id, {})
+        if preset_data.get('is_default'):
+            preset_name = _(preset_data['name_key'])
+        else:
+            preset_name = preset_data.get('name', active_preset_id)
+
+        AutoUpdateConfigDialog(
+            self.app_master,
+            self.instance_manager,
+            self.selected_instance_id,
+            instance_name,
+            active_preset_id,
+            preset_name
+        )
 
 
 # --- (从 ui_windows.py 移来的类) ---

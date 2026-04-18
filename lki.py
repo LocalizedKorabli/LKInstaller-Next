@@ -186,4 +186,4 @@ if __name__ == '__main__':
         log("Settings module not fully loaded or failed, skipping save.")
 
 # pyinstaller -w lki.py --add-data "resources\*;resources" -i resources\logo\logo.ico --version-file=assets\version_file.txt --clean --uac-admin
-# Windows 7 Users: Install KB3063858
+# Windows 7 Users: Install KB3063858 & KB2999226

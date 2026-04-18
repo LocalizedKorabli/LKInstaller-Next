@@ -794,4 +794,4 @@ class PresetManagerWindow(BaseDialog):
             return
 
         # 打开新对话框，传递它所需的信息
-        AutoUpdateConfigDialog(self, self.instance_id, instance_name, preset_id, self.id_to_name[preset_id])
+        AutoUpdateConfigDialog(self, self.instance_manager, self.instance_id, instance_name, preset_id, self.id_to_name[preset_id])

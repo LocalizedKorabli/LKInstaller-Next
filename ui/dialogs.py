@@ -245,49 +245,79 @@ class RoutePriorityWindow(BaseDialog):  # <-- 继承 BaseDialog
 
 # --- (新增：自动更新快捷方式配置窗口) ---
 class AutoUpdateConfigDialog(BaseDialog):
-    def __init__(self, parent, instance_id: str, instance_name: str, preset_id: str, preset_name: str):
+    def __init__(self, parent, mgr, instance_id: str, instance_name: str, preset_id: str, preset_name: str):
         super().__init__(parent)
         self.title(_('lki.autoupdate.title'))
         self.resizable(False, False)
 
-        self.instance_id = instance_id
-        self.instance_name = instance_name
-        self.preset_id = preset_id
+        self._mgr = mgr
+
+        # 构建实例映射（name → id），保留顺序
+        all_instances = mgr.get_all()
+        self._instance_name_to_id: dict = {
+            data['name']: iid for iid, data in all_instances.items()
+        }
+        self._instance_names: list = list(self._instance_name_to_id.keys())
+
+        # 当前选中的实例/预设 ID（随下拉框变化）
+        self._selected_instance_id = instance_id
+        self._selected_preset_id = preset_id
+
+        self.start_game_var = tk.BooleanVar(value=True)
 
         # --- 获取默认保存路径 ---
         shell = win32com.client.Dispatch('WScript.Shell')
         desktop_path_str = shell.SpecialFolders('Desktop')
-        desktop = Path(desktop_path_str)
-        default_name = f"{_('lki.autoupdate.shortcut_default_title') % f'{self.instance_name}-{preset_name}'}.lnk"
-        self.shortcut_path_var = tk.StringVar(value=str(desktop / default_name))
-        self.start_game_var = tk.BooleanVar(value=True)
+        self._desktop = Path(desktop_path_str)
+        self.shortcut_path_var = tk.StringVar(
+            value=str(self._desktop / self._make_shortcut_name(instance_name, preset_name))
+        )
 
         # --- UI 设置 ---
         main_frame = ttk.Frame(self, padding=15)
         main_frame.pack(fill='both', expand=True)
         main_frame.columnconfigure(1, weight=1)
 
-        # 1. 路径选择
-        ttk.Label(main_frame, text=_('lki.autoupdate.save_location')).grid(row=0, column=0, sticky='e', padx=(0, 10), pady=5)
+        # 0. 实例选择
+        ttk.Label(main_frame, text=_('lki.autoupdate.instance_label')).grid(
+            row=0, column=0, sticky='e', padx=(0, 10), pady=5)
+        self._instance_var = tk.StringVar(value=instance_name)
+        self._instance_combo = ttk.Combobox(
+            main_frame, textvariable=self._instance_var,
+            values=self._instance_names, state='readonly', width=40)
+        self._instance_combo.grid(row=0, column=1, sticky='we', pady=5)
+        self._instance_combo.bind('<<ComboboxSelected>>', self._on_instance_changed)
 
+        # 1. 预设选择
+        ttk.Label(main_frame, text=_('lki.autoupdate.preset_label')).grid(
+            row=1, column=0, sticky='e', padx=(0, 10), pady=5)
+        self._preset_var = tk.StringVar()
+        self._preset_combo = ttk.Combobox(
+            main_frame, textvariable=self._preset_var, state='readonly', width=40)
+        self._preset_combo.grid(row=1, column=1, sticky='we', pady=5)
+        self._preset_combo.bind('<<ComboboxSelected>>', self._on_preset_changed)
+        self._populate_presets(instance_id, preset_id)
+
+        # 2. 路径选择
+        ttk.Label(main_frame, text=_('lki.autoupdate.save_location')).grid(
+            row=2, column=0, sticky='e', padx=(0, 10), pady=5)
         path_frame = ttk.Frame(main_frame)
-        path_frame.grid(row=0, column=1, sticky='we', pady=5)
+        path_frame.grid(row=2, column=1, sticky='we', pady=5)
         path_frame.columnconfigure(0, weight=1)
 
         path_entry = ttk.Entry(path_frame, textvariable=self.shortcut_path_var, width=50)
         path_entry.grid(row=0, column=0, sticky='we')
-
         browse_btn = ttk.Button(path_frame, text=_('lki.autoupdate.btn.browse'), command=self._on_browse)
         browse_btn.grid(row=0, column=1, sticky='w', padx=(5, 0))
 
-        # 2. 复选框
+        # 3. 复选框
         cb_run_client = ttk.Checkbutton(main_frame, text=_('lki.autoupdate.run_client'),
                                         variable=self.start_game_var)
-        cb_run_client.grid(row=1, column=0, columnspan=2, sticky='w', pady=(10, 0))
+        cb_run_client.grid(row=3, column=0, columnspan=2, sticky='w', pady=(10, 0))
 
-        # 3. 按钮
+        # 4. 按钮
         button_frame = ttk.Frame(main_frame, padding=(0, 10, 0, 0))
-        button_frame.grid(row=2, column=0, columnspan=2, sticky='e', pady=(10, 0))
+        button_frame.grid(row=4, column=0, columnspan=2, sticky='e', pady=(10, 0))
 
         self.ok_btn = ttk.Button(button_frame, text=_('lki.btn.save'), command=self._on_ok)
         self.ok_btn.pack(side='right')
@@ -298,7 +328,60 @@ class AutoUpdateConfigDialog(BaseDialog):
             path_entry.config(state='disabled')
             browse_btn.config(state='disabled')
             cb_run_client.config(state='disabled')
-            ttk.Label(main_frame, text="Error: pywin32 is required to create shortcuts.", foreground='red').grid(row=3, column=0, columnspan=2, sticky='w', pady=5)
+            ttk.Label(main_frame, text="Error: pywin32 is required to create shortcuts.",
+                      foreground='red').grid(row=5, column=0, columnspan=2, sticky='w', pady=5)
+
+    @staticmethod
+    def _make_shortcut_name(instance_name: str, preset_name: str) -> str:
+        from core.localizer import _
+        return f"{_('lki.autoupdate.shortcut_default_title') % f'{instance_name}-{preset_name}'}.lnk"
+
+    def _populate_presets(self, instance_id: str, default_preset_id: str):
+        """根据 instance_id 填充预设下拉框，并选中 default_preset_id。"""
+        instance_data = self._mgr.get_instance(instance_id)
+        presets = instance_data.get('presets', {}) if instance_data else {}
+
+        self._preset_name_to_id: dict = {}
+        for pid, pdata in presets.items():
+            if pdata.get('is_default'):
+                display = _(pdata['name_key'])
+            else:
+                display = pdata.get('name', pid)
+            self._preset_name_to_id[display] = pid
+
+        preset_names = list(self._preset_name_to_id.keys())
+        self._preset_combo.config(values=preset_names)
+
+        # 选中默认预设
+        default_display = next(
+            (n for n, pid in self._preset_name_to_id.items() if pid == default_preset_id),
+            preset_names[0] if preset_names else ''
+        )
+        self._preset_var.set(default_display)
+        self._selected_preset_id = self._preset_name_to_id.get(default_display, default_preset_id)
+
+    def _on_instance_changed(self, _event=None):
+        name = self._instance_var.get()
+        iid = self._instance_name_to_id.get(name)
+        if not iid:
+            return
+        self._selected_instance_id = iid
+        instance_data = self._mgr.get_instance(iid)
+        active_preset_id = instance_data.get('active_preset_id', 'default') if instance_data else 'default'
+        self._populate_presets(iid, active_preset_id)
+        self._update_shortcut_path()
+
+    def _on_preset_changed(self, _event=None):
+        display = self._preset_var.get()
+        self._selected_preset_id = self._preset_name_to_id.get(display, self._selected_preset_id)
+        self._update_shortcut_path()
+
+    def _update_shortcut_path(self):
+        instance_name = self._instance_var.get()
+        preset_name = self._preset_var.get()
+        new_name = self._make_shortcut_name(instance_name, preset_name)
+        current_dir = Path(self.shortcut_path_var.get()).parent
+        self.shortcut_path_var.set(str(current_dir / new_name))
 
     def _on_browse(self):
         """显示保存文件对话框"""
@@ -330,17 +413,14 @@ class AutoUpdateConfigDialog(BaseDialog):
 
         try:
             # --- 尝试从实例目录获取 Korabli.exe 作为图标 ---
-            from instance import instance_manager
-            instance_data = instance_manager.global_instance_manager.get_instance(self.instance_id)
+            instance_data = self._mgr.get_instance(self._selected_instance_id)
+            instance_name = instance_data['name'] if instance_data else self._instance_var.get()
             korabli_exe = Path(instance_data['path']) / 'Korabli.exe' if instance_data else None
 
             if utils.is_running_as_msix():
-                # MSIX 模式：使用注册的别名
                 target_exe = "LKNext.exe"
-                # WorkingDirectory 在 MSIX 下建议设为用户目录
                 target_dir = os.path.expanduser("~")
             else:
-                # 普通模式（开发/绿色版）：使用当前运行的实际路径
                 target_exe = sys.executable
                 target_dir = str(Path(target_exe).parent)
 
@@ -353,19 +433,19 @@ class AutoUpdateConfigDialog(BaseDialog):
                 icon_location = f"{icon_path}, 0"
 
             # --- 通用参数构建 ---
-            preset_arg = f'--auto-execute-preset "{self.instance_id}:{self.preset_id}"'
+            preset_arg = f'--auto-execute-preset "{self._selected_instance_id}:{self._selected_preset_id}"'
             run_arg = "--runclient" if self.start_game_var.get() else ""
             full_args = f"{preset_arg} {run_arg}".strip()
 
             # --- 执行创建 ---
             shell = win32com.client.Dispatch("WScript.Shell")
             shortcut = shell.CreateShortCut(save_path)
-            
+
             shortcut.TargetPath = target_exe
             shortcut.Arguments = full_args
             shortcut.WorkingDirectory = target_dir
             shortcut.IconLocation = icon_location
-            shortcut.Description = _('lki.autoupdate.shortcut_description') % self.instance_name
+            shortcut.Description = _('lki.autoupdate.shortcut_description') % instance_name
             shortcut.Save()
 
             messagebox.showinfo(
