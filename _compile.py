@@ -27,7 +27,7 @@ from core import constants
 
 PFX_PATH = os.environ.get("PFX_PATH", r"")
 PFX_PASSWORD = os.environ.get("PFX_PASSWORD", "")
-PFX_SHA1 = os.environ.get("PFX_SHA1", "")
+PFX_SHA1 = "43ff9aecc348a54ed61178eda015832ec5b050fc"
 TIMESTAMP_URL = "http://timestamp.digicert.com"
 # signtool.exe from Windows SDK; adjust the version folder if needed
 SIGNTOOL_PATH = r"C:\Program Files (x86)\Windows Kits\10\App Certification Kit\signtool.exe"
