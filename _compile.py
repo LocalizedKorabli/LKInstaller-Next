@@ -25,6 +25,31 @@ import semver
 
 from core import constants
 
+PFX_PATH = os.environ.get("PFX_PATH", r"")
+PFX_PASSWORD = os.environ.get("PFX_PASSWORD", "")
+PFX_SHA1 = os.environ.get("PFX_SHA1", "")
+TIMESTAMP_URL = "http://timestamp.digicert.com"
+# signtool.exe from Windows SDK; adjust the version folder if needed
+SIGNTOOL_PATH = r"C:\Program Files (x86)\Windows Kits\10\App Certification Kit\signtool.exe"
+
+def sign_file(file_path):
+    cmd = [
+        SIGNTOOL_PATH, "sign",
+        "/fd", "SHA256",
+        "/f", PFX_PATH,
+        "/p", PFX_PASSWORD,
+        "/sha1", PFX_SHA1,
+        "/tr", TIMESTAMP_URL,
+        "/td", "SHA256",
+        str(file_path),
+    ]
+    print(f"Signing: {file_path}")
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"SIGN FAILED:\n{result.stdout}\n{result.stderr}")
+        sys.exit(1)
+    print(f"Signed OK: {file_path}")
+
 def run_build(major, minor, patch):
     python_exe = os.path.join('.venv', 'Scripts', 'python.exe')
 
@@ -116,12 +141,22 @@ if os.path.isdir('dist'):
     shutil.rmtree('dist')
 run_build(major, minor, patch)
 
-# Run Inno Setup to compile
+# Sign lki.exe before Inno Setup packages it
+sign_file(Path('dist') / 'lki.dist' / 'lki.exe')
+
+# Run Inno Setup to compile; /Smysign passes the sign tool used by SignTool=mysign in pack.iss
 output_path = Path('inno').joinpath('Output')
 
 iscc_path = r'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
 target_iss_file = os.path.join('inno', 'pack.iss')
-result = subprocess.run([iscc_path, target_iss_file], capture_output=True, text=True)
+sign_cmd = (
+    f'{SIGNTOOL_PATH} sign /fd SHA256 /f $q{PFX_PATH}$q /p $q{PFX_PASSWORD}$q'
+    f' /sha1 {PFX_SHA1} /tr {TIMESTAMP_URL} /td SHA256 $f'
+)
+result = subprocess.run(
+    [iscc_path, target_iss_file, f'/Smysign={sign_cmd}'],
+    capture_output=True, text=True,
+)
 
 print("Compile prints:")
 print(result.stdout)
@@ -129,7 +164,8 @@ if result.stderr:
     print("Compile errors:")
     print(result.stderr)
 
-shutil.copy(output_path.joinpath('lki_setup.exe'), output_path.joinpath(f'澪刻·本地化安装器Next-{app_version}.exe'))
+sign_file(output_path / 'lki_setup.exe')
+shutil.copy(output_path.joinpath('lki_setup.exe'), output_path.joinpath(f'LK Next v{app_version}.exe'))
 
 # Generate version_info.json
 

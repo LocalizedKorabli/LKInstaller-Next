@@ -579,6 +579,19 @@ class InstallationManager:
                     elif job.file_type == 'fonts':  # <-- (新增)
                         task.fo_ready = True  # <-- (新增)
                     tasks_to_check.append(task)
+
+                # 若该任务仍有其他下载未完成，将状态更新为仍在进行的那个下载项，
+                # 避免已完成的包名称残留在状态栏中
+                if task.status == "downloading" and not task.is_ready_for_install():
+                    pending_ids = []
+                    if not task.mo_ready and task.mo_job_id:
+                        pending_ids.append(task.mo_job_id)
+                    if not task.ee_ready and task.use_ee and task.ee_job_id:
+                        pending_ids.append(task.ee_job_id)
+                    if not task.fo_ready and task.use_fonts and task.fo_job_id:
+                        pending_ids.append(task.fo_job_id)
+                    if pending_ids:
+                        _log_task(task, _('lki.install.status.downloading_file') % pending_ids[0])
         elif job:  # 下载失败
             from core.localizer import _  # (为日志导入)
             for task in job.dependent_tasks:

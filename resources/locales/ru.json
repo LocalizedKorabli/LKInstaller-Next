@@ -22,6 +22,7 @@
   "lki.advanced.please_select": "Чтобы настроить экземпляр, сначала выберите его:\n1. Перейдите на вкладку 'Игра'\n2. Щелкните экземпляр в списке",
   "lki.advanced.preset_details": "Конфигурация пресета",
   "lki.advanced.preset_label": "Пресет установки:",
+  "lki.app.data.height": "524",
   "lki.app.title": "LK Next",
   "lki.app.title.full": "LK Next: Установщик локализации для «Мир кораблей»",
   "lki.autoupdate.btn.browse": "Обзор...",

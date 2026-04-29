@@ -38,7 +38,10 @@ class LocalizationInstallerApp:
         self.font_family = font_family
         # (修改) 步骤 4: 缩放窗口大小
         base_width = 350
-        base_height = 449
+        try:
+            base_height = int(_('lki.app.data.height'))
+        except ValueError:
+            base_height = 497
         # (修改) 使用新的 scale_dpi 函数
         scaled_width = utils.scale_dpi(self.master, base_width)
         scaled_height = utils.scale_dpi(self.master, base_height)

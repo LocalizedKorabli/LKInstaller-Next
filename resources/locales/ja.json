@@ -22,6 +22,7 @@
   "lki.advanced.please_select": "インスタンスを設定するには、まずインスタンスを選択してください：\n1. 「ゲーム」タブに切り替えます\n2. リスト内のインスタンスをクリックします",
   "lki.advanced.preset_details": "プリセット設定",
   "lki.advanced.preset_label": "インストールプリセット:",
+  "lki.app.data.height": "524",
   "lki.app.title": "澪刻 Next",
   "lki.app.title.full": "澪刻 Next: オンライン自動インストーラー for Mir Korabley",
   "lki.autoupdate.btn.browse": "参照...",

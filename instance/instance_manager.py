@@ -130,9 +130,12 @@ class InstanceManager:
 
     def save(self):
         """将当前所有实例保存回 instances.json"""
-        os.makedirs(instances_path.parent, exist_ok=True)
-        with open(instances_path, 'w', encoding='utf-8') as f:
-            json.dump(self.instances, f, indent=2, ensure_ascii=False)
+        try:
+            os.makedirs(instances_path.parent, exist_ok=True)
+            with open(instances_path, 'w', encoding='utf-8') as f:
+                json.dump(self.instances, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            log(f"Warning: Could not save instances: {e}")
 
     def get_all(self) -> Dict[str, Any]:
         """获取所有实例的字典"""

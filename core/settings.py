@@ -27,7 +27,13 @@ except ImportError:
     winreg = None  # 保证在非 Windows 系统或 pywin32 未安装时不会崩溃
 
 # (修改：导入 localizer 以便验证语言)
-import keyring
+try:
+    import keyring
+except Exception as _keyring_err:
+    keyring = None
+    # 不用 log()，此时 logger 可能尚未初始化；写 stderr 供日志捕获
+    import sys as _sys
+    _sys.stderr.write(f"Warning: keyring import failed, proxy credentials disabled: {_keyring_err}\n")
 
 from core.utils import select_locale_by_system_lang_code, get_system_language_codes, is_system_gmt8_timezone, is_running_as_msix
 from core.dirs import SETTINGS_DIR
@@ -39,6 +45,8 @@ PROXY_KEYRING_SERVICE = "LKInstallerNext"
 
 def save_proxy_credentials(user: str, password: str) -> None:
     """将代理凭据存入 Windows Credential Manager（通过 keyring）。"""
+    if not keyring:
+        return
     try:
         keyring.set_password(PROXY_KEYRING_SERVICE, "proxy_user", user)
         keyring.set_password(PROXY_KEYRING_SERVICE, "proxy_password", password)
@@ -48,6 +56,8 @@ def save_proxy_credentials(user: str, password: str) -> None:
 
 def load_proxy_credentials() -> tuple:
     """从 Windows Credential Manager 读取代理凭据，返回 (user, password)。"""
+    if not keyring:
+        return "", ""
     try:
         user = keyring.get_password(PROXY_KEYRING_SERVICE, "proxy_user") or ""
         password = keyring.get_password(PROXY_KEYRING_SERVICE, "proxy_password") or ""
@@ -231,13 +241,16 @@ class GlobalSettings:
     def save(self):
         """将所有设置保存到 JSON 文件（代理密码不写入 JSON）"""
         import copy
-        os.makedirs(settings_path.parent, exist_ok=True)
-        data_to_save = copy.deepcopy(self.data)
-        proxy = data_to_save.get('proxy', {})
-        proxy.pop('user', None)
-        proxy.pop('password', None)
-        with open(settings_path, 'w', encoding='utf-8') as f:
-            json.dump(data_to_save, f, indent=2, ensure_ascii=False)
+        try:
+            os.makedirs(settings_path.parent, exist_ok=True)
+            data_to_save = copy.deepcopy(self.data)
+            proxy = data_to_save.get('proxy', {})
+            proxy.pop('user', None)
+            proxy.pop('password', None)
+            with open(settings_path, 'w', encoding='utf-8') as f:
+                json.dump(data_to_save, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            log(f"Warning: Could not save global settings: {e}")
 
 
 global_settings = GlobalSettings()

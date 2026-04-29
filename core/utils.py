@@ -24,7 +24,6 @@ from typing import Optional, Tuple, Set, Dict, List
 
 from core import dirs
 from core.logger import log as logger_log
-from ui.windows.window_action import ActionProgressWindow
 
 major2exact: Dict[str, str] = {
     'zh': 'zh_CN',
@@ -224,7 +223,7 @@ def _get_prioritized_update_routes() -> List[Dict[str, str]]:
 
 
 # --- (NEW) Update Logic ---
-def update_worker(window: ActionProgressWindow, root_tk: tk.Tk):
+def update_worker(window, root_tk: tk.Tk):
     """
     在工作线程中执行更新检查和下载。
     支持多线路故障转移 (Fallback)。

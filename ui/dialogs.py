@@ -20,7 +20,6 @@ from pathlib import Path  # (新增)
 from tkinter import ttk, messagebox, filedialog  # (已修改)
 from typing import List, Callable
 
-import win32com.client
 from tktooltip import ToolTip
 
 from core import dirs
@@ -266,9 +265,15 @@ class AutoUpdateConfigDialog(BaseDialog):
         self.start_game_var = tk.BooleanVar(value=True)
 
         # --- 获取默认保存路径 ---
-        shell = win32com.client.Dispatch('WScript.Shell')
-        desktop_path_str = shell.SpecialFolders('Desktop')
-        self._desktop = Path(desktop_path_str)
+        try:
+            import win32com.client as _win32com
+        except ImportError:
+            _win32com = None
+        if _win32com:
+            shell = _win32com.Dispatch('WScript.Shell')
+            self._desktop = Path(shell.SpecialFolders('Desktop'))
+        else:
+            self._desktop = Path.home() / 'Desktop'
         self.shortcut_path_var = tk.StringVar(
             value=str(self._desktop / self._make_shortcut_name(instance_name, preset_name))
         )
@@ -323,7 +328,7 @@ class AutoUpdateConfigDialog(BaseDialog):
         self.ok_btn.pack(side='right')
         ttk.Button(button_frame, text=_('lki.btn.cancel'), command=self.destroy).pack(side='right', padx=5)
 
-        if not win32com:
+        if not _win32com:
             self.ok_btn.config(state='disabled')
             path_entry.config(state='disabled')
             browse_btn.config(state='disabled')
@@ -407,7 +412,12 @@ class AutoUpdateConfigDialog(BaseDialog):
             messagebox.showwarning(_('lki.autoupdate.title'), _('lki.autoupdate.error.no_path'), parent=self)
             return
 
-        if not win32com:
+        try:
+            import win32com.client as _win32com
+        except ImportError:
+            _win32com = None
+
+        if not _win32com:
             messagebox.showerror(_('lki.autoupdate.title'), "pywin32 library is missing.", parent=self)
             return
 
@@ -438,7 +448,7 @@ class AutoUpdateConfigDialog(BaseDialog):
             full_args = f"{preset_arg} {run_arg}".strip()
 
             # --- 执行创建 ---
-            shell = win32com.client.Dispatch("WScript.Shell")
+            shell = _win32com.Dispatch("WScript.Shell")
             shortcut = shell.CreateShortCut(save_path)
 
             shortcut.TargetPath = target_exe

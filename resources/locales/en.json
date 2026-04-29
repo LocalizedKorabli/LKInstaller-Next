@@ -22,6 +22,7 @@
   "lki.advanced.please_select": "To configure, please select an instance first:\n1. Switch to the 'Game' tab\n2. Click the instance in the list",
   "lki.advanced.preset_details": "Preset Configuration",
   "lki.advanced.preset_label": "Install Preset:",
+  "lki.app.data.height": "510",
   "lki.app.title": "LK Next",
   "lki.app.title.full": "LK Next: L10n Installer for Mir Korabley",
   "lki.autoupdate.btn.browse": "Browse...",

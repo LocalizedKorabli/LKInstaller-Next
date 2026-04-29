@@ -85,7 +85,7 @@ def get_available_languages():
             if lang_name:
                 langs[locale_code] = lang_name
             else:
-                log(f"Warning: '{f_path}' 中缺少 'lki.lang.name'。")
+                log(f"Warning: 'lki.lang.name' is missing in '{f_path}'")
         except Exception as e:
             log(f"Error loading locale '{f_path}': {e}")
     return langs
