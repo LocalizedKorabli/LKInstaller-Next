@@ -15,6 +15,12 @@
   
 </div>
 
+<details><summary style="font-size: 14px;">Languages🌐</summary>
+
+**English** | [简体中文](/README.md) | [繁體中文](/docs/cht/README.md) | [Русский](/docs/ru/README.md) | [日本語](/docs/ja/README.md)
+
+</details>
+
 *The documentation was AI-translated. Errors or ambiguities may occur.*
 
 ## Introduction
@@ -55,9 +61,7 @@
 ## Download and Install LK Next
 
 ### Download Routes
-- [Lanzou Cloud](https://tapio.lanzouu.com/b0nzmcv9i)
-- [Official Route - Mainland China](https://lk-1251573974.cos.accelerate.myqcloud.com/lki/lk-next/lki_setup.exe)
-- [Official Route - Overseas](https://dl.localizedkorabli.org/lki/lk-next/lki_setup.exe)
+- [Official Download Page](https://localizedkorabli.org/en/lk-next.html)
 
 <details><summary style="font-size: 12px;"><b>How to handle browser download blocks</b></summary>
 
@@ -97,7 +101,7 @@ If it is still not imported, click the **Import Instance** button on the same ro
 
 You can view all currently imported game instances on the **Game** tab.
 
-You can also use the other buttons on the **Game** tab to import, quickly edit, remove, sort, open the directory of, or run the game for the instances.
+You can also use the other buttons on the **Game** tab to import, quickly edit, remove, sort, open the directory of, run the game for the instances, or generate an **Auto-Update Shortcut**.
 
 #### Selecting an Instance (For viewing details)
 
@@ -170,7 +174,7 @@ L10n Mods will be installed by default. You can choose whether to install them i
 In the **Settings** tab, you can:
 - Adjust **Appearance**, **Download**, and **Files** settings;
 - Clear download cache and output logs;
-- View the application's working directory and data directory.
+- View the application's data directory.
 
 ### App Info / Update App
 
@@ -191,7 +195,7 @@ You can open the file to try and analyze the cause of the error yourself, or sub
 
 ### Where did the auto-update function go?
 
-Please see [Managing Presets](#managing-presets). You can generate an **Auto-Update Shortcut** for the current preset in the **Manage Presets** interface.
+Please see [Managing Instances](#managing-instances) and [Managing Presets](#managing-presets). You can generate an **Auto-Update Shortcut** for an instance on the **Game** tab or in the **Manage Presets** interface.
 
 ### What if I have questions about the localization package itself?
 
@@ -207,8 +211,8 @@ You can also join the QQ group or Discord server to participate in the discussio
 
 - [Tkinter](https://docs.python.org/3/library/tkinter.html) — The GUI framework used by this application
 
-- [Google Gemini](https://gemini.google.com/) — Shortened the development time of this application by approximately 70%
+- [Google Gemini](https://gemini.google.com/), [Claude Code](https://claude.ai/code), and [DeepSeek](https://deepseek.com/) — Shortened the development time of this application by approximately 80%
 
 - [Azure theme for ttk](https://github.com/rdbende/Azure-ttk-theme) — The ttk theme used by this application interface
 
-- [Inno Setup](https://jrsoftware.org/isinfo.php) and [PyInstaller](https://pyinstaller.org/) — Provided convenient packaging solutions for this application
+- [Inno Setup](https://jrsoftware.org/isinfo.php) and [Nuitka](https://nuitka.net/) — Provided convenient packaging solutions for this application
