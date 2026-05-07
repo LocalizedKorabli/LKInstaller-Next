@@ -10,7 +10,7 @@
   
   [![ソースコード](https://img.shields.io/badge/プロジェクト-ソースコード-orange?style=for-the-badge)](https://github.com/LocalizedKorabli/LKInstaller-Next/tree/dev)
   [![Discord](https://img.shields.io/discord/1275430075369656381?style=for-the-badge)](https://discord.gg/3d9k2mkWy4)
-  [![QQグループ](https://img.shields.io/badge/QQ-公開グループ-red?style=for-the-badge)](https://qm.qq.com/q/oLZZH47TRA)
+  [![QQ グループ](https://img.shields.io/badge/QQ-公開グループ-red?style=for-the-badge)](https://qm.qq.com/q/oLZZH47TRA)
   
 </div>
 
@@ -64,11 +64,11 @@
 
 <details><summary style="font-size: 12px;"><b>ブラウザがダウンロードをブロックする場合の対処法</b></summary>
 
-- Microsoft Edge （ lki_setup.exe は一般的にダウンロードされません。開く前にファイルを信頼できることを確認してください）：
-  - ダウンロード項目にカーソルを合わせ、右側の「3 点」（...）アイコンをクリックし、**保持する**をクリックします；
+- Microsoft Edge（lki_setup.exe は一般的にダウンロードされません。開く前にファイルを信頼できることを確認してください）：
+  - ダウンロード項目にカーソルを合わせ、右側の「三点」（...）アイコンをクリックし、**保持する**をクリックします；
   - 「lki_setup.exe を開く前に信頼できることを確認してください」ポップアップで、青い**削除**ボタンの横にあるドロップダウンメニューを開き、**とにかく保持**をクリックします。
 
-- Chrome （不審なダウンロードがブロックされました）：
+- Chrome（不審なダウンロードがブロックされました）：
   - ダウンロード項目をクリックし、**不審なファイルをダウンロード**オプションをクリックします。
 
 </details>
@@ -118,7 +118,7 @@
 
 インスタンスには複数の「プリセット」を持たせることができ、プリセットは**そのインスタンスにローカライゼーションパッケージをインストールする際にアプリケーションが実行する具体的な操作**を決定します：
 
-- どの**言語/クライアントタイプ**（ Mir Korabley ライブ/PT ）のローカライゼーションパッケージをダウンロードしてインストールするか。
+- どの**言語/クライアントタイプ**（Mir Korabley ライブ / PT）のローカライゼーションパッケージをダウンロードしてインストールするか。
 - [**EE パック**](#ee-パック)をダウンロードしてインストールするかどうか。
 - [**フォント最適化**](#フォント最適化)をダウンロードしてインストールするかどうか。
 - [**L10n MOD**](#l10n-mod) を読み込むかどうか。
@@ -190,7 +190,7 @@ L10n MOD はデフォルトでインストールされます。**プリセット
 
 **設定**タブに移動し、**データパス**行の**開く**ボタンをクリックします。開いたフォルダで、logs フォルダに入り、最新の .log ファイルを保存します。
 
-このファイルを開いてエラーの原因を分析して自分で修正するか、ファイルを[GitHub Issues](https://github.com/LocalizedKorabli/LKInstaller-Next/issues) | [QQグループ](https://qm.qq.com/q/SUoZAcV442) | [Discordサーバー](https://discord.gg/3d9k2mkWy4)に提出してヘルプを求めることができます。
+このファイルを開いてエラーの原因を分析して自分で修正するか、ファイルを [GitHub Issues](https://github.com/LocalizedKorabli/LKInstaller-Next/issues) | [QQ グループ](https://qm.qq.com/q/SUoZAcV442) | [Discord サーバー](https://discord.gg/3d9k2mkWy4)に提出してヘルプを求めることができます。
 
 ### 自動更新機能はどこに行きましたか？
 
