@@ -224,11 +224,20 @@ class InstanceManager:
         return instance_id
 
     def update_instance_data(self, instance_id: str, data: Dict[str, Any]):
-        """更新实例的顶层数据（例如 'active_preset_id'）"""
         if instance_id not in self.instances:
             return
         self.instances[instance_id].update(data)
         self.save()
+
+    def acknowledge_non_ascii_path(self, instance_id: str):
+        if instance_id in self.instances:
+            self.instances[instance_id]['non_ascii_acknowledged'] = True
+            self.save()
+
+    def is_non_ascii_acknowledged(self, instance_id: str) -> bool:
+        if instance_id not in self.instances:
+            return False
+        return self.instances[instance_id].get('non_ascii_acknowledged', False)
 
     def add_preset(self, instance_id: str, name: str, lang_code: str, use_ee: bool,
                    use_mods: bool, use_fonts: bool) -> str:

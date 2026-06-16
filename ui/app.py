@@ -166,49 +166,40 @@ class LocalizationInstallerApp:
         self.tab_advanced.update_content(instance)
 
     def _on_tab_changed(self, event):
-        """
-        当用户点击 Notebook 选项卡时。
-        确保 AdvancedTab 的内容在变为可见时是最新的。
-        """
         selected_tab_index = self.notebook.index(self.notebook.select())
         if selected_tab_index == 1:
             current_instance = self.tab_game.get_selected_game_instance()
             self.tab_advanced.update_content(current_instance)
 
     def reload_app(self):
-        """
-        保存所有内容，清除当前 UI 元素，并重建整个应用程序界面，
-        以应用语言和主题更改（不关闭进程）。
-        """
-        log(_('lki.reload.status.reloading_ui'))  # <-- 本地化
+        log(_('lki.reload.status.reloading_ui'))
 
         try:
             settings.global_settings.save()
             instance_manager.global_instance_manager.save()
 
-            # 1. 重新加载语言环境（必须在重建 UI 之前完成）
             global_translator.load_language(settings.global_settings.language)
 
-            # 2. 销毁所有主要 UI 元素
             for widget in self.master.winfo_children():
-                # 销毁除根窗口外的所有子部件
                 widget.destroy()
 
-            # 4. 获取当前主题并重新设置
             current_theme = settings.global_settings.get('theme', 'light')
             self.master.call('set_theme', current_theme, self.font_family)
 
-            # 5. 重建整个应用 UI
-            LocalizationInstallerApp(self.master, initial_theme=current_theme,
-                                     font_family=self.font_family,
-                                     scaling_factor=self.master.scaling_factor)
+            root = self.master
+            font_family = self.font_family
+            scaling_factor = self.master.scaling_factor
+
+            def _rebuild():
+                LocalizationInstallerApp(root, initial_theme=current_theme,
+                                         font_family=font_family,
+                                         scaling_factor=scaling_factor)
+
+            root.after(50, _rebuild)
 
         except Exception as e:
-            # 严重错误: 重新加载失败，提醒用户手动重启
             import traceback
             traceback.print_exc()
-            # 关键修改: 使用本地化字符串
             error_message = _('lki.reload.error.failed_to_reload') % e
             messagebox.showerror(_('lki.reload.title'), error_message)
-            # 确保程序退出，因为状态已损坏
             sys.exit(1)

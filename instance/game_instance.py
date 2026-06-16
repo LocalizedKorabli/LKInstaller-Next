@@ -13,31 +13,15 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import hashlib
 import json
 import os
 import subprocess
 from pathlib import Path
 from core.logger import log
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional, List, Tuple, Any
 
 import win32api
-
-
-def _calculate_sha256(filepath: Path) -> Optional[str]:
-    """计算文件的 SHA256 哈希值"""
-    if not filepath.is_file():
-        return None
-
-    sha256_hash = hashlib.sha256()
-    try:
-        with open(filepath, "rb") as f:
-            for byte_block in iter(lambda: f.read(4096), b""):
-                sha256_hash.update(byte_block)
-            return sha256_hash.hexdigest()
-    except Exception as e:
-        log(f"Error calculating SHA256 for {filepath}: {e}")
-        return None
+from installation.installation_utils import get_sha256
 
 
 class LocalizationInfo:
@@ -58,18 +42,29 @@ class GameVersion:
     代表一个单独的游戏版本，对应于 "bin/" 目录下的一个数字文件夹。
     """
 
+    _UNSET = object()
+
     def __init__(self, bin_folder_path: Path, game_root_path: Path):
         self.bin_folder_path: Path = bin_folder_path
         self.game_root_path: Path = game_root_path
         self.bin_folder_name: str = bin_folder_path.name
-        self.exe_version: Optional[str] = None
+        self._exe_version: Any = self._UNSET
         self.l10n_info: Optional[LocalizationInfo] = None
 
-        self.load_details()
+        self.l10n_info = self._load_l10n_info()
+
+    @property
+    def exe_version(self) -> Optional[str]:
+        if self._exe_version is self._UNSET:
+            self._exe_version = self._load_exe_version()
+        return self._exe_version
+
+    @exe_version.setter
+    def exe_version(self, value):
+        self._exe_version = value
 
     def load_details(self):
         """加载此版本的所有动态属性"""
-        self.exe_version = self._load_exe_version()
         self.l10n_info = self._load_l10n_info()
 
     # --- (已修改：读取 ProductVersion 字符串) ---
@@ -166,7 +161,7 @@ class GameVersion:
                 # (self.bin_folder_path 是 ".../bin/8828504")
                 absolute_path = self.bin_folder_path / relative_path
 
-                actual_hash = _calculate_sha256(absolute_path)
+                actual_hash = get_sha256(absolute_path)
 
                 if actual_hash != expected_hash:
                     log(f"Verification FAILED for {relative_path}: Hash mismatch.")
@@ -189,9 +184,9 @@ class GameInstance:
         self.path: Path = path
         self.name: str = name
         self.type: str = type
+        self.path_has_non_ascii: bool = not all(ord(c) < 128 for c in str(path))
 
         self.versions: List[GameVersion] = []
-
         self._discover_game_versions()
 
     def _discover_game_versions(self):
@@ -212,7 +207,7 @@ class GameInstance:
                     self.versions.append(GameVersion(folder_path, self.path))
 
         self.versions.sort(
-            key=lambda v: [int(x) for x in (v.exe_version or "0.0.0.0").split('.')],
+            key=lambda v: int(v.bin_folder_name),
             reverse=True
         )
 

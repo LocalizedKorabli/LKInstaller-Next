@@ -146,23 +146,26 @@ def scale_dpi(widget: tk.Misc, value: int) -> int:
         return value
 
 
-# --- (NEW) Proxy Util (Moved from installation_manager.py) ---
-def get_configured_proxies() -> Optional[Dict[str, str]]:
+def get_configured_proxies():
     """
-    从全局设置中读取代理配置，并返回 requests 库所需的字典。
-    - 'system':   返回 None，由 requests 自行读取环境变量代理
-    - 'manual':   返回 {'http': '...', 'https': '...'}
+    从全局设置中读取代理配置，返回 (proxies_dict, auth) 元组。
+    - proxies_dict: requests 的 proxies 参数 (不含凭据)
+    - auth: requests.auth.HTTPProxyAuth 或 None
+    - 'system':   返回 (None, None)，由 requests 自行读取环境变量代理
+    - 'disabled': 返回 ({'http': '', 'https': ''}, None)
     """
-    from core import settings  # Local import
-    from core.localizer import _  # Local import
+    import requests
+    from requests.auth import HTTPProxyAuth
+    from core import settings
+    from core.localizer import _
 
     proxy_mode = settings.global_settings.get('proxy.mode', 'system')
 
     if proxy_mode == 'system':
-        return None
+        return None, None
 
     if proxy_mode == 'disabled':
-        return {'http': '', 'https': ''}
+        return {'http': '', 'https': ''}, None
 
     if proxy_mode == 'manual':
         host = settings.global_settings.get('proxy.host', '')
@@ -172,22 +175,18 @@ def get_configured_proxies() -> Optional[Dict[str, str]]:
 
         if not host or not port:
             logger_log(_('lki.proxy.warn.manual_no_host'))
-            return {'http': '', 'https': ''}
+            return {'http': '', 'https': ''}, None
 
-        if user and password:
-            proxy_url = f"http://{user}:{password}@{host}:{port}"
-        elif user:
-            proxy_url = f"http://{user}@{host}:{port}"
-        else:
-            proxy_url = f"http://{host}:{port}"
+        proxy_url = f"http://{host}:{port}"
 
-        # (假设代理同时适用于 http 和 https)
+        auth = HTTPProxyAuth(user, password) if (user and password) else None
+
         return {
             'http': proxy_url,
             'https': proxy_url
-        }
+        }, auth
 
-    return None  # (默认：由 requests 自行处理)
+    return None, None
 
 
 def copy_with_log(src: Path, dst: Path, *, follow_symlinks=True):
@@ -247,7 +246,7 @@ def update_worker(window, root_tk: tk.Tk):
     # 辅助函数：安全地更新UI
     ui_log = lambda msg, p: root_tk.after(0, window.update_task_progress, _('lki.update.title'), p, msg)
 
-    def _download_and_run(remote_ver_str: str, proxies: Optional[dict], routes_list: List[Dict[str, str]]):
+    def _download_and_run(remote_ver_str: str, proxies: Optional[dict], proxy_auth, routes_list: List[Dict[str, str]]):
         """
         下载部分，在用户确认后在*新*线程中运行。
         会在 routes_list 中依次尝试下载，直到成功。
@@ -273,7 +272,7 @@ def update_worker(window, root_tk: tk.Tk):
                     logger_log(f"Attempting update download from: {download_url}")
 
                     # 下载
-                    dl_resp = requests.get(download_url, stream=True, proxies=proxies, timeout=30)
+                    dl_resp = requests.get(download_url, stream=True, proxies=proxies, auth=proxy_auth, timeout=30)
                     dl_resp.raise_for_status()
 
                     total_size = int(dl_resp.headers.get('content-length', 0))
@@ -361,7 +360,7 @@ def update_worker(window, root_tk: tk.Tk):
             if window.is_cancelled(): return
 
             ui_log(_('lki.update.status.checking'), 10)
-            proxies = get_configured_proxies()
+            proxies, proxy_auth = get_configured_proxies()
 
             # 获取排序后的线路列表
             update_routes = _get_prioritized_update_routes()
@@ -377,7 +376,7 @@ def update_worker(window, root_tk: tk.Tk):
 
                 try:
                     logger_log(f"Checking version from: {version_url}")
-                    resp = requests.get(version_url, timeout=10, proxies=proxies)
+                    resp = requests.get(version_url, timeout=10, proxies=proxies, auth=proxy_auth)
                     resp.raise_for_status()
 
                     data = resp.json()
@@ -420,7 +419,7 @@ def update_worker(window, root_tk: tk.Tk):
                         # 在新线程中开始下载，并传入所有的线路列表以供重试
                         threading.Thread(
                             target=_download_and_run,
-                            args=(remote_version, proxies, update_routes),
+                            args=(remote_version, proxies, proxy_auth, update_routes),
                             daemon=True
                         ).start()
                     else:

@@ -51,6 +51,7 @@ class DownloadJob:
         self.lang_code = lang_code
         self.dependent_tasks: Set['InstallationTask'] = set()
         self.result_path: Optional[Path] = None
+        self._queued: bool = False
 
         # MO 特有
         self.version_info: Optional[Dict[str, str]] = None
@@ -130,21 +131,7 @@ class InstallationManager:
                                            starting_text=_('lki.install.status.starting'),
                                            pending_text=_('lki.install.status.pending'))
 
-        # (为每个任务分配 UI 回调)
-        for task in self.tasks:
-            def safe_progress_callback(t=task):
-                try:
-                    if self.window and self.window.winfo_exists():
-                        return self.window.widgets[t.task_name]['progress_bar']['value']
-                except (tk.TclError, KeyError):
-                    pass  # 窗口已销毁，返回默认值
-                return 0.0  # 默认值
-
-            task.log_callback = lambda msg, p=..., t=task: self.root_tk.after(
-                0, self.window.update_task_progress, t.task_name,
-                p if p is not ... else safe_progress_callback(t), msg  # (修改) 调用 safe_progress_callback
-            )
-            task.progress_callback = safe_progress_callback
+        self._assign_task_ui_callbacks()
 
         threading.Thread(target=self._control_thread, daemon=True).start()
 
@@ -180,22 +167,26 @@ class InstallationManager:
                                            starting_text=_('lki.uninstall.status.starting'),
                                            pending_text=_('lki.uninstall.status.pending'))
 
+        self._assign_task_ui_callbacks()
+
+        threading.Thread(target=self._uninstall_control_thread, daemon=True).start()
+
+    def _assign_task_ui_callbacks(self):
+        """为所有任务分配 UI 进度回调和日志回调。"""
         for task in self.tasks:
             def safe_progress_callback(t=task):
                 try:
                     if self.window and self.window.winfo_exists():
                         return self.window.widgets[t.task_name]['progress_bar']['value']
                 except (tk.TclError, KeyError):
-                    pass  # 窗口已销毁，返回默认值
-                return 0.0  # 默认值
+                    pass
+                return 0.0
 
             task.log_callback = lambda msg, p=..., t=task: self.root_tk.after(
                 0, self.window.update_task_progress, t.task_name,
-                p if p is not ... else safe_progress_callback(t), msg  # (修改) 调用 safe_progress_callback
+                p if p is not ... else safe_progress_callback(t), msg
             )
-            task.progress_callback = safe_progress_callback  # (修改) 分配 safe_progress_callback
-
-        threading.Thread(target=self._uninstall_control_thread, daemon=True).start()
+            task.progress_callback = safe_progress_callback
 
     # (新增：卸载控制线程)
     def _uninstall_control_thread(self):
@@ -208,40 +199,47 @@ class InstallationManager:
             threading.Thread(target=self._uninstall_worker, args=(task,), daemon=True).start()
 
     def _control_thread(self):
-        from core.localizer import _  # <-- (修复 UnboundLocalError)
+        from core.localizer import _
 
         _log_overall(self, _('lki.install.status.preparing_files'))
         utils.clear_temp_dir()
         self.download_jobs = {}
 
         _log_overall(self, _('lki.install.status.getting_versions'))
-        version_threads = []
+
+        self._pending_version_count = len(self.tasks)
+        self._version_all_done = threading.Event()
+
+        def _resolve_and_notify(task):
+            try:
+                self._resolve_task_version(task)
+            finally:
+                with self._lock:
+                    self._pending_version_count -= 1
+                    if self._pending_version_count == 0:
+                        self._version_all_done.set()
+
         for task in self.tasks:
-            if self._cancel_event.is_set(): return
-
-            t = threading.Thread(target=self._resolve_task_version, args=(task,), daemon=True)
+            if self._cancel_event.is_set():
+                return
+            t = threading.Thread(target=_resolve_and_notify, args=(task,), daemon=True)
             t.start()
-            version_threads.append(t)
 
-        for t in version_threads: t.join()
+        num_workers = min(6, max(len(self.tasks) * 3, 1))
+        _log_overall(self, _('lki.install.status.downloading_files') % (len(self.tasks) * 3))
 
-        if self._cancel_event.is_set(): return
+        for _i in range(num_workers):
+            threading.Thread(target=self._download_worker, daemon=True).start()
 
-        for job in self.download_jobs.values():
-            self.download_queue.put(job)
+        self._version_all_done.wait()
+
+        if self._cancel_event.is_set():
+            return
 
         if self.download_queue.empty():
-            # (修改 3: 使用新键并设置标志)
             _log_overall(self, _('lki.install.status.install_phase'))
             self._install_phase_started = True
             self.root_tk.after(0, self._on_download_complete, None, True)
-            return
-
-        num_workers = min(6, self.download_queue.qsize())
-        _log_overall(self, _('lki.install.status.downloading_files') % self.download_queue.qsize())
-
-        for _ in range(num_workers):
-            threading.Thread(target=self._download_worker, daemon=True).start()
 
     def _resolve_task_version(self, task: InstallationTask):
         from core.localizer import _
@@ -250,8 +248,7 @@ class InstallationManager:
 
         source = global_source_manager.get_source(task.lang_code)
         if not source:
-            _log_task(task, _('lki.install.error.no_source') % task.lang_code)
-            self._mark_task_failed(task)
+            self._mark_task_failed(task, _('lki.install.error.no_source') % task.lang_code)
             return
 
         available_route_ids = source.get_available_route_ids()
@@ -265,10 +262,10 @@ class InstallationManager:
                 break
 
         if not has_valid_config:
-            _log_task(task, _('lki.install.error.no_version_url') % task.lang_code)
-            self._mark_task_failed(task)
+            self._mark_task_failed(task, _('lki.install.error.no_version_url') % task.lang_code)
             return
 
+        route_remote = {}  # route_id → remote_major, 在本task内复用
         for game_version_obj in task.instance.versions:
             if self._cancel_event.is_set(): return
 
@@ -287,22 +284,29 @@ class InstallationManager:
                 route_urls = source.get_urls(task.instance.type, route_id)
                 if not route_urls: continue
 
+                if route_id in route_remote:
+                    if route_remote[route_id] == major_version:
+                        _log_task(task, _('lki.install.status.version_match_found') % '(cached)')
+                    continue
+
                 v_url = route_urls.get('version')
                 _log_task(task,
                           _('lki.install.status.getting_version_from') % get_route_id_to_name().get(route_id, route_id))
 
                 try:
-                    proxies = root_utils.get_configured_proxies()
-                    resp = requests.get(v_url, timeout=5, proxies=proxies)
+                    proxies, proxy_auth = root_utils.get_configured_proxies()
+                    resp = requests.get(v_url, timeout=5, proxies=proxies, auth=proxy_auth)
                     resp.raise_for_status()
                     lines = resp.text.splitlines()
-                    if len(lines) >= 2 and lines[1].strip() == major_version:
-                        sub_version = lines[0].strip()
-                        _log_task(task, _('lki.install.status.version_match_found') % sub_version)
-                        break
-                    else:
-                        remote_major = lines[1].strip() if len(lines) >= 2 else "N/A"
-                        _log_task(task, _('lki.install.status.version_mismatch') % (remote_major, major_version))
+                    if len(lines) >= 2:
+                        remote_major = lines[1].strip()
+                        route_remote[route_id] = remote_major
+                        if remote_major == major_version:
+                            sub_version = lines[0].strip()
+                            _log_task(task, _('lki.install.status.version_match_found') % sub_version)
+                            break
+                        else:
+                            _log_task(task, _('lki.install.status.version_mismatch') % (remote_major, major_version))
 
                 except requests.exceptions.RequestException as e:
                     _log_task(task, f"{_('lki.install.status.failed')}: {route_id} ({e})")
@@ -331,22 +335,27 @@ class InstallationManager:
                         self.download_jobs[task.fo_job_id].dependent_tasks.add(task)
 
                     task.status = "downloading"
+                    for jid in [mo_job_id, task.ee_job_id, task.fo_job_id]:
+                        if jid and jid in self.download_jobs:
+                            j = self.download_jobs[jid]
+                            if not j._queued:
+                                self.download_queue.put(j)
+                                j._queued = True
                 return
 
         # Compatible version not found
-        _log_task(task, _('lki.install.status.no_compatible_version'))
-        self._mark_task_failed(task)
+        self._mark_task_failed(task, _('lki.install.status.no_compatible_version'))
 
     def _download_worker(self):
-        from core.localizer import _  # <-- (修复 UnboundLocalError)
+        from core.localizer import _
 
-        while not self.download_queue.empty():
-            if self._cancel_event.is_set(): return
-
+        while not self._cancel_event.is_set():
             try:
-                job = self.download_queue.get_nowait()
+                job = self.download_queue.get(timeout=1.0)
             except queue.Empty:
-                return  # 队列已空
+                if getattr(self, '_version_all_done', threading.Event()).is_set():
+                    return
+                continue
 
             if not job:
                 self.download_queue.task_done()
@@ -356,9 +365,9 @@ class InstallationManager:
                 representative_task = next(iter(job.dependent_tasks))
             except StopIteration:
                 self.download_queue.task_done()
-                continue  # 没有任务依赖此作业
+                continue
 
-            for task in job.dependent_tasks:
+            for task in list(job.dependent_tasks):
                 _log_task(task, _('lki.install.status.downloading_file') % job.job_id)
 
             success, result_path = self._perform_download(job, representative_task)
@@ -374,166 +383,169 @@ class InstallationManager:
             self.download_queue.task_done()
 
     def _perform_download(self, job: DownloadJob, task: InstallationTask) -> Tuple[bool, Optional[Path]]:
-        from core.localizer import _  # <-- (修复 UnboundLocalError)
+        from core.localizer import _
 
         source = global_source_manager.get_source(job.lang_code)
 
-        # MO
         if job.file_type == 'mo':
-            cache_path = L10N_CACHE / job.lang_code / job.version_info['main'] / job.version_info['sub']
-            mo_path = cache_path / "global.mo"
-            info_path = cache_path / "file_info.json"
+            return self._download_mo(job, task, source)
+        if job.file_type == 'ee':
+            return self._download_ee(job, task, source)
+        if job.file_type == 'fonts':
+            return self._download_fonts(job, task)
 
-            if info_path.is_file() and mo_path.is_file():
+        return False, None
+
+    def _download_mo(self, job: DownloadJob, task: InstallationTask, source) -> Tuple[bool, Optional[Path]]:
+        from core.localizer import _
+
+        cache_path = L10N_CACHE / job.lang_code / job.version_info['main'] / job.version_info['sub']
+        mo_path = cache_path / "global.mo"
+        info_path = cache_path / "file_info.json"
+
+        if info_path.is_file() and mo_path.is_file():
+            try:
+                with open(info_path, 'r') as f:
+                    info_data = json.load(f)
+                expected_hash = info_data.get('file_sha256')
+                actual_hash = utils.get_sha256(mo_path)
+
+                if expected_hash and actual_hash == expected_hash:
+                    log(_('lki.install.debug.cache_hit') % job.job_id)
+                    return True, mo_path
+            except Exception as e:
+                log(_('lki.install.debug.cache_check_failed') % e)
+
+        utils.mkdir(cache_path)
+
+        for route_id in self.download_routes_priority:
+            if self._cancel_event.is_set():
+                return False, None
+
+            urls = source.get_urls(task.instance.type, route_id)
+            if not urls or not urls.get('mo'):
+                continue
+
+            mo_url = urls.get('mo')
+            if self._download_file_with_retry(mo_url, mo_path, f"MO ({job.job_id}) - {route_id}", 5):
+                dl_hash = utils.get_sha256(mo_path)
+                with open(info_path, 'w') as f:
+                    json.dump({'file_sha256': dl_hash}, f)
+                return True, mo_path
+
+        return False, None
+
+    def _download_ee(self, job: DownloadJob, task: InstallationTask, source) -> Tuple[bool, Optional[Path]]:
+        from core.localizer import _
+
+        cache_path = EE_CACHE / job.lang_code / task.instance.type
+        ee_zip_path = cache_path / "ee.zip"
+
+        utils.mkdir(cache_path)
+
+        for route_id in self.download_routes_priority:
+            if self._cancel_event.is_set():
+                return False, None
+
+            urls = source.get_urls(task.instance.type, route_id)
+            if not urls or not urls.get('ee'):
+                continue
+
+            ee_url = urls.get('ee')
+            if self._download_file_with_retry(ee_url, ee_zip_path, f"EE ({job.job_id}) - {route_id}", 5):
+                return True, ee_zip_path
+
+        return False, None
+
+    def _download_fonts(self, job: DownloadJob, task: InstallationTask) -> Tuple[bool, Optional[Path]]:
+        from core.localizer import _
+
+        asset_id = job.job_id
+        cache_dir = utils.FONTS_CACHE
+        mkmod_path = cache_dir / "srcwagon_mk.mkmod"
+        info_path = cache_dir / "cache_info.json"
+        utils.mkdir(cache_dir)
+
+        proxies, proxy_auth = root_utils.get_configured_proxies()
+
+        for route_id in self.download_routes_priority:
+            if self._cancel_event.is_set():
+                return False, None
+
+            urls = global_source_manager.get_global_asset_urls(asset_id, route_id)
+            if not urls or not urls.get('zip') or not urls.get('version'):
+                continue
+
+            VER_URL = urls.get('version')
+            ZIP_URL = urls.get('zip')
+
+            remote_version = None
+
+            try:
+                _log_task(task, _('lki.install.status.fonts_route') % get_route_id_to_name().get(route_id, route_id))
+                resp = requests.get(VER_URL, timeout=5, proxies=proxies, auth=proxy_auth)
+                resp.raise_for_status()
+                remote_info = resp.json()
+                remote_version = remote_info.get('version')
+            except Exception as e:
+                _log_task(task, _('lki.install.error.fonts_version_check') % f"{route_id}: {e}")
+                continue
+
+            if not remote_version:
+                _log_task(task, _('lki.install.error.fonts_version_invalid') + f" ({route_id})")
+                continue
+
+            if info_path.is_file() and mkmod_path.is_file():
                 try:
-                    with open(info_path, 'r') as f:
-                        info_data = json.load(f)
-                    expected_hash = info_data.get('file_sha256')
-                    actual_hash = utils.get_sha256(mo_path)
-
-                    if expected_hash and actual_hash == expected_hash:
-                        log(_('lki.install.debug.cache_hit') % job.job_id)
-                        return True, mo_path
+                    with open(info_path, 'r', encoding='utf-8') as f:
+                        local_info = json.load(f)
+                    if local_info.get('version') == remote_version:
+                        actual_hash = utils.get_sha256(mkmod_path)
+                        expected_hash = local_info.get('file_sha256')
+                        if actual_hash == expected_hash:
+                            log(_('lki.install.debug.cache_hit') % job.job_id)
+                            return True, mkmod_path
                 except Exception as e:
                     log(_('lki.install.debug.cache_check_failed') % e)
 
-            utils.mkdir(cache_path)
+            _log_task(task, _('lki.install.status.packing_fonts'))
+            temp_zip_path = utils.TEMP_DIR / "fonts.zip"
 
-            for route_id in self.download_routes_priority:
-                if self._cancel_event.is_set(): return False, None
+            if not self._download_file_with_retry(ZIP_URL, temp_zip_path, f"Fonts ({job.job_id}) - {route_id}", 15):
+                continue
 
-                urls = source.get_urls(task.instance.type, route_id)
-                if not urls or not urls.get('mo'):
-                    continue
+            try:
+                unpack_dir = utils.FONTS_UNPACK_TEMP
+                if unpack_dir.exists():
+                    shutil.rmtree(unpack_dir)
+                utils.mkdir(unpack_dir)
 
-                mo_url = urls.get('mo')
+                with zipfile.ZipFile(temp_zip_path, 'r') as zf:
+                    utils.process_possible_gbk_zip(zf).extractall(unpack_dir)
 
-                if self._download_file_with_retry(mo_url, mo_path, f"MO ({job.job_id}) - {route_id}", 5):
-                    dl_hash = utils.get_sha256(mo_path)
-                    with open(info_path, 'w') as f:
-                        json.dump({'file_sha256': dl_hash}, f)
-                    return True, mo_path
+                files_to_add: Dict[str, Path] = {}
+                for root, _dirnames, files in os.walk(unpack_dir):
+                    for file in files:
+                        local_path = Path(root) / file
+                        arcname = str(local_path.relative_to(unpack_dir)).replace("\\", "/")
+                        files_to_add[arcname] = local_path
 
-            return False, None
+                if not files_to_add:
+                    raise Exception("Empty zip file")
 
-        # EE
-        if job.file_type == 'ee':
-            cache_path = EE_CACHE / job.lang_code / task.instance.type
-            ee_zip_path = cache_path / "ee.zip"
+                utils.create_mkmod(mkmod_path, files_to_add)
 
-            utils.mkdir(cache_path)
-            # 循环尝试所有路由
-            for route_id in self.download_routes_priority:
-                if self._cancel_event.is_set(): return False, None
+                new_hash = utils.get_sha256(mkmod_path)
+                with open(info_path, 'w', encoding='utf-8') as f:
+                    json.dump({'version': remote_version, 'file_sha256': new_hash}, f)
 
-                urls = source.get_urls(task.instance.type, route_id)
-                if not urls or not urls.get('ee'):
-                    continue
+                return True, mkmod_path
 
-                ee_url = urls.get('ee')
-                # 如果下载成功，返回 True；否则继续
-                if self._download_file_with_retry(ee_url, ee_zip_path, f"EE ({job.job_id}) - {route_id}", 5):
-                    return True, ee_zip_path
+            except Exception as e:
+                _log_task(task, f"Fonts packing failed for {route_id}, retrying next: {e}")
+                continue
 
-            return False, None
-
-        # Fonts
-        if job.file_type == 'fonts':
-            asset_id = job.job_id
-            cache_dir = utils.FONTS_CACHE
-            mkmod_path = cache_dir / "srcwagon_mk.mkmod"
-            info_path = cache_dir / "cache_info.json"
-            utils.mkdir(cache_dir)
-
-            proxies = root_utils.get_configured_proxies()
-
-            for route_id in self.download_routes_priority:
-                if self._cancel_event.is_set(): return False, None
-
-                # URL
-                urls = global_source_manager.get_global_asset_urls(asset_id, route_id)
-                if not urls or not urls.get('zip') or not urls.get('version'):
-                    continue  # 当前路由配置无效，跳过
-
-                VER_URL = urls.get('version')
-                ZIP_URL = urls.get('zip')
-
-                remote_version = None
-
-                # Version
-                try:
-                    _log_task(task, _('lki.install.status.fonts_route') % get_route_id_to_name().get(route_id, route_id))
-                    resp = requests.get(VER_URL, timeout=5, proxies=proxies)
-                    resp.raise_for_status()
-                    remote_info = resp.json()
-                    remote_version = remote_info.get('version')
-                except Exception as e:
-                    # 当前路由连接失败，记录日志并尝试下一个路由
-                    _log_task(task, _('lki.install.error.fonts_version_check') % f"{route_id}: {e}")
-                    continue
-
-                if not remote_version:
-                    _log_task(task, _('lki.install.error.fonts_version_invalid') + f" ({route_id})")
-                    continue
-
-                # Check cache
-                if info_path.is_file() and mkmod_path.is_file():
-                    try:
-                        with open(info_path, 'r', encoding='utf-8') as f:
-                            local_info = json.load(f)
-                        if local_info.get('version') == remote_version:
-                            actual_hash = utils.get_sha256(mkmod_path)
-                            expected_hash = local_info.get('file_sha256')
-                            if actual_hash == expected_hash:
-                                log(_('lki.install.debug.cache_hit') % job.job_id)
-                                return True, mkmod_path
-                    except Exception as e:
-                        log(_('lki.install.debug.cache_check_failed') % e)
-
-                # Download
-                _log_task(task, _('lki.install.status.packing_fonts'))
-                temp_zip_path = utils.TEMP_DIR / "fonts.zip"
-
-                if not self._download_file_with_retry(ZIP_URL, temp_zip_path, f"Fonts ({job.job_id}) - {route_id}", 15):
-                    continue
-
-                try:
-                    unpack_dir = utils.FONTS_UNPACK_TEMP
-                    if unpack_dir.exists():
-                        shutil.rmtree(unpack_dir)
-                    utils.mkdir(unpack_dir)
-
-                    with zipfile.ZipFile(temp_zip_path, 'r') as zf:
-                        utils.process_possible_gbk_zip(zf).extractall(unpack_dir)
-
-                    files_to_add: Dict[str, Path] = {}
-                    for root, _, files in os.walk(unpack_dir):
-                        for file in files:
-                            local_path = Path(root) / file
-                            arcname = str(local_path.relative_to(unpack_dir)).replace("\\", "/")
-                            files_to_add[arcname] = local_path
-
-                    if not files_to_add:
-                        raise Exception("Empty zip file")
-
-                    utils.create_mkmod(mkmod_path, files_to_add)
-
-                    new_hash = utils.get_sha256(mkmod_path)
-                    with open(info_path, 'w', encoding='utf-8') as f:
-                        json.dump({'version': remote_version, 'file_sha256': new_hash}, f)
-
-                    return True, mkmod_path
-
-                except Exception as e:
-                    _log_task(task, f"Fonts packing failed for {route_id}, retrying next: {e}")
-                    # 打包失败（可能是zip损坏），继续尝试下一个路由
-                    continue
-
-            # 如果所有路由都尝试完毕仍未返回 True
-            _log_task(task, _('lki.install.error.fonts_no_url'))
-            return False, None
-        # --- (新增结束) ---
-
+        _log_task(task, _('lki.install.error.fonts_no_url'))
         return False, None
 
     def _download_file_with_retry(self, url: str, dest: Path, log_prefix: str, timeout: int) -> bool:
@@ -542,9 +554,9 @@ class InstallationManager:
         try:
             # (已修改：修复 %s 格式化)
             _log_overall(self, f"{log_prefix}: {_('lki.install.status.connecting') % url}")
-            proxies = root_utils.get_configured_proxies()
+            proxies, proxy_auth = root_utils.get_configured_proxies()
 
-            response = requests.get(url, stream=True, proxies=proxies, timeout=timeout)
+            response = requests.get(url, stream=True, proxies=proxies, auth=proxy_auth, timeout=(timeout, 60))
             response.raise_for_status()
 
             with open(dest, 'wb') as f:
@@ -631,283 +643,236 @@ class InstallationManager:
         self._check_if_all_finished()
 
     def _install_worker(self, task: InstallationTask):
-        """(在线程中) 为单个实例执行文件打包和复制。"""
         from core.localizer import _
 
-        # (新增) 跟踪非关键错误
         non_critical_errors: List[str] = []
 
         try:
-            if self._cancel_event.is_set(): return
+            if self._cancel_event.is_set():
+                return
 
             _log_task(task, _('lki.install.status.preparing_files'), 10)
 
             mo_job = self.download_jobs[task.mo_job_id]
             mo_file_path = mo_job.result_path
 
-            ee_zip_path: Optional[Path] = None
-            fo_mkmod_path: Optional[Path] = None
-            mods_mo_mkmod_path: Optional[Path] = None
-            mods_json_mkmod_path: Optional[Path] = None
+            ee_zip_path = self._validate_optional_path(task, 'ee', task.ee_job_id, non_critical_errors)
+            fo_mkmod_path = self._validate_optional_path(task, 'fonts', task.fo_job_id, non_critical_errors)
+            mods_mo_mkmod_path, mods_json_mkmod_path = self._process_mods(task, mo_file_path, non_critical_errors)
 
-            if task.use_ee:
-                ee_job = self.download_jobs[task.ee_job_id]
-                ee_zip_path = ee_job.result_path
-
-            if task.use_fonts:
-                fo_job = self.download_jobs[task.fo_job_id]
-                fo_mkmod_path = fo_job.result_path
-
-            # --- 关键检查 ---
             if not mo_file_path or not mo_file_path.is_file():
-                # (已修改：本地化)
                 raise Exception(_('lki.install.error.mo_file_not_found') % mo_file_path)
-            # --- 关键检查结束 ---
 
-            # --- (修改) 非关键检查 ---
-            if task.use_ee and (not ee_zip_path or not ee_zip_path.is_file()):
-                _log_task(task, _('lki.install.status.ee_failed_skip') % task.ee_job_id)
-                # (已修改：本地化)
-                non_critical_errors.append(_('lki.component.ee'))
-                ee_zip_path = None  # 确保后续步骤跳过它
-
-            if task.use_fonts and (not fo_mkmod_path or not fo_mkmod_path.is_file()):
-                _log_task(task, _('lki.install.status.fonts_failed_skip') % task.fo_job_id)
-                # (已修改：本地化)
-                non_critical_errors.append(_('lki.component.font'))
-                fo_mkmod_path = None  # 确保后续步骤跳过它
-            # --- 非关键检查结束 ---
-
-            if task.use_mods:
-                _log_task(task, _('lki.install.status.packing_mods'), 20)
-                try:
-                    mods_mo_mkmod_path, mods_json_mkmod_path = utils.process_mods_for_installation(
-                        task.instance.instance_id, task.instance.path, mo_file_path, task.lang_code
-                    )
-                except Exception as e:
-                    _log_task(task, _('lki.install.status.mods_failed_skip') % e)
-                    non_critical_errors.append(_('lki.component.mods'))
-                    mods_mo_mkmod_path = None
-                    mods_json_mkmod_path = None
-
-            _log_task(task, _('lki.install.status.writing_config'), 25)
             locale_config_path = utils.write_locale_config_to_temp(task.lang_code, task.use_fonts)
 
-            # --- 关键打包 ---
-            _log_task(task, _('lki.install.status.packing_core'), 40)
-            core_mod_files = {
-                "texts/ru/LC_MESSAGES/global.mo": mo_file_path
-            }
-            if locale_config_path:
-                core_mod_files["locale_config.xml"] = locale_config_path
+            core_mkmod_path = self._build_core_mkmod(task, mo_file_path, locale_config_path)
+            ee_mkmod_path = self._build_ee_mkmod(task, ee_zip_path, non_critical_errors)
 
-            core_mkmod_path = utils.TEMP_DIR / f"{task.instance.instance_id}_core.mkmod"
-            utils.create_mkmod(core_mkmod_path, core_mod_files)
-            # --- 关键打包结束 ---
-
-            # --- (修改) 非关键打包：EE ---
-            _log_task(task, _('lki.install.status.packing_ee'), 60)
-            ee_mkmod_path: Optional[Path] = None
-            if task.use_ee and ee_zip_path:
-                try:
-                    # (已修改：本地化)
-                    ee_unpack_dir = utils.EE_UNPACK_TEMP / task.instance.instance_id
-                    _log_task(task, _('lki.install.status.unpacking_ee'), 61)
-
-                    if ee_unpack_dir.exists():
-                        shutil.rmtree(ee_unpack_dir)
-
-                    utils.mkdir(ee_unpack_dir)
-                    with zipfile.ZipFile(ee_zip_path, 'r') as zf:
-                        utils.process_possible_gbk_zip(zf).extractall(ee_unpack_dir)
-
-                    ee_files_to_add: Dict[str, Path] = {}
-                    for root, dirnames, files in os.walk(ee_unpack_dir):
-                        for file in files:
-                            local_path = Path(root) / file
-                            arcname = str(local_path.relative_to(ee_unpack_dir)).replace("\\", "/")
-                            ee_files_to_add[arcname] = local_path
-
-                    if ee_files_to_add:
-                        ee_mkmod_path = utils.TEMP_DIR / f"{task.instance.instance_id}_ee.mkmod"
-                        utils.create_mkmod(ee_mkmod_path, ee_files_to_add)
-                except Exception as e:
-                    # (已修改：本地化)
-                    _log_task(task, _('lki.install.error.ee_pack_failed') % e)
-                    non_critical_errors.append(_('lki.component.ee'))
-                    ee_mkmod_path = None  # 确保不安装
-            # --- 非关键打包结束 ---
-
-            if self._cancel_event.is_set(): return
+            if self._cancel_event.is_set():
+                return
 
             for version_folder in task.instance.versions:
-                exe_version = version_folder.exe_version or ""
-                major_version = ".".join(exe_version.split('.')[:2])
-
-                mods_dir = version_folder.bin_folder_path / "mods"
-                dest_core_mod_path = mods_dir / "aa_lk_i18n_pack.mkmod"
-                dest_ee_mod_path = mods_dir / "aaaa_lk_i18n_ee.mkmod"
-                dest_fo_mod_path = mods_dir / "aaa_srcwagon_mk.mkmod"
-                dest_mo_mod_path = mods_dir / "aaaa_lk_i18n_mo_mod.mkmod"
-                dest_json_mod_path = mods_dir / "aaaa_lk_i18n_json_mod.mkmod"
-
-                info_json_path = task.instance.path / "lki" / "info" / version_folder.bin_folder_name
-                info_file = info_json_path / "installation_info.json"
-
-                # Clean before installation
-                _log_task(task, _('lki.uninstall.status.removing_files_for') % version_folder.bin_folder_name, 5)
-
-                bin_folder = version_folder.bin_folder_path
-                # Remove potentially existing global.mo & locale_config.xml in the res_mods folder
-                files_to_delete: Set[Path] = get_files_may_overwrite(bin_folder)
-
-                if info_file.is_file():
-                    try:
-                        with open(info_file, 'r', encoding='utf-8') as f:
-                            data = json.load(f)
-                        files_data = data.get("files", {})
-                        for component_name, path_dict in files_data.items():
-                            for relative_path in path_dict.keys():
-                                absolute_path = (bin_folder / relative_path).absolute()
-                                files_to_delete.add(absolute_path)
-                    except Exception as e:
-                        _log_task(task, _('lki.install.warn.cleanup_read_failed') % (info_file.name, e))
-
-                for file_path in files_to_delete:
-                    try:
-                        if file_path.is_file():
-                            os.remove(file_path)
-                            log(f'Deleting {str(file_path)}...') # Consider making this localized
-                    except OSError as e:
-                        _log_task(task, _('lki.install.warn.cleanup_remove_failed') % (file_path.name, e))
-
-                if info_file.is_file():
-                    try:
-                        os.remove(info_file)
-                    except OSError as e:
-                        _log_task(task, _('lki.install.warn.cleanup_remove_failed') % (info_file.name, e))
-                # --- (清理逻辑结束) ---
-
-                if major_version == mo_job.version_info['main']:
-                    # --- 关键安装步骤 ---
-                    _log_task(task, _('lki.install.status.installing_to') % version_folder.bin_folder_name, 80)
-                    utils.mkdir(mods_dir)
-
-                    try:
-                        _log_task(task, _('lki.install.status.patching_paths_xml'), 81)
-                        utils.fix_paths_xml(version_folder.bin_folder_path)
-                    except Exception as e:
-                        # 这是一个非关键步骤，记录警告即可
-                        _log_task(task, _('lki.install.error.paths_xml_failed') % e)
-                        log(f"Warning: Failed to fix paths.xml for {version_folder.bin_folder_path}: {e}")
-
-                    root_utils.copy_with_log(core_mkmod_path, dest_core_mod_path)
-                    files_info = {'i18n': {}, 'ee': {}, 'font': {}, 'mods': {}}
-                    try:
-                        core_rel_path = f"mods/{dest_core_mod_path.name}"
-                        files_info["i18n"][core_rel_path] = utils.get_sha256(dest_core_mod_path)
-                    except Exception as e:
-                        # 如果核心包哈希失败，这是致命错误
-                        raise Exception(f"Critical error hashing core mod: {e}") from e
-
-                        # 2. EE (非关键)
-                    if ee_mkmod_path and ee_mkmod_path.is_file():
-                        try:
-                            root_utils.copy_with_log(ee_mkmod_path, dest_ee_mod_path)
-                            ee_rel_path = f"mods/{dest_ee_mod_path.name}"
-                            files_info["ee"][ee_rel_path] = utils.get_sha256(dest_ee_mod_path)
-                        except Exception as e:
-                            log(_('lki.install.debug.hash_failed') % (f"{task.task_name} (EE)", e))
-                            non_critical_errors.append(_('lki.component.ee'))
-
-                        # 3. Font (非关键)
-                    if fo_mkmod_path and fo_mkmod_path.is_file():
-                        try:
-                            root_utils.copy_with_log(fo_mkmod_path, dest_fo_mod_path)
-                            font_rel_path = f"mods/{dest_fo_mod_path.name}"
-                            files_info["font"][font_rel_path] = utils.get_sha256(dest_fo_mod_path)
-                        except Exception as e:
-                            log(_('lki.install.debug.hash_failed') % (f"{task.task_name} (Font)", e))
-                            non_critical_errors.append(_('lki.component.font'))
-
-                        # 4. Mods (MO) (非关键)
-                    if mods_mo_mkmod_path and mods_mo_mkmod_path.is_file():
-                        try:
-                            root_utils.copy_with_log(mods_mo_mkmod_path, dest_mo_mod_path)
-                            mods_mo_rel_path = f"mods/{dest_mo_mod_path.name}"
-                            files_info["mods"][mods_mo_rel_path] = utils.get_sha256(dest_mo_mod_path)
-                        except Exception as e:
-                            log(_('lki.install.debug.hash_failed') % (f"{task.task_name} (Mods-MO)", e))
-                            non_critical_errors.append(_('lki.component.mods'))
-
-                        # 5. Mods (JSON) (非关键)
-                    if mods_json_mkmod_path and mods_json_mkmod_path.is_file():
-                        try:
-                            root_utils.copy_with_log(mods_json_mkmod_path, dest_json_mod_path)
-                            mods_json_rel_path = f"mods/{dest_json_mod_path.name}"
-                            files_info["mods"][mods_json_rel_path] = utils.get_sha256(dest_json_mod_path)
-                        except Exception as e:
-                            log(_('lki.install.debug.hash_failed') % (f"{task.task_name} (Mods-JSON)", e))
-                            # 仅当组件尚未在列表中时才添加
-                            if _('lki.component.mods') not in non_critical_errors:
-                                non_critical_errors.append(_('lki.component.mods'))
-                    # --- 非关键安装结束 ---
-
-                    # --- 关键的 Info.json 写入 ---
-                    utils.mkdir(info_json_path)
-                    with open(info_file, 'w', encoding='utf-8') as f:
-                        json.dump({
-                            "version": f"{mo_job.version_info['main']}.{mo_job.version_info['sub']}",
-                            "l10n_sub_version": mo_job.version_info['sub'],
-                            "lang_code": task.lang_code,
-                            "files": files_info
-                        }, f, indent=2)
-                    # --- 关键写入结束 ---
-
+                if self._cancel_event.is_set():
+                    return
+                self._cleanup_version(task, version_folder)
+                if self._version_matches_mo(version_folder, mo_job):
+                    self._install_components_to_version(
+                        task, version_folder, mo_job, core_mkmod_path,
+                        ee_mkmod_path, fo_mkmod_path,
+                        mods_mo_mkmod_path, mods_json_mkmod_path,
+                        non_critical_errors
+                    )
                 else:
-                    # --- (修改) 非关键清理 ---
-                    _log_task(task, _('lki.install.status.inactive_skip') % version_folder.bin_folder_name, 85)
-                    try:
-                        if dest_core_mod_path.is_file():
-                            os.remove(dest_core_mod_path)
-                        if dest_ee_mod_path.is_file():
-                            os.remove(dest_ee_mod_path)
-                        if dest_fo_mod_path.is_file():
-                            os.remove(dest_fo_mod_path)
-                        if dest_mo_mod_path.is_file():
-                            os.remove(dest_mo_mod_path)
-                        if dest_json_mod_path.is_file():
-                            os.remove(dest_json_mod_path)
+                    self._mark_version_inactive(task, version_folder)
 
-                        utils.mkdir(info_json_path)
-                        with open(info_file, 'w', encoding='utf-8') as f:
-                            json.dump({
-                                "version": "INACTIVE",
-                                "l10n_sub_version": None,
-                                "files": {}
-                            }, f, indent=2)
-                    except OSError as e:
-                        # (已修改：本地化)
-                        _log_task(task,
-                                  _('lki.install.warn.inactive_cleanup_failed') % (version_folder.bin_folder_name, e))
-                    # --- 非关键清理结束 ---
-
-            # --- (修改) 检查最终状态 ---
             if non_critical_errors:
-                error_summary = ", ".join(list(set(non_critical_errors)))  # (去重)
+                error_summary = ", ".join(list(set(non_critical_errors)))
                 _log_task(task, _('lki.install.status.warn_done') % error_summary, 100)
                 self._mark_task_finished(task, success=True, status_key='lki.install.status.warn_done_short')
             else:
                 _log_task(task, _('lki.install.status.done'), 100)
                 self._mark_task_finished(task, success=True, status_key='lki.install.status.done')
-            # --- 修改结束 ---
 
         except Exception as e:
-            # (这现在只捕获关键错误)
             import traceback
             log(f"Error in install worker for {task.task_name}: {e}")
             traceback.print_exc()
             self._mark_task_failed(task, str(e))
+
+    def _validate_optional_path(self, task, component_key, job_id, errors):
+        from core.localizer import _
+        if not job_id:
+            return None
+        job = self.download_jobs.get(job_id)
+        if not job:
+            return None
+        path = job.result_path
+        if not path or not path.is_file():
+            key_map = {'ee': 'lki.component.ee', 'fonts': 'lki.component.font'}
+            skip_key_map = {'ee': 'lki.install.status.ee_failed_skip', 'fonts': 'lki.install.status.fonts_failed_skip'}
+            _log_task(task, _(skip_key_map.get(component_key, '')) % job_id)
+            errors.append(_(key_map.get(component_key, '')))
+            return None
+        return path
+
+    def _process_mods(self, task, mo_file_path, errors):
+        from core.localizer import _
+        mods_mo_path = None
+        mods_json_path = None
+        if not task.use_mods:
+            return mods_mo_path, mods_json_path
+        _log_task(task, _('lki.install.status.packing_mods'), 20)
+        try:
+            mods_mo_path, mods_json_path = utils.process_mods_for_installation(
+                task.instance.instance_id, task.instance.path, mo_file_path, task.lang_code
+            )
+        except Exception as e:
+            _log_task(task, _('lki.install.status.mods_failed_skip') % e)
+            errors.append(_('lki.component.mods'))
+        return mods_mo_path, mods_json_path
+
+    def _build_core_mkmod(self, task, mo_file_path, locale_config_path):
+        from core.localizer import _
+        _log_task(task, _('lki.install.status.writing_config'), 25)
+        _log_task(task, _('lki.install.status.packing_core'), 40)
+        core_mod_files = {"texts/ru/LC_MESSAGES/global.mo": mo_file_path}
+        if locale_config_path:
+            core_mod_files["locale_config.xml"] = locale_config_path
+        core_mkmod_path = utils.TEMP_DIR / f"{task.instance.instance_id}_core.mkmod"
+        utils.create_mkmod(core_mkmod_path, core_mod_files)
+        return core_mkmod_path
+
+    def _build_ee_mkmod(self, task, ee_zip_path, errors):
+        from core.localizer import _
+        _log_task(task, _('lki.install.status.packing_ee'), 60)
+        if not ee_zip_path:
+            return None
+        try:
+            ee_unpack_dir = utils.EE_UNPACK_TEMP / task.instance.instance_id
+            _log_task(task, _('lki.install.status.unpacking_ee'), 61)
+            if ee_unpack_dir.exists():
+                shutil.rmtree(ee_unpack_dir)
+            utils.mkdir(ee_unpack_dir)
+            with zipfile.ZipFile(ee_zip_path, 'r') as zf:
+                utils.process_possible_gbk_zip(zf).extractall(ee_unpack_dir)
+            ee_files_to_add: Dict[str, Path] = {}
+            for root, dirnames, files in os.walk(ee_unpack_dir):
+                for file in files:
+                    local_path = Path(root) / file
+                    arcname = str(local_path.relative_to(ee_unpack_dir)).replace("\\", "/")
+                    ee_files_to_add[arcname] = local_path
+            if ee_files_to_add:
+                ee_mkmod_path = utils.TEMP_DIR / f"{task.instance.instance_id}_ee.mkmod"
+                utils.create_mkmod(ee_mkmod_path, ee_files_to_add)
+                return ee_mkmod_path
+        except Exception as e:
+            _log_task(task, _('lki.install.error.ee_pack_failed') % e)
+            errors.append(_('lki.component.ee'))
+        return None
+
+    def _version_matches_mo(self, version_folder, mo_job):
+        exe_version = version_folder.exe_version or ""
+        major_version = ".".join(exe_version.split('.')[:2])
+        return major_version == mo_job.version_info['main']
+
+    def _cleanup_version(self, task, version_folder):
+        from core.localizer import _
+        _log_task(task, _('lki.uninstall.status.removing_files_for') % version_folder.bin_folder_name, 5)
+        bin_folder = version_folder.bin_folder_path
+        files_to_delete: Set[Path] = get_files_may_overwrite(bin_folder)
+        info_file = version_folder.game_root_path / "lki" / "info" / version_folder.bin_folder_name / "installation_info.json"
+        if info_file.is_file():
+            try:
+                with open(info_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                files_data = data.get("files", {})
+                for component_name, path_dict in files_data.items():
+                    for relative_path in path_dict.keys():
+                        absolute_path = (bin_folder / relative_path).absolute()
+                        files_to_delete.add(absolute_path)
+            except Exception as e:
+                _log_task(task, _('lki.install.warn.cleanup_read_failed') % (info_file.name, e))
+        for file_path in files_to_delete:
+            try:
+                if file_path.is_file():
+                    os.remove(file_path)
+                    log(f'Deleting {str(file_path)}...')
+            except OSError as e:
+                _log_task(task, _('lki.install.warn.cleanup_remove_failed') % (file_path.name, e))
+        if info_file.is_file():
+            try:
+                os.remove(info_file)
+            except OSError as e:
+                _log_task(task, _('lki.install.warn.cleanup_remove_failed') % (info_file.name, e))
+
+    def _install_components_to_version(self, task, version_folder, mo_job, core_mkmod_path,
+                                        ee_mkmod_path, fo_mkmod_path,
+                                        mods_mo_mkmod_path, mods_json_mkmod_path,
+                                        errors):
+        from core.localizer import _
+
+        _log_task(task, _('lki.install.status.installing_to') % version_folder.bin_folder_name, 80)
+
+        mods_dir = version_folder.bin_folder_path / "mods"
+        dest_core_mod_path = mods_dir / "aa_lk_i18n_pack.mkmod"
+        dest_ee_mod_path = mods_dir / "aaaa_lk_i18n_ee.mkmod"
+        dest_fo_mod_path = mods_dir / "aaa_srcwagon_mk.mkmod"
+        dest_mo_mod_path = mods_dir / "aaaa_lk_i18n_mo_mod.mkmod"
+        dest_json_mod_path = mods_dir / "aaaa_lk_i18n_json_mod.mkmod"
+
+        info_json_path = task.instance.path / "lki" / "info" / version_folder.bin_folder_name
+        info_file = info_json_path / "installation_info.json"
+
+        utils.mkdir(mods_dir)
+
+        try:
+            _log_task(task, _('lki.install.status.patching_paths_xml'), 81)
+            utils.fix_paths_xml(version_folder.bin_folder_path)
+        except Exception as e:
+            _log_task(task, _('lki.install.error.paths_xml_failed') % e)
+            log(f"Warning: Failed to fix paths.xml for {version_folder.bin_folder_path}: {e}")
+
+        root_utils.copy_with_log(core_mkmod_path, dest_core_mod_path)
+        files_info = {'i18n': {}, 'ee': {}, 'font': {}, 'mods': {}}
+        try:
+            files_info["i18n"][f"mods/{dest_core_mod_path.name}"] = utils.get_sha256(dest_core_mod_path)
+        except Exception as e:
+            raise Exception(f"Critical error hashing core mod: {e}") from e
+
+        _copy_and_hash_component(root_utils.copy_with_log, ee_mkmod_path, dest_ee_mod_path, "ee", task, files_info, errors)
+        _copy_and_hash_component(root_utils.copy_with_log, fo_mkmod_path, dest_fo_mod_path, "font", task, files_info, errors)
+        _copy_and_hash_component(root_utils.copy_with_log, mods_mo_mkmod_path, dest_mo_mod_path, "mods", task, files_info, errors)
+        _copy_and_hash_component(root_utils.copy_with_log, mods_json_mkmod_path, dest_json_mod_path, "mods", task, files_info, errors)
+
+        utils.mkdir(info_json_path)
+        with open(info_file, 'w', encoding='utf-8') as f:
+            json.dump({
+                "version": f"{mo_job.version_info['main']}.{mo_job.version_info['sub']}",
+                "l10n_sub_version": mo_job.version_info['sub'],
+                "lang_code": task.lang_code,
+                "files": files_info
+            }, f, indent=2)
+
+    def _mark_version_inactive(self, task, version_folder):
+        from core.localizer import _
+        _log_task(task, _('lki.install.status.inactive_skip') % version_folder.bin_folder_name, 85)
+        mods_dir = version_folder.bin_folder_path / "mods"
+        info_json_path = task.instance.path / "lki" / "info" / version_folder.bin_folder_name
+        info_file = info_json_path / "installation_info.json"
+        for name in ["aa_lk_i18n_pack.mkmod", "aaaa_lk_i18n_ee.mkmod", "aaa_srcwagon_mk.mkmod",
+                      "aaaa_lk_i18n_mo_mod.mkmod", "aaaa_lk_i18n_json_mod.mkmod"]:
+            mod_file = mods_dir / name
+            try:
+                if mod_file.is_file():
+                    os.remove(mod_file)
+            except OSError:
+                pass
+        try:
+            utils.mkdir(info_json_path)
+            with open(info_file, 'w', encoding='utf-8') as f:
+                json.dump({"version": "INACTIVE", "l10n_sub_version": None, "files": {}}, f, indent=2)
+        except OSError as e:
+            _log_task(task, _('lki.install.warn.inactive_cleanup_failed') % (version_folder.bin_folder_name, e))
 
     def _uninstall_worker(self, task: InstallationTask):
         """(在线程中) 为单个实例执行文件删除。"""
@@ -986,10 +951,12 @@ class InstallationManager:
         from core.localizer import _
         with self._lock:
             task.status = "failed"
-            # (已修改：根据状态使用不同的失败字符串)
             status_key = 'lki.uninstall.status.failed' if self.is_uninstalling else 'lki.install.status.failed'
-            status_text = f"{_(status_key)}: {reason}"
-            _log_task(task, status_text, 100)  # (日志现在也使用最终文本)
+            if reason:
+                status_text = f"{_(status_key)}: {reason}"
+            else:
+                status_text = _(status_key)
+            _log_task(task, status_text, 100)
 
     def _mark_task_finished(self, task: InstallationTask, success: bool, status_key: str = 'lki.install.status.done'):
         from core.localizer import _
@@ -1009,6 +976,24 @@ class InstallationManager:
                 self.root_tk.after(0, self.window.all_tasks_finished)
                 if self.on_complete_callback:
                     self.root_tk.after(0, self.on_complete_callback)
+
+
+# --- (组件安装助手) ---
+
+def _copy_and_hash_component(copy_func, src_path, dest_path, component_name, task, files_info, errors):
+    if not src_path or not src_path.is_file():
+        return
+    from core.localizer import _
+    from core.logger import log as _log
+    try:
+        copy_func(src_path, dest_path)
+        rel_path = f"mods/{dest_path.name}"
+        files_info[component_name][rel_path] = utils.get_sha256(dest_path)
+    except Exception as e:
+        _log(_('lki.install.debug.hash_failed') % (f"{task.task_name} ({component_name})", e))
+        key = _('lki.component.' + component_name)
+        if key not in errors:
+            errors.append(key)
 
 
 # --- (日志记录助手) ---

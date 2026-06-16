@@ -13,6 +13,7 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+import ctypes
 import os
 import string
 import winreg
@@ -24,9 +25,27 @@ from typing import List, Optional, Tuple, Set
 
 MK_STEAM_APP_ID = '3114940'
 
+_DRIVE_TYPES_SKIP = {1, 5, 6}
+
 def _find_all_drives() -> List[str]:
-    """返回所有驱动器盘符的列表, e.g., ['C:/', 'D:/']"""
-    return ['%s:/' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
+    """
+    返回可扫描的驱动器盘符列表。
+    排除: CD-ROM(5)、RAM盘(6)、无根目录(1)——这些不可能有游戏安装且可能卡IO。
+    保留: 固定盘(3)、网络驱动器(4)、可移动磁盘(2)。
+    """
+    drives = []
+    for d in string.ascii_uppercase:
+        root = f'{d}:\\'
+        if not os.path.exists(root):
+            continue
+        try:
+            drive_type = ctypes.windll.kernel32.GetDriveTypeW(root)
+            if drive_type in _DRIVE_TYPES_SKIP:
+                continue
+        except Exception:
+            pass
+        drives.append(f'{d}:/')
+    return drives
 
 
 def get_instance_type_from_path(path: Path) -> Optional[str]:

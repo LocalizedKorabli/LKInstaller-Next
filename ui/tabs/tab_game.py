@@ -22,6 +22,7 @@ from core.logger import log
 from pathlib import Path
 from tkinter import ttk, messagebox, filedialog
 from typing import List, Dict, Optional, Set
+from dataclasses import dataclass, field
 
 from core import settings
 from core import utils
@@ -36,6 +37,15 @@ from ui.dialogs import BaseDialog, AutoUpdateConfigDialog
 from instance.instance_detector import find_instances_for_auto_import, get_instance_type_from_path
 from installation.installation_manager import InstallationManager, InstallationTask  # <-- (新增)
 from installation.localization_sources import global_source_manager
+
+
+@dataclass
+class _GameEntryWidgets:
+    frame: ttk.Frame
+    check_var: tk.BooleanVar
+    separator: ttk.Separator = None
+    non_ascii_warning_label: ttk.Label = None
+    status_labels: List[ttk.Label] = field(default_factory=list)
 
 
 class GameTab(BaseTab):
@@ -61,6 +71,7 @@ class GameTab(BaseTab):
         self.selected_client_widget: Optional[ttk.Frame] = None
 
         self.loaded_game_instances: Dict[str, GameInstance] = {}
+        self._instance_widgets: Dict[str, _GameEntryWidgets] = {}
 
         self.client_check_vars: List[tk.BooleanVar] = []
         self.select_all_var = tk.BooleanVar()
@@ -187,6 +198,7 @@ class GameTab(BaseTab):
         for widget in self.client_list_frame.winfo_children():
             widget.destroy()
 
+        self._instance_widgets.clear()
         self.client_check_vars = []
         self.select_all_var.set(False)
         self.check_all_btn.state(['!alternate'])
@@ -254,13 +266,26 @@ class GameTab(BaseTab):
         text_frame = ttk.Frame(item_frame, style="TFrame", cursor="hand2")
         text_frame.pack(side='left', fill='x', expand=True)
 
+        def on_click(event, frame=item_frame, id=instance.instance_id):
+            self._on_client_select(frame, id)
+
         name_label_text = f"{_('lki.game.name_label')} {instance.name}"
         name_label = ttk.Label(text_frame, text=name_label_text, style="Client.TLabel", cursor="hand2")
         name_label.pack(anchor='w', fill='x')
 
         path_label_text = f"{_('lki.game.path_label')} {str(instance.path)}"
-        path_label = ttk.Label(text_frame, text=path_label_text, style="Path.TLabel", wraplength=500, cursor="hand2")
+        path_label = ttk.Label(text_frame, text=path_label_text, style="Path.TLabel", wraplength=400, cursor="hand2")
         path_label.pack(anchor='w', fill='x')
+
+        non_ascii_warning_label = None
+        if instance.path_has_non_ascii:
+            warning_text = _('lki.game.warning.non_ascii_path')
+            non_ascii_warning_label = ttk.Label(text_frame, text=warning_text,
+                                                foreground='#c09853', cursor='hand2', justify='left',
+                                                wraplength=400)
+            non_ascii_warning_label.pack(anchor='w', fill='x')
+            non_ascii_warning_label.bind('<Button-1>', on_click)
+            self._bind_mousewheel(non_ascii_warning_label)
 
         type_key = f"lki.game.client_type.{instance.type}"
         type_text = _(type_key)
@@ -281,9 +306,6 @@ class GameTab(BaseTab):
 
         versions_to_display = instance.versions[:2]
 
-        def on_click(event, frame=item_frame, id=instance.instance_id):
-            self._on_client_select(frame, id)
-
         text_frame.bind("<Button-1>", on_click)
         name_label.bind("<Button-1>", on_click)
         path_label.bind("<Button-1>", on_click)
@@ -298,74 +320,23 @@ class GameTab(BaseTab):
         self._bind_mousewheel(type_info_label)
         self._bind_mousewheel(preset_info_label)
 
+        status_labels = []
         if not versions_to_display:
             status_text = _('lki.game.version_not_found')
-            status_label = ttk.Label(text_frame, text=status_text, style="Path.TLabel", cursor="hand2", justify='left')
+            status_label = ttk.Label(text_frame, text=status_text, style='Path.TLabel', cursor='hand2', justify='left')
             status_label.pack(anchor='w', fill='x')
-            status_label.bind("<Button-1>", on_click)
+            status_label.bind('<Button-1>', on_click)
             self._bind_mousewheel(status_label)
+            status_labels.append(status_label)
         else:
             for game_version in versions_to_display:
-                ver_str = game_version.exe_version or _('lki.game.version_unknown')
-                status_text = f"{_('lki.game.version_label')} {ver_str}"
-
-                # --- (修改：游戏选项卡的简洁状态) ---
-                if game_version.l10n_info:
-                    l10n_ver_full = game_version.l10n_info.version
-
-                    # (请求 3) 首先处理“非活跃版本”
-                    if l10n_ver_full == "INACTIVE":
-                        l10n_details = f"{_('lki.game.i18n_status.inactive')}"
-                    else:
-                        # (请求 1) 为“游戏”选项卡计算一个总状态
-                        # (已修改：为“游戏”选项卡计算总状态时检查预设)
-                        statuses = game_version.get_component_statuses()
-
-                        l10n_sub_ver = game_version.l10n_info.l10n_sub_version
-                        l10n_lang_code = game_version.l10n_info.lang_code
-                        l10n_lang_name = self.l10n_id_to_name.get(l10n_lang_code, l10n_lang_code)
-                        lang_str = f"{l10n_lang_name} " if l10n_lang_name else ""
-
-                        preset_use_ee = preset_data.get("use_ee", False)
-                        preset_use_fonts = preset_data.get("use_fonts", False)
-                        preset_use_mods = preset_data.get("use_mods", False)
-
-                        is_ok = True
-                        for component, status in statuses.items():
-                            if status == "tampered":
-                                is_ok = False
-                                break
-                            if status == "not_installed":
-                                # 检查这个“未安装”的组件是否被预设所需要
-                                if component == "i18n":  # i18n 始终是必需的
-                                    is_ok = False
-                                    break
-                                if component == "ee" and preset_use_ee:  # 它被需要，但未安装
-                                    is_ok = False
-                                    break
-                                if component == "font" and preset_use_fonts:  # 它被需要，但未安装
-                                    is_ok = False
-                                    break
-                                if component == "mods" and preset_use_mods:  # <-- (新增)
-                                    is_ok = False
-                                    break
-                                # 如果执行到这里, 意味着 status 是 "not_installed"
-                                # 但预设为 False (例如 ee=False)，所以这是 OK 的 (⭕)
-
-                        display_ver = l10n_sub_ver if l10n_sub_ver else l10n_ver_full
-                        status_key = 'lki.game.i18n_status.ok' if is_ok else 'lki.game.i18n_status.corrupted'
-                        l10n_details = f"{lang_str}{display_ver} - {_(status_key)}"
-
-                    status_text += f" | {l10n_details}"  # (回到单行)
-                else:
-                    status_text += f" | {_('lki.game.i18n_status.not_installed')}"
-                # --- (修改结束) ---
-
-                status_label = ttk.Label(text_frame, text=status_text, style="Path.TLabel", cursor="hand2",
+                status_text = self._build_version_display_text(instance, game_version, preset_data)
+                status_label = ttk.Label(text_frame, text=status_text, style='Path.TLabel', cursor='hand2',
                                          justify='left')
                 status_label.pack(anchor='w', fill='x')
-                status_label.bind("<Button-1>", on_click)
+                status_label.bind('<Button-1>', on_click)
                 self._bind_mousewheel(status_label)
+                status_labels.append(status_label)
 
         item_frame.type_label = name_label
         item_frame.path_label = path_label
@@ -374,7 +345,55 @@ class GameTab(BaseTab):
         separator = ttk.Separator(self.client_list_frame, orient='horizontal')
         separator.pack(fill='x', expand=True, padx=5, pady=2)
 
+        self._instance_widgets[instance.instance_id] = _GameEntryWidgets(
+            frame=item_frame, check_var=check_var, separator=separator,
+            non_ascii_warning_label=non_ascii_warning_label, status_labels=status_labels
+        )
+
         return item_frame
+
+    def _build_version_display_text(self, instance, game_version, preset_data):
+        ver_str = game_version.exe_version or _('lki.game.version_unknown')
+        status_text = f"{_('lki.game.version_label')} {ver_str}"
+
+        if game_version.l10n_info:
+            l10n_ver_full = game_version.l10n_info.version
+            if l10n_ver_full == "INACTIVE":
+                l10n_details = f"{_('lki.game.i18n_status.inactive')}"
+            else:
+                statuses = game_version.get_component_statuses()
+                l10n_sub_ver = game_version.l10n_info.l10n_sub_version
+                l10n_lang_code = game_version.l10n_info.lang_code
+                l10n_lang_name = self.l10n_id_to_name.get(l10n_lang_code, l10n_lang_code)
+                lang_str = f"{l10n_lang_name} " if l10n_lang_name else ""
+                preset_use_ee = preset_data.get("use_ee", False)
+                preset_use_fonts = preset_data.get("use_fonts", False)
+                preset_use_mods = preset_data.get("use_mods", False)
+                is_ok = True
+                for component, status in statuses.items():
+                    if status == "tampered":
+                        is_ok = False
+                        break
+                    if status == "not_installed":
+                        if component == "i18n":
+                            is_ok = False
+                            break
+                        if component == "ee" and preset_use_ee:
+                            is_ok = False
+                            break
+                        if component == "font" and preset_use_fonts:
+                            is_ok = False
+                            break
+                        if component == "mods" and preset_use_mods:
+                            is_ok = False
+                            break
+                display_ver = l10n_sub_ver if l10n_sub_ver else l10n_ver_full
+                status_key = 'lki.game.i18n_status.ok' if is_ok else 'lki.game.i18n_status.corrupted'
+                l10n_details = f"{lang_str}{display_ver} - {_(status_key)}"
+            status_text += f" | {l10n_details}"
+        else:
+            status_text += f" | {_('lki.game.i18n_status.not_installed')}"
+        return status_text
 
     def _on_client_select(self, selected_frame, selected_id):
         """处理客户端条目的点击（选择）事件"""
@@ -509,8 +528,8 @@ class GameTab(BaseTab):
         threading.Thread(target=self._run_auto_import_thread, args=(is_initial_run,), daemon=True).start()
 
     def _run_auto_import_thread(self, is_initial_run):
-        """在单独的线程中运行以避免冻结 UI。"""
         new_ids = []
+        non_ascii_paths = []
         try:
             found_instances = find_instances_for_auto_import()
             new_count = 0
@@ -557,12 +576,15 @@ class GameTab(BaseTab):
                         used_pt_nums.add(pt_counter)
                         pt_counter += 1
 
-                    self.instance_manager.add_instance(name, path, type_code, current_ui_lang)
                     new_id = self.instance_manager.add_instance(name, path, type_code, current_ui_lang)
                     new_ids.append(new_id)
                     new_count += 1
 
-            self.app_master.after(0, self._auto_import_finished, new_count, new_ids, is_initial_run)
+                    if not all(ord(c) < 128 for c in path):
+                        non_ascii_paths.append(path)
+
+            self.app_master.after(0, self._auto_import_finished, new_count, new_ids, is_initial_run,
+                                  non_ascii_paths)
 
         except Exception as e:
             log(f"Error during instance detection thread: {e}")
@@ -572,8 +594,8 @@ class GameTab(BaseTab):
                                       f"An error occurred: {e}")
             self.app_master.after(0, self.btn_auto_import.config, {'state': 'normal'})
 
-    def _auto_import_finished(self, new_count: int, new_ids: List[str], is_initial_run: bool):
-        """在检测线程完成后由主线程调用。"""
+    def _auto_import_finished(self, new_count: int, new_ids: List[str], is_initial_run: bool,
+                              non_ascii_paths=None):
         self.btn_auto_import.config(state='normal')
 
         if not is_initial_run:
@@ -587,6 +609,18 @@ class GameTab(BaseTab):
                     _('lki.game.detected_clients'),
                     _('lki.detect.no_new')
                 )
+
+        if non_ascii_paths:
+            lines = [_('lki.game.warning.non_ascii_detected_header')]
+            for p in non_ascii_paths:
+                lines.append(f"  - {p}")
+            lines.append('')
+            lines.append(_('lki.game.warning.non_ascii_detected_footer'))
+            messagebox.showwarning(
+                _('lki.game.warning.non_ascii_detected_title'),
+                '\n'.join(lines),
+                parent=self.app_master
+            )
 
         current_checked_ids = set(settings.global_settings.get('checked_instance_ids', []))
 
@@ -622,9 +656,27 @@ class GameTab(BaseTab):
         checked_instance_ids = self._get_checked_instance_ids()  # (已修改：复用此逻辑)
 
         if not checked_instance_ids:
-            # (已修改：使用正确的标题)
             messagebox.showwarning(_('lki.install.title'), _('lki.install.error.no_instances_selected'))
             return
+
+        unacknowledged = []
+        for instance_id in checked_instance_ids:
+            instance = self.loaded_game_instances.get(instance_id)
+            if instance and instance.path_has_non_ascii:
+                if not self.instance_manager.is_non_ascii_acknowledged(instance_id):
+                    unacknowledged.append((instance_id, instance))
+
+        if unacknowledged:
+            lines = [_('lki.game.warning.non_ascii_install_header')]
+            for iid, inst in unacknowledged:
+                lines.append(f"  - {inst.name} ({inst.path})")
+            lines.append('')
+            lines.append(_('lki.game.warning.non_ascii_install_footer'))
+            msg = '\n'.join(lines)
+            if not messagebox.askyesno(_('lki.install.title'), msg, parent=self.app_master):
+                return
+            for iid, _inst in unacknowledged:
+                self.instance_manager.acknowledge_non_ascii_path(iid)
 
         # 2. 为每个实例创建任务
         for instance_id in checked_instance_ids:
@@ -657,15 +709,45 @@ class GameTab(BaseTab):
             self.installation_manager.start_installation(tasks_to_run, self._on_installation_complete)
 
     def _on_installation_complete(self):
-        """
-        由 InstallationManager 在所有任务完成后调用的回调。
-        刷新游戏列表以显示新的安装状态。
-        """
         log("Installation complete. Refreshing game list...")
-        checked_ids = self._get_checked_instance_ids()
+        self._refresh_entries_status()
 
-        # (修改) 延迟刷新以等待文件系统I/O完成
-        self._clear_selection_and_refresh(default_checked_ids=checked_ids)
+    def _refresh_entries_status(self):
+        for instance_id, instance in list(self.loaded_game_instances.items()):
+            for version in instance.versions:
+                version.load_details()
+            self._rebuild_entry_status_labels(instance_id)
+
+    def _rebuild_entry_status_labels(self, instance_id):
+        instance = self.loaded_game_instances.get(instance_id)
+        widgets = self._instance_widgets.get(instance_id)
+        if not instance or not widgets:
+            return
+        for label in widgets.status_labels:
+            label.destroy()
+        widgets.status_labels.clear()
+        instance_data = self.instance_manager.get_instance(instance_id)
+        active_preset_id = instance_data.get("active_preset_id", "default") if instance_data else "default"
+        preset_data = (instance_data.get("presets", {}).get(active_preset_id, {}) if instance_data else {})
+        versions_to_display = instance.versions[:2]
+        text_frame = widgets.frame.text_frame
+        def oclick(event):
+            self._on_client_select(widgets.frame, instance_id)
+        if not versions_to_display:
+            label = ttk.Label(text_frame, text=_("lki.game.version_not_found"),
+                              style="Path.TLabel", cursor="hand2", justify="left")
+            label.pack(anchor="w", fill="x")
+            label.bind("<Button-1>", oclick)
+            self._bind_mousewheel(label)
+            widgets.status_labels.append(label)
+        else:
+            for ver in versions_to_display:
+                txt = self._build_version_display_text(instance, ver, preset_data)
+                label = ttk.Label(text_frame, text=txt, style="Path.TLabel", cursor="hand2", justify="left")
+                label.pack(anchor="w", fill="x")
+                label.bind("<Button-1>", oclick)
+                self._bind_mousewheel(label)
+                widgets.status_labels.append(label)
 
     def _on_uninstall_clicked(self):
         """收集勾选的任务并启动卸载管理器。"""
@@ -701,15 +783,8 @@ class GameTab(BaseTab):
             self.installation_manager.start_uninstallation(tasks_to_run, self._on_uninstallation_complete)
 
     def _on_uninstallation_complete(self):
-        """
-        由 InstallationManager 在所有任务完成后调用的回调。
-        刷新游戏列表以显示新的（未安装）状态。
-        """
         log("Uninstallation complete. Refreshing game list...")
-        checked_ids = self._get_checked_instance_ids()
-
-        # (修改) 延迟刷新以等待文件系统I/O完成
-        self._clear_selection_and_refresh(default_checked_ids=checked_ids)
+        self._refresh_entries_status()
 
     # --- (回调) ---
     def _open_import_instance_window(self):
@@ -717,8 +792,15 @@ class GameTab(BaseTab):
         window = ImportInstanceWindow(self.app_master, self.type_id_to_name, self._on_import_instance_save)
 
     def _on_import_instance_save(self, name: str, path: str, type_code: str):
-        """“导入实例”窗口的保存回调"""
         current_ui_lang = settings.global_settings.language
+
+        if not all(ord(c) < 128 for c in path):
+            msg = (_('lki.game.warning.non_ascii_detected_header') + '\n\n'
+                   + f"  {path}\n\n"
+                   + _('lki.game.warning.non_ascii_detected_footer'))
+            if not messagebox.askyesno(_('lki.add_instance.title'), msg, parent=self.app_master):
+                return
+
         new_id = self.instance_manager.add_instance(name, path, type_code, current_ui_lang)
 
         messagebox.showinfo(
@@ -1132,8 +1214,6 @@ class DeleteInstanceWindow(BaseDialog):
 
         self.copy_feedback_label = ttk.Label(name_frame, text="", style="Hint.TLabel", foreground='green')
         self.copy_feedback_label.pack(side='left', padx=5)
-
-        confirm_label = ttk.Label(main_frame, text=_('lki.delete_instance.confirm_label'))
 
         confirm_label = ttk.Label(main_frame, text=_('lki.delete_instance.confirm_label'))
         confirm_label.grid(row=2, column=0, sticky='w', pady=(10, 5))
