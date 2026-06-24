@@ -244,6 +244,7 @@
   "lki.settings.category.appearance": "外観",
   "lki.settings.category.download": "ダウンロード",
   "lki.settings.category.files": "ファイル",
+  "lki.settings.category.install": "インストール",
   "lki.settings.clear.error": "消去に失敗しました: %s",
   "lki.settings.clear_cache.confirm.message": "キャッシュはインストール効率を向上させます。\nしかし、ローカライズが正常に読み込まれない場合は、これを試してください。\nダウンロードキャッシュを消去しますか？",
   "lki.settings.clear_cache.confirm.title": "キャッシュの消去",

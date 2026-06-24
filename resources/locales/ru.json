@@ -244,6 +244,7 @@
   "lki.settings.category.appearance": "Внешний вид",
   "lki.settings.category.download": "Загрузка",
   "lki.settings.category.files": "Файлы",
+  "lki.settings.category.install": "Установка",
   "lki.settings.clear.error": "Очистка не удалась: %s",
   "lki.settings.clear_cache.confirm.message": "Кеш загрузок повышает эффективность установки.\nНо если ваша локализация не загружается корректно, попробуйте эту опцию.\nПодтвердите очистку кеша загрузок?",
   "lki.settings.clear_cache.confirm.title": "Очистка кеша",

@@ -244,6 +244,7 @@
   "lki.settings.category.appearance": "Appearance",
   "lki.settings.category.download": "Download",
   "lki.settings.category.files": "Files",
+  "lki.settings.category.install": "Install",
   "lki.settings.clear.error": "Clear failed: %s",
   "lki.settings.clear_cache.confirm.message": "Download cache improves installation efficiency.\nBut if your localization pack fails to load correctly, please try this.\nConfirm clearing download cache?",
   "lki.settings.clear_cache.confirm.title": "Clear Cache",

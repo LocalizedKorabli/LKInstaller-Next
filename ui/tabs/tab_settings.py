@@ -45,8 +45,6 @@ class SettingsTab(BaseTab):
         self.on_language_change_callback = on_language_change_callback
         self.on_reload_callback = on_reload_callback
 
-        self.theme_var = tk.StringVar(value=settings.global_settings.get('theme', 'light'))
-
         self.available_ui_langs = get_available_languages()
         self.ui_lang_name_to_code = {v: k for k, v in self.available_ui_langs.items()}
         current_locale = settings.global_settings.language
@@ -84,30 +82,12 @@ class SettingsTab(BaseTab):
         self.lang_combobox.bind("<<ComboboxSelected>>", self._on_language_select)
 
         self.lang_reload_label = ttk.Label(appearance_frame, text="", foreground='gray')
-        # 扩展到第2列 (columnspan=2)
-        self.lang_reload_label.grid(row=1, column=1, columnspan=2, sticky='w', padx=5, pady=(0, 10))
+        self.lang_reload_label.grid(row=1, column=1, sticky='w', padx=5, pady=(0, 10))
 
-        # 主题设置 (row=2)
-        theme_label = ttk.Label(appearance_frame, text=_('lki.settings.theme'))
-        theme_label.grid(row=2, column=0, sticky='e', padx=(0, 10), pady=(10, 0))
-
-        rb_light = ttk.Radiobutton(appearance_frame, text=_('lki.settings.theme.light'), variable=self.theme_var,
-                                   value='light', command=self._on_theme_select)
-        # 扩展到第2列 (columnspan=2)
-        rb_light.grid(row=2, column=1, columnspan=2, sticky='w', pady=(10, 5))
-
-        # Dark Radiobutton (row=3, column=1)
-        rb_dark = ttk.Radiobutton(appearance_frame, text=_('lki.settings.theme.dark'), variable=self.theme_var,
-                                  value='dark', command=self._on_theme_select)
-        # 保持在 column 1
-        rb_dark.grid(row=3, column=1, sticky='w', pady=(0, 10))
-
-        # --- (移动后的重载按钮) ---
+        # 重载按钮 (row=1, column=2)
         self.reload_btn = ttk.Button(appearance_frame, text=_('lki.settings.btn.reload'),
                                      command=self._on_reload_click, style='Link.TButton')
-        # 放置在 row=3, column=2, sticky='se' (右下角), 且与 rb_dark 使用相同的 pady=(0, 10)
-        self.reload_btn.grid(row=3, column=2, sticky='se', padx=(10, 0), pady=(0, 10))
-        # -------------------------
+        self.reload_btn.grid(row=1, column=2, sticky='se', padx=(10, 0), pady=(0, 10))
 
         # --- “下载”设置组 (row=1) ---
         download_frame = ttk.LabelFrame(self, text=_('lki.settings.category.download'), padding=10)
@@ -143,11 +123,16 @@ class SettingsTab(BaseTab):
                                            command=self._open_route_priority_window)
         self.route_config_btn.grid(row=0, column=1, sticky='e')
 
-        # [实验性] 安装到独立模组目录（row=2）
-        lk_label = ttk.Label(download_frame, text=_('lki.settings.use_lk_mods'))
-        lk_label.grid(row=2, column=0, sticky='e', padx=(0, 10), pady=10)
-        self._lk_global_combo = ttk.Combobox(download_frame, state='readonly', width=10)
-        self._lk_global_combo.grid(row=2, column=1, sticky='w', pady=10)
+        # --- “安装”设置组 ---
+        install_frame = ttk.LabelFrame(self, text=_('lki.settings.category.install'), padding=10)
+        install_frame.grid(row=2, column=0, sticky='we', pady=5)
+        install_frame.columnconfigure(1, weight=1)
+
+        # ⚠独立安装目录
+        lk_label = ttk.Label(install_frame, text=_('lki.settings.use_lk_mods'))
+        lk_label.grid(row=0, column=0, sticky='e', padx=(0, 10), pady=10)
+        self._lk_global_combo = ttk.Combobox(install_frame, state='readonly', width=10)
+        self._lk_global_combo.grid(row=0, column=1, sticky='w', pady=10)
         self._lk_global_combo['values'] = [_('lki.generic.yes'), _('lki.generic.no')]
         current_lk = settings.global_settings.get('use_lk_mods', False)
         self._lk_global_combo.set(_('lki.generic.yes') if current_lk else _('lki.generic.no'))
@@ -155,7 +140,7 @@ class SettingsTab(BaseTab):
 
         # --- “文件”设置组 (row=3) ---
         files_frame = ttk.LabelFrame(self, text=_('lki.settings.category.files'), padding=10)
-        files_frame.grid(row=2, column=0, sticky='we', pady=5)
+        files_frame.grid(row=3, column=0, sticky='we', pady=5)
         files_frame.columnconfigure(1, weight=1)
 
         # 数据路径
@@ -231,10 +216,6 @@ class SettingsTab(BaseTab):
 
     # --- (修改结束) ---
 
-    def _on_theme_select(self):
-        selected_theme = self.theme_var.get()
-        settings.global_settings.set('theme', selected_theme)
-        self.on_theme_change_callback(selected_theme)
 
     def _get_proxy_status_text(self):
         proxy_mode = settings.global_settings.get('proxy.mode', 'system')
