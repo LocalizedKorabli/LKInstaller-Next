@@ -1,6 +1,6 @@
 vdf~=3.4
 requests~=2.32.4
-pywin32~=311
+pywin32==311
 semver~=3.0.4
 urllib3==1.25.11
 nuitka
