@@ -479,16 +479,10 @@ class PresetManagerWindow(BaseDialog):
             row=0, column=0, sticky='w', padx=(0, 5))
         self._font_combo = ttk.Combobox(font_frame, state='readonly', width=28)
         self._font_combo.grid(row=0, column=1, sticky='w')
-        # 构建字体选项列表
-        font_options = [_('lki.preset.manager.font_opt.none')]
+        # 初始选项（在 update_content 中会根据语言动态重建）
         self._font_id_map = {"": _('lki.preset.manager.font_opt.none')}
-        for fid in FONT_IDS:
-            display_key = FONT_DISPLAY_KEYS.get(fid, fid)
-            display_text = _(display_key)
-            font_options.append(display_text)
-            self._font_id_map[fid] = display_text
-        self._display_to_font_id = {v: k for k, v in self._font_id_map.items()}
-        self._font_combo['values'] = font_options
+        self._font_combo['values'] = [_('lki.preset.manager.font_opt.none')]
+        self._display_to_font_id = {_('lki.preset.manager.font_opt.none'): ""}
 
         # Row 4: 加载本地化修改包
         mods_frame = ttk.Frame(self.details_frame)
@@ -620,7 +614,28 @@ class PresetManagerWindow(BaseDialog):
         self.use_ee_var.set(use_ee)
         self.use_mods_var.set(use_mods)
         self.use_fonts_var.set(use_fonts)
-        display = self._font_id_map.get(use_fonts, self._font_id_map.get("", ""))
+        # 动态重建字体 Combo（根据当前语言添加推荐项）
+        lang_code = preset_data.get('lang_code', 'en')
+        recommended_font = global_source_manager.get_default_font_id(lang_code)
+        font_options = [_('lki.preset.manager.font_opt.none')]
+        font_id_map = {"": _('lki.preset.manager.font_opt.none')}
+        if recommended_font:
+            rec_display_key = FONT_DISPLAY_KEYS.get(recommended_font)
+            rec_text = _(rec_display_key) if rec_display_key else recommended_font
+            # 用语言默认字体名填充推荐文本: "推荐：xx"
+            recommended_label = _('lki.preset.manager.font_opt.recommended_prefix') + rec_text
+            font_options.append(recommended_label)
+            font_id_map["__recommended__"] = recommended_label
+        for fid in FONT_IDS:
+            display_key = FONT_DISPLAY_KEYS.get(fid, fid)
+            display_text = _(display_key)
+            font_options.append(display_text)
+            font_id_map[fid] = display_text
+        self._font_combo['values'] = font_options
+        self._font_id_map = font_id_map
+        self._display_to_font_id = {v: k for k, v in font_id_map.items()}
+        # 设置字体 Combo 选中项
+        display = font_id_map.get(use_fonts, font_id_map.get("", ""))
         self._font_combo.set(display)
         # 动态重建 Combo（跟随全局文本中包含当前全局状态）
         from core import settings as core_settings

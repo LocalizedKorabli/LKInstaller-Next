@@ -215,6 +215,7 @@
   "lki.preset.manager.font_opt.SrcWagon-MainlandCN": "SrcWagon Материковый Китай",
   "lki.preset.manager.font_opt.SrcWagon-TWProvince": "SrcWagon Провинция Тайвань",
   "lki.preset.manager.font_opt.none": "Не устанавливать шрифты",
+  "lki.preset.manager.font_opt.recommended_prefix": "Рекомендуется: ",
   "lki.preset.manager.language": "Локализация:",
   "lki.preset.manager.route": "Маршрут загрузки:",
   "lki.preset.manager.saved": "Пресет сохранен.",

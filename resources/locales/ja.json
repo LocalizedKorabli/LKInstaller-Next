@@ -215,6 +215,7 @@
   "lki.preset.manager.font_opt.SrcWagon-MainlandCN": "SrcWagon 中国大陸版",
   "lki.preset.manager.font_opt.SrcWagon-TWProvince": "SrcWagon 中国台湾省版",
   "lki.preset.manager.font_opt.none": "フォントをインストールしない",
+  "lki.preset.manager.font_opt.recommended_prefix": "推奨：",
   "lki.preset.manager.language": "ローカライズ:",
   "lki.preset.manager.route": "ダウンロードルート:",
   "lki.preset.manager.saved": "プリセットが保存されました。",
