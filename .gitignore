@@ -8,3 +8,7 @@ __pycache__/
 
 /inno/Output/
 /.claude/
+/.reasonix/
+/reasonix.toml
+/CHANGELOG_v*.md
+/STORE_CHANGELOG_v*.txt
