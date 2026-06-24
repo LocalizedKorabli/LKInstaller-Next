@@ -270,7 +270,7 @@ if __name__ == '__main__':
     else:
         # --- GUI模式 ---
         root.withdraw()
-        root.overridedirect(True)
+        root.overrideredirect(True)
         root.deiconify()
         app = LocalizationInstallerApp(root, initial_theme=theme, font_family=font_family, scaling_factor=scaling_factor)
         root.mainloop()
