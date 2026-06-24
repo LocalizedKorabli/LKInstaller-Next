@@ -56,6 +56,55 @@ def is_running_as_msix() -> bool:
     return _msix_cache
 
 
+ALIAS_NAME = "LKNext.exe"
+
+
+def register_app_paths_alias():
+    """
+    在 Windows 注册表 App Paths 下注册 LKNext.exe 别名，
+    使非 MSIX 版也能被 Task Scheduler 以 LKNext.exe 解析到实际路径。
+    HKCU 无需管理员权限，用户级生效。
+
+    MSIX 版有系统原生 App ExecutionAlias，无需此注册，
+    且若同时安装 MSIX，MSIX 的 ExecutionAlias 优先级高于 App Paths。
+    """
+    if is_running_as_msix():
+        return True
+
+    try:
+        import winreg
+    except ImportError:
+        return False
+
+    try:
+        # 检查是否已有 MSIX ExecutionAlias 注册（Windows 10+）
+        try:
+            ks = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Extensions\windows.appExecutionAlias",
+                0, winreg.KEY_READ
+            )
+            logger_log("Warning: MSIX version detected alongside non-MSIX. "
+                        "Both versions share the 'LKNext.exe' alias; scheduled tasks "
+                        "may launch the MSIX version instead of this one.")
+            winreg.CloseKey(ks)
+        except FileNotFoundError:
+            pass
+        except Exception:
+            pass
+
+        subkey = r"Software\Microsoft\Windows\CurrentVersion\App Paths\LKNext.exe"
+        key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, subkey)
+        winreg.SetValueEx(key, "", 0, winreg.REG_SZ, sys.executable)
+        winreg.SetValueEx(key, "Path", 0, winreg.REG_SZ, str(Path(sys.executable).parent))
+        winreg.CloseKey(key)
+        logger_log(f"App Paths alias registered: {sys.executable} -> LKNext.exe")
+        return True
+    except Exception as e:
+        logger_log(f"Warning: Could not register App Paths alias: {e}")
+        return False
+
+
 def get_system_language_codes() -> Tuple[Optional[str], Optional[str]]:
     try:
         default_locale = locale.getdefaultlocale()
@@ -449,3 +498,50 @@ def update_worker(window, root_tk: tk.Tk):
 
     # 启动检查版本线程
     _check_version_and_ask()
+
+
+# ── 快捷方式 / 计划任务 公用辅助 ──────────────────────────────
+
+# Windows 不允许在任务名和文件名中使用的字符
+_TASK_NAME_INVALID_CHARS = set('/\\:?*"<>|')
+
+def sanitize_task_name(name: str) -> str:
+    """
+    将任意字符串清洗为 Windows Task Scheduler 和文件名均安全的文本。
+    替换非法字符为 '_'，并折叠连续空白。
+    """
+    cleaned = []
+    for ch in name:
+        if ch in _TASK_NAME_INVALID_CHARS:
+            cleaned.append('_')
+        else:
+            cleaned.append(ch)
+    result = ''.join(cleaned)
+    # 折叠连续的 '_' 和空白
+    import re
+    result = re.sub(r'[_\s]+', '_', result)
+    # 去掉首尾的 '_' 和空白
+    result = result.strip('_ ')
+    return result or 'Task'
+
+
+def validate_time_str(time_str: str) -> str:
+    """
+    验证并规范化 HH:MM 格式的时间字符串。
+    返回规范化后的 'HH:MM'，若无效则抛出 ValueError。
+    """
+    time_str = time_str.strip()
+    if ':' not in time_str:
+        raise ValueError("Time must be in HH:MM format")
+    parts = time_str.split(':')
+    if len(parts) != 2:
+        raise ValueError("Time must be in HH:MM format")
+    h_str, m_str = parts
+    if not h_str.isdigit() or not m_str.isdigit():
+        raise ValueError("Hours and minutes must be digits")
+    h, m = int(h_str), int(m_str)
+    if h < 0 or h > 23:
+        raise ValueError("Hours must be 0-23")
+    if m < 0 or m > 59:
+        raise ValueError("Minutes must be 0-59")
+    return f"{h:02d}:{m:02d}"

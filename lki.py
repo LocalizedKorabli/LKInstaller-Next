@@ -97,6 +97,85 @@ def run_auto_execute(root, arg, run_client):
     root.mainloop()
 
 
+def run_auto_execute_all(root, run_client):
+    """
+    为所有已配置的实例（使用其已选中的预设）运行自动更新。
+    """
+    log(f"Auto-execute-all mode triggered, run_client={run_client}")
+
+    all_instances = instance_manager.global_instance_manager.get_all()
+    if not all_instances:
+        log("Error: No instances configured, nothing to update.")
+        sys.exit(1)
+
+    tasks = []
+    first_instance = None  # 记住第一个合法实例，用于 runclient
+
+    for instance_id, instance_data in all_instances.items():
+        preset_id = instance_data.get('active_preset_id', 'default')
+        preset_data = instance_data.get('presets', {}).get(preset_id)
+        if not preset_data:
+            log(f"Warning: Instance '{instance_data.get('name', instance_id)}' has no active preset '{preset_id}', skipping.")
+            continue
+
+        try:
+            instance = GameInstance(
+                instance_id=instance_id,
+                path=Path(instance_data['path']),
+                name=instance_data['name'],
+                type=instance_data['type']
+            )
+        except Exception as e:
+            log(f"Error initializing game instance {instance_data.get('name', instance_id)}: {e}")
+            continue
+
+        if first_instance is None:
+            first_instance = instance
+
+        # 为预设添加可显示的名称
+        if preset_data.get('is_default'):
+            preset_data['name'] = _(preset_data.get('name_key', 'lki.preset.default.name'))
+        else:
+            preset_data['name'] = preset_data.get('name', preset_id)
+
+        tasks.append(InstallationTask(instance, preset_data, root))
+        log(f"Queued task: {instance_data['name']} -> {preset_data['name']}")
+
+    if not tasks:
+        log("Error: No valid instances/presets to update.")
+        sys.exit(1)
+
+    log(f"Starting batch update for {len(tasks)} instance(s)...")
+
+    def _on_all_complete():
+        log("Batch auto-install complete.")
+        if run_client and first_instance:
+            log("Launching client (first instance)...")
+            success, exe_name = first_instance.launch_game()
+            if not success:
+                log(f"Error: Failed to launch game at {first_instance.path}")
+
+        log("Exiting.")
+        root.after(500, root.quit)
+
+    manager = InstallationManager(root)
+
+    def deferred_start_all():
+        log("Mainloop is running. Starting batch installation...")
+        try:
+            manager.start_installation(tasks, _on_all_complete)
+        except Exception as e:
+            log(f"CRITICAL ERROR during batch installation: {e}")
+            import traceback
+            traceback.print_exc()
+            root.quit()
+
+    root.after(100, deferred_start_all)
+
+    log("Starting mainloop, waiting for deferred batch start...")
+    root.mainloop()
+
+
 if __name__ == '__main__':
     setup_logger()
     # HiDPI Awareness
@@ -115,23 +194,33 @@ if __name__ == '__main__':
         log(f"Warning: Could not set DPI awareness: {e}")
 
     global_translator.load_language(settings.global_settings.language)
+    from core.utils import register_app_paths_alias
+    register_app_paths_alias()
     from ui.app import LocalizationInstallerApp
     root = tk.Tk()
 
     auto_execute_arg = None
+    auto_execute_all = False
     run_client_flag = False
 
     args = sys.argv[1:]
+
+    if '--auto-execute-all' in args:
+        auto_execute_all = True
+
     if '--auto-execute-preset' in args:
-        try:
-            idx = args.index('--auto-execute-preset')
-            if idx + 1 < len(args):
-                auto_execute_arg = args[idx + 1]
-            else:
-                log("Error: --auto-execute-preset flag found but no argument provided.")
-                sys.exit(1)
-        except ValueError:
-            pass
+        if auto_execute_all:
+            log("Warning: Both --auto-execute-all and --auto-execute-preset specified. Using --auto-execute-all.")
+        else:
+            try:
+                idx = args.index('--auto-execute-preset')
+                if idx + 1 < len(args):
+                    auto_execute_arg = args[idx + 1]
+                else:
+                    log("Error: --auto-execute-preset flag found but no argument provided.")
+                    sys.exit(1)
+            except ValueError:
+                pass
 
     if '--runclient' in args:
         run_client_flag = True
@@ -171,9 +260,13 @@ if __name__ == '__main__':
     root.iconbitmap(default=dirs.base_path.joinpath('resources/logo/logo64.ico'))
 
     if auto_execute_arg:
-        # --- 简洁模式 ---
+        # --- 简洁模式（单实例） ---
         root.withdraw()  # 隐藏根窗口
         run_auto_execute(root, auto_execute_arg, run_client_flag)
+    elif auto_execute_all:
+        # --- 简洁模式（全部实例） ---
+        root.withdraw()
+        run_auto_execute_all(root, run_client_flag)
     else:
         # --- GUI模式 ---
         app = LocalizationInstallerApp(root, initial_theme=theme, font_family=font_family, scaling_factor=scaling_factor)
