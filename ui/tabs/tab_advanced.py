@@ -622,9 +622,11 @@ class PresetManagerWindow(BaseDialog):
         if recommended_font:
             rec_display_key = FONT_DISPLAY_KEYS.get(recommended_font)
             rec_text = _(rec_display_key) if rec_display_key else recommended_font
-            recommended_label = _('lki.preset.manager.font_opt.recommended_prefix') + rec_text
-            font_options.append(recommended_label)
-            font_id_map[True] = recommended_label  # True 哨兵 → 推荐显示文本
+        else:
+            rec_text = _('lki.preset.manager.font_opt.none')
+        recommended_label = _('lki.preset.manager.font_opt.recommended_prefix') + rec_text
+        font_options.append(recommended_label)
+        font_id_map[True] = recommended_label  # True 哨兵 → 推荐显示文本
         for fid in FONT_IDS:
             display_key = FONT_DISPLAY_KEYS.get(fid, fid)
             display_text = _(display_key)
