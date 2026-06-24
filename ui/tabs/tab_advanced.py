@@ -409,7 +409,7 @@ class PresetManagerWindow(BaseDialog):
 
         self.use_ee_var = tk.BooleanVar()
         self.use_mods_var = tk.BooleanVar()
-        self.use_fonts_var = tk.BooleanVar()
+        self.use_fonts_var = tk.StringVar(value="")
 
         main_frame = ttk.Frame(self, padding=10)
         main_frame.pack(fill='both', expand=True)
@@ -464,10 +464,25 @@ class PresetManagerWindow(BaseDialog):
         self._lk_mods_combo['values'] = [v[0] for v in self._lk_mods_combo.lk_mods_values]
         ToolTip(self._lk_mods_combo, _('lki.preset.manager.tooltip_use_lk_mods'))
 
-        # Row 3: 安装字体优化包
-        self.cb_use_fonts = ttk.Checkbutton(self.details_frame, text=_('lki.preset.manager.use_fonts'),
-                                            variable=self.use_fonts_var)
-        self.cb_use_fonts.grid(row=3, column=0, columnspan=2, sticky='w', pady=(5, 0))
+        # Row 3: 字体优化包（Combobox 多选一）
+        font_frame = ttk.Frame(self.details_frame)
+        font_frame.grid(row=3, column=0, columnspan=2, sticky='we', pady=(5, 0))
+        font_frame.columnconfigure(1, weight=1)
+        ttk.Label(font_frame, text=_('lki.preset.manager.use_fonts')).grid(
+            row=0, column=0, sticky='w', padx=(0, 5))
+        self._font_combo = ttk.Combobox(font_frame, state='readonly', width=28)
+        self._font_combo.grid(row=0, column=1, sticky='w')
+        # 构建字体选项列表
+        from installation.localization_sources import FONT_IDS, FONT_DISPLAY_KEYS
+        font_options = [_('lki.preset.manager.font_opt.none')]
+        self._font_id_map = {"": _('lki.preset.manager.font_opt.none')}
+        for fid in FONT_IDS:
+            display_key = FONT_DISPLAY_KEYS.get(fid, fid)
+            display_text = _(display_key)
+            font_options.append(display_text)
+            self._font_id_map[fid] = display_text
+        self._display_to_font_id = {v: k for k, v in self._font_id_map.items()}
+        self._font_combo['values'] = font_options
 
         # Row 4: 加载本地化修改包
         mods_frame = ttk.Frame(self.details_frame)
@@ -594,11 +609,13 @@ class PresetManagerWindow(BaseDialog):
 
         use_ee = preset_data.get('use_ee', False)
         use_mods = preset_data.get('use_mods', False)
-        use_fonts = preset_data.get('use_fonts', False)
+        use_fonts = preset_data.get('use_fonts', "")
         use_lk_mods = preset_data.get('use_lk_mods', None)
         self.use_ee_var.set(use_ee)
         self.use_mods_var.set(use_mods)
         self.use_fonts_var.set(use_fonts)
+        display = self._font_id_map.get(use_fonts, self._font_id_map.get("", ""))
+        self._font_combo.set(display)
         # 动态重建 Combo（跟随全局文本中包含当前全局状态）
         from core import settings as core_settings
         global_val = core_settings.global_settings.get('use_lk_mods', False)
@@ -618,7 +635,6 @@ class PresetManagerWindow(BaseDialog):
 
         self.cb_use_ee.config(state='normal')
         self.cb_use_mods.config(state='normal')
-        self.cb_use_fonts.config(state='normal')
 
         self.btn_rename.config(state=btn_state)
         self.btn_delete.config(state=btn_state)
@@ -653,6 +669,11 @@ class PresetManagerWindow(BaseDialog):
                 return val
         return None
 
+    def _get_font_value(self):
+        """从字体 Combo 读取选中的字体 ID，空字符串表示不安装。"""
+        display = self._font_combo.get()
+        return self._display_to_font_id.get(display, "")
+
     def _update_download_mods_btn_state(self, lang_code: str):
         """根据 lang_code 启用/禁用 mods 下载按钮"""
         if global_source_manager.get_mods_url(lang_code):
@@ -676,7 +697,7 @@ class PresetManagerWindow(BaseDialog):
         default_lang_code = determine_default_l10n_lang(current_ui_lang)
         default_use_ee = True
         default_use_mods = True
-        default_use_fonts = False
+        default_use_fonts = global_source_manager.get_default_font_id(default_lang_code)
 
         # try:
         #     default_use_fonts = global_source_manager.lang_code_requires_fonts(default_lang_code)
@@ -704,7 +725,7 @@ class PresetManagerWindow(BaseDialog):
         current_lang_code = self.l10n_name_to_id.get(current_lang_name, 'en')
         current_use_ee = self.use_ee_var.get()
         current_use_mods = self.use_mods_var.get()
-        current_use_fonts = self.use_fonts_var.get()
+        current_use_fonts = self._get_font_value()
 
         self.active_preset_id = self.instance_manager.add_preset(
             self.instance_id, new_name, current_lang_code, current_use_ee, current_use_mods, current_use_fonts,
@@ -728,7 +749,7 @@ class PresetManagerWindow(BaseDialog):
         new_lang_code = self.l10n_name_to_id.get(new_lang_name)
         new_use_ee = self.use_ee_var.get()
         new_use_mods = self.use_mods_var.get()
-        new_use_fonts = self.use_fonts_var.get()
+        new_use_fonts = self._get_font_value()
 
         data_to_save = {
             "lang_code": new_lang_code,

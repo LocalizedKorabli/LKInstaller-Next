@@ -7,3 +7,4 @@ nuitka
 polib~=1.2.0
 tkinter-tooltip~=3.1.2
 keyring~=25.5.0
+py7zr~=0.22.0

@@ -70,7 +70,7 @@ class InstallationTask:
 
         self.lang_code: str = preset_data.get('lang_code', 'en')
         self.use_ee: bool = preset_data.get('use_ee', False)
-        self.use_fonts: bool = preset_data.get('use_fonts', False)
+        self.use_fonts: str = preset_data.get('use_fonts', "")  # 字体 ID 或空字符串
         self.use_mods: bool = preset_data.get('use_mods', False)
         self.use_lk_mods: bool = preset_data.get('use_lk_mods')
         # None = 跟随全局设置
@@ -81,11 +81,11 @@ class InstallationTask:
         # 跟踪依赖
         self.mo_job_id: Optional[str] = None
         self.ee_job_id: Optional[str] = None if not self.use_ee else f"ee_{self.lang_code}"
-        self.fo_job_id: Optional[str] = None if not self.use_fonts else "fonts_srcwagon"  # <-- (新增)
+        self.fo_job_id: Optional[str] = None if not self.use_fonts else self.use_fonts  # 字体 ID 作为 job_id
 
         self.mo_ready: bool = False
         self.ee_ready: bool = not self.use_ee
-        self.fo_ready: bool = not self.use_fonts  # <-- (新增)
+        self.fo_ready: bool = not bool(self.use_fonts)  # <-- (新增)
 
         self.status: str = "pending"
         self.log_callback: Optional[Callable] = None
@@ -465,9 +465,9 @@ class InstallationManager:
     def _download_fonts(self, job: DownloadJob, task: InstallationTask) -> Tuple[bool, Optional[Path]]:
         from core.localizer import _
 
-        asset_id = job.job_id
-        cache_dir = utils.FONTS_CACHE
-        mkmod_path = cache_dir / "srcwagon_mk.mkmod"
+        font_id = job.job_id  # 例如 "SrcWagon-MainlandCN"
+        cache_dir = utils.FONTS_CACHE / font_id
+        mkmod_path = cache_dir / f"{font_id}.mkmod"
         info_path = cache_dir / "cache_info.json"
         utils.mkdir(cache_dir)
 
@@ -477,21 +477,26 @@ class InstallationManager:
             if self._cancel_event.is_set():
                 return False, None
 
-            urls = global_source_manager.get_global_asset_urls(asset_id, route_id)
-            if not urls or not urls.get('zip') or not urls.get('version'):
+            urls = global_source_manager.get_global_asset_urls("fonts", route_id)
+            if not urls or not urls.get('metadata') or not urls.get('download_template'):
                 continue
 
-            VER_URL = urls.get('version')
-            ZIP_URL = urls.get('zip')
+            METADATA_URL = urls['metadata']
+            DOWNLOAD_URL = urls['download_template'].replace('{font_id}', font_id)
 
             remote_version = None
+            remote_sha256 = None
 
             try:
                 _log_task(task, _('lki.install.status.fonts_route') % get_route_id_to_name().get(route_id, route_id))
-                resp = requests.get(VER_URL, timeout=5, proxies=proxies, auth=proxy_auth)
+                resp = requests.get(METADATA_URL, timeout=10, proxies=proxies, auth=proxy_auth)
                 resp.raise_for_status()
-                remote_info = resp.json()
-                remote_version = remote_info.get('version')
+                metadata = resp.json()
+                fonts_data = metadata.get('fonts', {})
+                font_info = fonts_data.get(font_id)
+                if font_info:
+                    remote_version = font_info.get('version')
+                    remote_sha256 = font_info.get('sha256')
             except Exception as e:
                 _log_task(task, _('lki.install.error.fonts_version_check') % f"{route_id}: {e}")
                 continue
@@ -500,11 +505,12 @@ class InstallationManager:
                 _log_task(task, _('lki.install.error.fonts_version_invalid') + f" ({route_id})")
                 continue
 
+            # 缓存命中检查
             if info_path.is_file() and mkmod_path.is_file():
                 try:
                     with open(info_path, 'r', encoding='utf-8') as f:
                         local_info = json.load(f)
-                    if local_info.get('version') == remote_version:
+                    if local_info.get('version') == remote_version and local_info.get('font_id') == font_id:
                         actual_hash = utils.get_sha256(mkmod_path)
                         expected_hash = local_info.get('file_sha256')
                         if actual_hash == expected_hash:
@@ -513,21 +519,25 @@ class InstallationManager:
                 except Exception as e:
                     log(_('lki.install.debug.cache_check_failed') % e)
 
+            # 下载 7z
             _log_task(task, _('lki.install.status.packing_fonts'))
-            temp_zip_path = utils.TEMP_DIR / "fonts.zip"
+            temp_7z_path = utils.TEMP_DIR / f"{font_id}.7z"
 
-            if not self._download_file_with_retry(ZIP_URL, temp_zip_path, f"Fonts ({job.job_id}) - {route_id}", 15):
+            if not self._download_file_with_retry(DOWNLOAD_URL, temp_7z_path, f"Fonts ({font_id}) - {route_id}", 30):
                 continue
 
             try:
-                unpack_dir = utils.FONTS_UNPACK_TEMP
+                # 用 py7zr 解压
+                unpack_dir = utils.FONTS_UNPACK_TEMP / font_id
                 if unpack_dir.exists():
                     shutil.rmtree(unpack_dir)
                 utils.mkdir(unpack_dir)
 
-                with zipfile.ZipFile(temp_zip_path, 'r') as zf:
-                    utils.process_possible_gbk_zip(zf).extractall(unpack_dir)
+                import py7zr
+                with py7zr.SevenZipFile(temp_7z_path, mode='r') as sz:
+                    sz.extractall(path=unpack_dir)
 
+                # 收集解压后的文件
                 files_to_add: Dict[str, Path] = {}
                 for root, _dirnames, files in os.walk(unpack_dir):
                     for file in files:
@@ -536,13 +546,14 @@ class InstallationManager:
                         files_to_add[arcname] = local_path
 
                 if not files_to_add:
-                    raise Exception("Empty zip file")
+                    raise Exception("Empty 7z archive")
 
+                # 打包为 mkmod
                 utils.create_mkmod(mkmod_path, files_to_add)
 
                 new_hash = utils.get_sha256(mkmod_path)
                 with open(info_path, 'w', encoding='utf-8') as f:
-                    json.dump({'version': remote_version, 'file_sha256': new_hash}, f)
+                    json.dump({'font_id': font_id, 'version': remote_version, 'file_sha256': new_hash}, f)
 
                 return True, mkmod_path
 
@@ -668,7 +679,7 @@ class InstallationManager:
             if not mo_file_path or not mo_file_path.is_file():
                 raise Exception(_('lki.install.error.mo_file_not_found') % mo_file_path)
 
-            locale_config_path = utils.write_locale_config_to_temp(task.lang_code, task.use_fonts)
+            locale_config_path = utils.write_locale_config_to_temp(task.lang_code, bool(task.use_fonts))
 
             core_mkmod_path = self._build_core_mkmod(task, mo_file_path, locale_config_path)
             ee_mkmod_path = self._build_ee_mkmod(task, ee_zip_path, non_critical_errors)

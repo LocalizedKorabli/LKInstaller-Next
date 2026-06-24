@@ -136,16 +136,42 @@ JA_PT_ROUTES = {
     }
 }
 
-# 5. 字体包路由 (SrcWagon)
-FONTS_SRCWAGON_ROUTES = {
-    'tencent': {
-        'zip': 'http://lk-1251573974.cos.accelerate.myqcloud.com/fonts/srcwagon/SrcWagon-MK.zip',
-        'version': 'http://lk-1251573974.cos.accelerate.myqcloud.com/fonts/srcwagon/version_info.json'
-    },
+# 5. 字体包路由
+# 元数据（所有字体版本信息汇总在一个 metadata.json）
+FONTS_METADATA_URL = "https://localizedkorabli.org/metadata/fonts/metadata.json"
+# 下载链接模板（{font_id} 替换为具体字体 ID，如 SrcHelios-MainlandCN）
+FONTS_DOWNLOAD_URL_TEMPLATE = "https://dl.localizedkorabli.org/fonts/{font_id}.7z"
+
+FONTS_ROUTES = {
     "cloudflare": {
-        'zip': "https://dl.localizedkorabli.org/fonts/srcwagon/SrcWagon-MK.zip",
-        'version': "https://dl.localizedkorabli.org/fonts/srcwagon/version_info.json"
+        'metadata': FONTS_METADATA_URL,
+        'download_template': FONTS_DOWNLOAD_URL_TEMPLATE
     }
+}
+
+# 可用字体 ID 列表
+FONT_IDS = [
+    "SrcWagon-MainlandCN",
+    "SrcWagon-TWProvince",
+    "SrcWagon-HKSAR",
+    "SrcWagon-JP",
+    "SrcHelios-MainlandCN",
+]
+
+# 字体 ID → UI 显示键 映射
+FONT_DISPLAY_KEYS = {
+    "SrcWagon-MainlandCN": "lki.preset.manager.font_opt.SrcWagon-MainlandCN",
+    "SrcWagon-TWProvince": "lki.preset.manager.font_opt.SrcWagon-TWProvince",
+    "SrcWagon-HKSAR": "lki.preset.manager.font_opt.SrcWagon-HKSAR",
+    "SrcWagon-JP": "lki.preset.manager.font_opt.SrcWagon-JP",
+    "SrcHelios-MainlandCN": "lki.preset.manager.font_opt.SrcHelios-MainlandCN",
+}
+
+# 语言 → 默认推荐字体 ID 映射
+LANG_DEFAULT_FONT = {
+    "zh_CN": "SrcWagon-MainlandCN",
+    "zh_TW": "SrcWagon-TWProvince",
+    "ja": "SrcWagon-JP",
 }
 
 # 6. 软件本体更新路由 (LKI Next)
@@ -174,8 +200,7 @@ class LocalizationSource:
 
     def __init__(self, source_id: str, name_key: str,
                  routes_live: dict, routes_pt: dict,
-                 mods_url: Optional[str],
-                 requires_fonts: bool):
+                 mods_url: Optional[str]):
         self.id = source_id
         self.name_key = name_key
 
@@ -184,7 +209,6 @@ class LocalizationSource:
             'pts': routes_pt
         }
         self.mods_url = mods_url
-        self.requires_fonts = requires_fonts
 
     def get_routes_for_type(self, instance_type: str = 'production') -> Optional[dict]:
         """获取 'production' 或 'pts' 的下载路由字典"""
@@ -231,8 +255,7 @@ class SourceManager:
             name_key="lki.i18n.lang.zh_CN.name",
             routes_live=CHS_LIVE_ROUTES,
             routes_pt=CHS_PT_ROUTES,
-            mods_url=MODS_URL_CHS,
-            requires_fonts=True
+            mods_url=MODS_URL_CHS
         )
 
         # 2. 英文
@@ -241,8 +264,7 @@ class SourceManager:
             name_key="lki.i18n.lang.en.name",
             routes_live=EN_LIVE_ROUTES,
             routes_pt=EN_PT_ROUTES,
-            mods_url=MODS_URL_EN,
-            requires_fonts=False
+            mods_url=MODS_URL_EN
         )
 
         # 3. 繁体中文
@@ -251,8 +273,7 @@ class SourceManager:
             name_key="lki.i18n.lang.zh_TW.name",
             routes_live=CHT_LIVE_ROUTES,
             routes_pt=CHT_PT_ROUTES,
-            mods_url=MODS_URL_CHT,
-            requires_fonts=True
+            mods_url=MODS_URL_CHT
         )
 
         # 4. 日语
@@ -261,18 +282,15 @@ class SourceManager:
             name_key="lki.i18n.lang.ja.name",
             routes_live=JA_LIVE_ROUTES,
             routes_pt=JA_PT_ROUTES,
-            mods_url=MODS_URL_JA,
-            requires_fonts=True
+            mods_url=MODS_URL_JA
         )
 
         # 注册全局资产 (字体包)
-        # 使用上面定义的全局常量，而不是硬编码
-        self.global_assets["fonts_srcwagon"] = FONTS_SRCWAGON_ROUTES
+        self.global_assets["fonts"] = FONTS_ROUTES
 
     def add_source(self, source_id: str, name_key: str, routes_live: dict, routes_pt: dict,
-                   mods_url: Optional[str], requires_fonts: bool):
-        self.sources[source_id] = LocalizationSource(source_id, name_key, routes_live, routes_pt, mods_url,
-                                                     requires_fonts)
+                   mods_url: Optional[str]):
+        self.sources[source_id] = LocalizationSource(source_id, name_key, routes_live, routes_pt, mods_url)
 
     def get_source(self, source_id: str) -> Optional[LocalizationSource]:
         return self.sources.get(source_id)
@@ -322,15 +340,9 @@ class SourceManager:
             return asset_routes.get(route_id, next(iter(asset_routes.values()), None))
         return None
 
-    def lang_code_requires_fonts(self, lang_code: str) -> bool:
-        """
-        检查一个语言代码是否可能需要字体包。
-        """
-        # May reactivate this
-        source = self.get_source(lang_code)
-        if source:
-          return source.requires_fonts
-        return False
+    def get_default_font_id(self, lang_code: str) -> str:
+        """返回指定语言推荐安装的字体 ID，空字符串表示不安装字体。"""
+        return LANG_DEFAULT_FONT.get(lang_code, "")
 
 
 # 全局实例

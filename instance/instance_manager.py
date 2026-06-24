@@ -45,7 +45,7 @@ class InstanceManager:
         'use_fonts' 的值取决于语言。
         """
 
-        default_fonts = global_source_manager.lang_code_requires_fonts(lang_code)
+        default_fonts = global_source_manager.get_default_font_id(lang_code)
 
         return {
             "name_key": "lki.preset.default.name",
@@ -103,12 +103,11 @@ class InstanceManager:
 
                     # (b. 补全语言相关的 'use_fonts' 键)
                     if 'use_fonts' not in preset_data:
-                        # (使用预设中已存的 lang_code 来决定默认值)
-                        lang_code = preset_data.get('lang_code', 'en')  # (回退到 'en')
+                        lang_code = preset_data.get('lang_code', 'en')
                         try:
-                            default_fonts = global_source_manager.lang_code_requires_fonts(lang_code)
+                            default_fonts = global_source_manager.get_default_font_id(lang_code)
                         except Exception:
-                            default_fonts = False  # (回退)
+                            default_fonts = ""
 
                         log(
                             f"Migrating preset {preset_id} for {instance_id} (adding use_fonts: {default_fonts} for lang={lang_code})...")
@@ -246,7 +245,7 @@ class InstanceManager:
         return self.instances[instance_id].get('non_ascii_acknowledged', False)
 
     def add_preset(self, instance_id: str, name: str, lang_code: str, use_ee: bool,
-                   use_mods: bool, use_fonts: bool, use_lk_mods: bool = None) -> str:
+                   use_mods: bool, use_fonts: str = "", use_lk_mods: bool = None) -> str:
         """为特定实例创建一个新的自定义预设并返回其 ID"""
         if instance_id not in self.instances:
             return None
