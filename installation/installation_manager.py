@@ -72,7 +72,11 @@ class InstallationTask:
         self.use_ee: bool = preset_data.get('use_ee', False)
         self.use_fonts: bool = preset_data.get('use_fonts', False)
         self.use_mods: bool = preset_data.get('use_mods', False)
-        self.use_lk_mods: bool = preset_data.get('use_lk_mods', False)
+        self.use_lk_mods: bool = preset_data.get('use_lk_mods')
+        # None = 跟随全局设置
+        if self.use_lk_mods is None:
+            from core import settings as core_settings
+            self.use_lk_mods = core_settings.global_settings.get('use_lk_mods', False)
 
         # 跟踪依赖
         self.mo_job_id: Optional[str] = None

@@ -143,7 +143,17 @@ class SettingsTab(BaseTab):
                                            command=self._open_route_priority_window)
         self.route_config_btn.grid(row=0, column=1, sticky='e')
 
-        # --- “文件”设置组 (row=2) ---
+        # [实验性] 安装到独立模组目录（row=2）
+        lk_label = ttk.Label(download_frame, text=_('lki.settings.use_lk_mods'))
+        lk_label.grid(row=2, column=0, sticky='e', padx=(0, 10), pady=10)
+        self._lk_global_combo = ttk.Combobox(download_frame, state='readonly', width=10)
+        self._lk_global_combo.grid(row=2, column=1, sticky='w', pady=10)
+        self._lk_global_combo['values'] = [_('lki.generic.yes'), _('lki.generic.no')]
+        current_lk = settings.global_settings.get('use_lk_mods', False)
+        self._lk_global_combo.set(_('lki.generic.yes') if current_lk else _('lki.generic.no'))
+        self._lk_global_combo.bind('<<ComboboxSelected>>', self._on_lk_global_changed)
+
+        # --- “文件”设置组 (row=3) ---
         files_frame = ttk.LabelFrame(self, text=_('lki.settings.category.files'), padding=10)
         files_frame.grid(row=2, column=0, sticky='we', pady=5)
         files_frame.columnconfigure(1, weight=1)
@@ -240,6 +250,10 @@ class SettingsTab(BaseTab):
 
     def _on_proxy_config_saved(self):
         self.proxy_status_label.config(text=self._get_proxy_status_text())
+
+    def _on_lk_global_changed(self, event=None):
+        val = self._lk_global_combo.get() == _('lki.generic.yes')
+        settings.global_settings.set('use_lk_mods', val)
 
     def update_icons(self):
         """当主题更改时更新此选项卡上的图标（如果需要）"""

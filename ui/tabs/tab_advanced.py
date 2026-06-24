@@ -410,7 +410,6 @@ class PresetManagerWindow(BaseDialog):
         self.use_ee_var = tk.BooleanVar()
         self.use_mods_var = tk.BooleanVar()
         self.use_fonts_var = tk.BooleanVar()
-        self.use_lk_mods_var = tk.BooleanVar()
 
         main_frame = ttk.Frame(self, padding=10)
         main_frame.pack(fill='both', expand=True)
@@ -467,12 +466,21 @@ class PresetManagerWindow(BaseDialog):
         ToolTip(self.btn_open_mods_dir, lambda: self.mods_dir_tooltip)
         ToolTip(self.btn_download_mods, _('lki.preset.manager.tooltip_download_mods'))
 
-        self.cb_use_lk_mods = ttk.Checkbutton(
-            self.details_frame,
-            text=_('lki.preset.manager.use_lk_mods'),
-            variable=self.use_lk_mods_var)
-        self.cb_use_lk_mods.grid(row=4, column=0, columnspan=2, sticky='w', pady=(5, 0))
-        ToolTip(self.cb_use_lk_mods, _('lki.preset.manager.tooltip_use_lk_mods'))
+        # [实验性] 安装到独立模组目录：是/否/跟随全局
+        lk_mods_frame = ttk.Frame(self.details_frame)
+        lk_mods_frame.grid(row=4, column=0, columnspan=2, sticky='we', pady=(5, 0))
+        lk_mods_frame.columnconfigure(1, weight=1)
+        ttk.Label(lk_mods_frame, text=_('lki.preset.manager.use_lk_mods')).grid(
+            row=0, column=0, sticky='w', padx=(0, 5))
+        self._lk_mods_combo = ttk.Combobox(lk_mods_frame, state='readonly', width=18)
+        self._lk_mods_combo.grid(row=0, column=1, sticky='w')
+        self._lk_mods_combo.lk_mods_values = [
+            (_('lki.generic.yes'), True),
+            (_('lki.generic.no'), False),
+            (_('lki.generic.follow_global'), None),
+        ]
+        self._lk_mods_combo['values'] = [v[0] for v in self._lk_mods_combo.lk_mods_values]
+        ToolTip(self._lk_mods_combo, _('lki.preset.manager.tooltip_use_lk_mods'))
 
         self.cb_use_fonts = ttk.Checkbutton(self.details_frame, text=_('lki.preset.manager.use_fonts'),
                                             variable=self.use_fonts_var)
@@ -577,15 +585,29 @@ class PresetManagerWindow(BaseDialog):
         use_ee = preset_data.get('use_ee', False)
         use_mods = preset_data.get('use_mods', False)
         use_fonts = preset_data.get('use_fonts', False)
-        use_lk_mods = preset_data.get('use_lk_mods', False)
+        use_lk_mods = preset_data.get('use_lk_mods', None)
         self.use_ee_var.set(use_ee)
         self.use_mods_var.set(use_mods)
         self.use_fonts_var.set(use_fonts)
-        self.use_lk_mods_var.set(use_lk_mods)
+        # 动态重建 Combo（跟随全局文本中包含当前全局状态）
+        from core import settings as core_settings
+        global_val = core_settings.global_settings.get('use_lk_mods', False)
+        global_label = _('lki.generic.yes') if global_val else _('lki.generic.no')
+        follow_text = _('lki.generic.follow_global') + '：' + global_label
+        self._lk_mods_combo.lk_mods_values = [
+            (_('lki.generic.yes'), True),
+            (_('lki.generic.no'), False),
+            (follow_text, None),
+        ]
+        self._lk_mods_combo['values'] = [v[0] for v in self._lk_mods_combo.lk_mods_values]
+        # 设置 Combo 选中项
+        for text, val in self._lk_mods_combo.lk_mods_values:
+            if val is use_lk_mods or val == use_lk_mods:
+                self._lk_mods_combo.set(text)
+                break
 
         self.cb_use_ee.config(state='normal')
         self.cb_use_mods.config(state='normal')
-        self.cb_use_lk_mods.config(state='normal')
         self.cb_use_fonts.config(state='normal')
 
         self.btn_rename.config(state=btn_state)
@@ -612,6 +634,14 @@ class PresetManagerWindow(BaseDialog):
             self.mods_dir_tooltip = _('lki.preset.manager.tooltip_open_mods_dir')
 
     # --- (路由相关方法已移除) ---
+
+    def _get_lk_mods_value(self):
+        """从 Combo 读取 use_lk_mods 实际值（True/False/None）。"""
+        display = self._lk_mods_combo.get()
+        for text, val in self._lk_mods_combo.lk_mods_values:
+            if text == display:
+                return val
+        return None
 
     def _update_download_mods_btn_state(self, lang_code: str):
         """根据 lang_code 启用/禁用 mods 下载按钮"""
@@ -665,11 +695,10 @@ class PresetManagerWindow(BaseDialog):
         current_use_ee = self.use_ee_var.get()
         current_use_mods = self.use_mods_var.get()
         current_use_fonts = self.use_fonts_var.get()
-        current_use_lk_mods = self.use_lk_mods_var.get()
 
         self.active_preset_id = self.instance_manager.add_preset(
             self.instance_id, new_name, current_lang_code, current_use_ee, current_use_mods, current_use_fonts,
-            current_use_lk_mods
+            self._get_lk_mods_value()
         )
         self._populate_listbox_and_select()
 
@@ -690,14 +719,13 @@ class PresetManagerWindow(BaseDialog):
         new_use_ee = self.use_ee_var.get()
         new_use_mods = self.use_mods_var.get()
         new_use_fonts = self.use_fonts_var.get()
-        new_use_lk_mods = self.use_lk_mods_var.get()
 
         data_to_save = {
             "lang_code": new_lang_code,
             "use_ee": new_use_ee,
             "use_mods": new_use_mods,
             "use_fonts": new_use_fonts,
-            "use_lk_mods": new_use_lk_mods
+            "use_lk_mods": self._get_lk_mods_value()
         }
 
         if not is_default:

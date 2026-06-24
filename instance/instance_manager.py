@@ -53,7 +53,7 @@ class InstanceManager:
             "use_ee": True,
             "use_mods": True,
             "use_fonts": default_fonts,
-            "use_lk_mods": False,
+            "use_lk_mods": None,  # None = 跟随全局设置
             "is_default": True
         }
 
@@ -246,7 +246,7 @@ class InstanceManager:
         return self.instances[instance_id].get('non_ascii_acknowledged', False)
 
     def add_preset(self, instance_id: str, name: str, lang_code: str, use_ee: bool,
-                   use_mods: bool, use_fonts: bool, use_lk_mods: bool = False) -> str:
+                   use_mods: bool, use_fonts: bool, use_lk_mods: bool = None) -> str:
         """为特定实例创建一个新的自定义预设并返回其 ID"""
         if instance_id not in self.instances:
             return None

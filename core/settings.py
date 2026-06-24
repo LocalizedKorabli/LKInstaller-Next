@@ -131,7 +131,8 @@ class GlobalSettings:
             },
             'ever_launched': False,
             'download_routes_priority': default_route_priority,
-            'checked_instance_ids': []
+            'checked_instance_ids': [],
+            'use_lk_mods': False
         }
 
         saved_data: Dict[str, Any] = {}
@@ -189,6 +190,9 @@ class GlobalSettings:
 
         if 'checked_instance_ids' in saved_data:
             self.data['checked_instance_ids'] = saved_data['checked_instance_ids']
+
+        if 'use_lk_mods' in saved_data:
+            self.data['use_lk_mods'] = saved_data['use_lk_mods']
 
         migration_needs_save = False
         current_routes = self.data['download_routes_priority']
