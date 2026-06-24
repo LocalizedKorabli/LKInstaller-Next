@@ -264,7 +264,7 @@
   "lki.settings.theme": "テーマ:",
   "lki.settings.theme.dark": "ダーク",
   "lki.settings.theme.light": "ライト",
-  "lki.settings.use_lk_mods": "[実験的] 独立Modディレクトリにインストール",
+  "lki.settings.use_lk_mods": "⚠ 独立インストールディレクトリ",
   "lki.tab.about": "概要",
   "lki.tab.advanced": "詳細",
   "lki.tab.game": "ゲーム",

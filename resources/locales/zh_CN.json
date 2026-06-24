@@ -264,7 +264,7 @@
   "lki.settings.theme": "主题:",
   "lki.settings.theme.dark": "深色",
   "lki.settings.theme.light": "浅色",
-  "lki.settings.use_lk_mods": "[实验性] 安装到独立模组目录",
+  "lki.settings.use_lk_mods": "⚠独立安装目录",
   "lki.tab.about": "关于",
   "lki.tab.advanced": "高级",
   "lki.tab.game": "游戏",
