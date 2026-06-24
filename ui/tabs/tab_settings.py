@@ -45,6 +45,8 @@ class SettingsTab(BaseTab):
         self.on_language_change_callback = on_language_change_callback
         self.on_reload_callback = on_reload_callback
 
+        self.theme_var = tk.StringVar(value=settings.global_settings.get('theme', 'light'))
+
         self.available_ui_langs = get_available_languages()
         self.ui_lang_name_to_code = {v: k for k, v in self.available_ui_langs.items()}
         current_locale = settings.global_settings.language
@@ -84,10 +86,22 @@ class SettingsTab(BaseTab):
         self.lang_reload_label = ttk.Label(appearance_frame, text="", foreground='gray')
         self.lang_reload_label.grid(row=1, column=1, sticky='w', padx=5, pady=(0, 10))
 
-        # 重载按钮 (row=1, column=2)
+        # 主题设置 (row=2)
+        theme_label = ttk.Label(appearance_frame, text=_('lki.settings.theme'))
+        theme_label.grid(row=2, column=0, sticky='e', padx=(0, 10), pady=(10, 0))
+
+        rb_light = ttk.Radiobutton(appearance_frame, text=_('lki.settings.theme.light'), variable=self.theme_var,
+                                   value='light', command=self._on_theme_select)
+        rb_light.grid(row=2, column=1, columnspan=2, sticky='w', pady=(10, 5))
+
+        rb_dark = ttk.Radiobutton(appearance_frame, text=_('lki.settings.theme.dark'), variable=self.theme_var,
+                                  value='dark', command=self._on_theme_select)
+        rb_dark.grid(row=3, column=1, sticky='w', pady=(0, 10))
+
+        # 重载按钮 (row=3, column=2)
         self.reload_btn = ttk.Button(appearance_frame, text=_('lki.settings.btn.reload'),
                                      command=self._on_reload_click, style='Link.TButton')
-        self.reload_btn.grid(row=1, column=2, sticky='se', padx=(10, 0), pady=(0, 10))
+        self.reload_btn.grid(row=3, column=2, sticky='se', padx=(10, 0), pady=(0, 10))
 
         # --- “下载”设置组 (row=1) ---
         download_frame = ttk.LabelFrame(self, text=_('lki.settings.category.download'), padding=10)
@@ -214,8 +228,10 @@ class SettingsTab(BaseTab):
                 self.lang_reload_label.config(text=_('lki.settings.language.reload_required'))
                 # (我们不再调用 on_language_change_callback，因为它会触发多余的弹窗)
 
-    # --- (修改结束) ---
-
+    def _on_theme_select(self):
+        selected_theme = self.theme_var.get()
+        settings.global_settings.set('theme', selected_theme)
+        self.on_theme_change_callback(selected_theme)
 
     def _get_proxy_status_text(self):
         proxy_mode = settings.global_settings.get('proxy.mode', 'system')

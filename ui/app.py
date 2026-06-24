@@ -60,48 +60,14 @@ class LocalizationInstallerApp:
 
         self._setup_styles(initial_theme == 'dark', font_family)
 
-        # ── 自定义顶栏 ──
-        self._drag_data = {'x': 0, 'y': 0, 'maximized': False, 'normal_geom': None}
-        self.top_bar = ttk.Frame(master, style='TopBar.TFrame')
-        self.top_bar.pack(fill='x', side='top', before=None)
-        # 顶栏拖拽
-        self.top_bar.bind('<Button-1>', self._start_move)
-        self.top_bar.bind('<B1-Motion>', self._on_move)
-        self.top_bar.bind('<Double-Button-1>', self._toggle_maximize)
-        # 应用标题（左侧）
-        self._title_label = ttk.Label(self.top_bar, text=_('lki.app.title'),
-                                      style='TopBar.TLabel', anchor='w')
-        self._title_label.pack(side='left', padx=10)
-        self._title_label.bind('<Button-1>', self._start_move)
-        self._title_label.bind('<B1-Motion>', self._on_move)
-        self._title_label.bind('<Double-Button-1>', self._toggle_maximize)
-        # 主题切换（右侧）
-        theme_combo_frame = ttk.Frame(self.top_bar)
-        theme_combo_frame.pack(side='right', padx=(0, 2))
-        self._theme_combo = ttk.Combobox(theme_combo_frame, state='readonly', width=10)
-        self._theme_combo['values'] = [_('lki.settings.theme.light'), _('lki.settings.theme.dark')]
-        self._theme_combo.set(_('lki.settings.theme.light') if initial_theme == 'light' else _('lki.settings.theme.dark'))
-        self._theme_combo.bind('<<ComboboxSelected>>', self._on_topbar_theme_changed)
-        self._theme_combo.pack(side='left')
-        # 窗口按钮
-        self._btn_min = ttk.Button(theme_combo_frame, text='─', width=3,
-                                   command=self._iconify_window)
-        self._btn_min.pack(side='left', padx=(4, 1))
-        self._btn_max = ttk.Button(theme_combo_frame, text='□', width=3,
-                                   command=self._toggle_maximize)
-        self._btn_max.pack(side='left', padx=1)
-        self._btn_close = ttk.Button(theme_combo_frame, text='✕', width=3,
-                                     command=self._close_window)
-        self._btn_close.pack(side='left', padx=(1, 0))
-
         self.notebook = ttk.Notebook(master)
-        self.notebook.pack(pady=(0, 10), padx=10, expand=True, fill='both')
+        self.notebook.pack(pady=10, padx=10, expand=True, fill='both')
 
         self.tab_game = GameTab(self.notebook, self.icons, self.type_id_to_name, self._on_instance_select)
 
         self.tab_advanced = AdvancedTab(self.notebook, self.icons, self.type_id_to_name)
 
-        self.tab_settings = SettingsTab(self.notebook, self.icons, None,
+        self.tab_settings = SettingsTab(self.notebook, self.icons, self._on_theme_select,
                                         self._on_language_select, self.reload_app)
 
         self.tab_about = AboutTab(self.notebook)
@@ -137,11 +103,6 @@ class LocalizationInstallerApp:
         self.style.map("Link.TButton",
                        foreground=[('active', self.select_bg), ('disabled', 'gray')],
                        underline=[('active', 1)])
-
-        # 顶栏样式
-        self.style.configure("TopBar.TFrame", background="#2b2b2b" if is_dark else "#e0e0e0")
-        self.style.configure("TopBar.TLabel", background="#2b2b2b" if is_dark else "#e0e0e0",
-                             foreground="white" if is_dark else "black", font=(font_family, 10))
 
     def _center_main_window(self):
         """计算并将主窗口居中到屏幕上。"""
@@ -196,50 +157,6 @@ class LocalizationInstallerApp:
         self.tab_advanced.update_icons()
         self.tab_settings.update_icons()
         self.tab_about.update_icons()
-
-    # ── 自定义顶栏：窗口控制 ──
-    def _start_move(self, event):
-        self._drag_data['x'] = event.x_root
-        self._drag_data['y'] = event.y_root
-
-    def _on_move(self, event):
-        if self._drag_data.get('maximized'):
-            return
-        dx = event.x_root - self._drag_data['x']
-        dy = event.y_root - self._drag_data['y']
-        self.master.geometry(f'+{self.master.winfo_x() + dx}+{self.master.winfo_y() + dy}')
-        self._drag_data['x'] = event.x_root
-        self._drag_data['y'] = event.y_root
-
-    def _toggle_maximize(self, event=None):
-        if self._drag_data['maximized']:
-            # 还原
-            if self._drag_data['normal_geom']:
-                self.master.geometry(self._drag_data['normal_geom'])
-            self._drag_data['maximized'] = False
-            self._btn_max.config(text='□')
-        else:
-            # 最大化：保存当前几何信息
-            self._drag_data['normal_geom'] = self.master.geometry()
-            screen_w = self.master.winfo_screenwidth()
-            screen_h = self.master.winfo_screenheight()
-            # 确保窗口覆盖整个屏幕（不包含任务栏区域）
-            self.master.geometry(f'{screen_w}x{screen_h}+0+0')
-            self._drag_data['maximized'] = True
-            self._btn_max.config(text='❐')
-
-    def _iconify_window(self):
-        self.master.iconify()
-
-    def _close_window(self):
-        self.master.quit()
-
-    def _on_topbar_theme_changed(self, event=None):
-        selected = self._theme_combo.get()
-        theme_map = {_('lki.settings.theme.light'): 'light', _('lki.settings.theme.dark'): 'dark'}
-        theme = theme_map.get(selected, 'light')
-        settings.global_settings.set('theme', theme)
-        self._on_theme_select(theme)
 
     def _on_instance_select(self, instance: Optional[GameInstance]):
         """
