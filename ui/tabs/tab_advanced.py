@@ -672,7 +672,7 @@ class PresetManagerWindow(BaseDialog):
             self.mods_dir_tooltip = _('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name
 
     def _on_lang_select_changed(self, event=None):
-        """当语言下拉框更改时，动态更新下载线路下拉框"""
+        """当语言下拉框更改时，动态更新下载线路下拉框和推荐字体。"""
         lang_name = self.lang_combobox.get()
         lang_code = self.l10n_name_to_id.get(lang_name)
         self._update_download_mods_btn_state(lang_code)
@@ -680,6 +680,20 @@ class PresetManagerWindow(BaseDialog):
             self.mods_dir_tooltip = _('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name
         else:
             self.mods_dir_tooltip = _('lki.preset.manager.tooltip_open_mods_dir')
+        # 若当前字体选了"推荐"，刷新推荐标签以匹配新语言
+        if self._get_font_value() is True:
+            rec_font = global_source_manager.get_default_font_id(lang_code) if lang_code else ""
+            rec_text = _(FONT_DISPLAY_KEYS.get(rec_font)) if rec_font else _('lki.preset.manager.font_opt.none')
+            new_label = _('lki.preset.manager.font_opt.recommended_prefix') + rec_text
+            self._font_id_map[True] = new_label
+            self._display_to_font_id[new_label] = True
+            vals = list(self._font_combo['values'])
+            for i, v in enumerate(vals):
+                if v.startswith(_('lki.preset.manager.font_opt.recommended_prefix')):
+                    vals[i] = new_label
+                    break
+            self._font_combo['values'] = vals
+            self._font_combo.set(new_label)
 
     # --- (路由相关方法已移除) ---
 
