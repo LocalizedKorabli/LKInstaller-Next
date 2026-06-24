@@ -882,11 +882,23 @@ class InstallationManager:
         _copy_and_hash_component(root_utils.copy_with_log, mods_json_mkmod_path, dest_json_mod_path, "mods", task, files_info, errors, mods_dir_name)
 
         utils.mkdir(info_json_path)
+        # 读取字体版本信息
+        font_version = None
+        if task.use_fonts:
+            font_cache_info = utils.FONTS_CACHE / task.use_fonts / "cache_info.json"
+            try:
+                with open(font_cache_info, 'r', encoding='utf-8') as f:
+                    font_cache_data = json.load(f)
+                font_version = font_cache_data.get('version')
+            except Exception:
+                pass
         with open(info_file, 'w', encoding='utf-8') as f:
             json.dump({
                 "version": f"{mo_job.version_info['main']}.{mo_job.version_info['sub']}",
                 "l10n_sub_version": mo_job.version_info['sub'],
                 "lang_code": task.lang_code,
+                "font_id": task.use_fonts,
+                "font_version": font_version,
                 "files": files_info
             }, f, indent=2)
 

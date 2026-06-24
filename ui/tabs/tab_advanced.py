@@ -24,7 +24,7 @@ from core import settings
 from core import utils
 from instance import instance_manager
 from instance.game_instance import GameInstance
-from installation.localization_sources import global_source_manager, get_route_id_to_name
+from installation.localization_sources import global_source_manager, get_route_id_to_name, FONT_IDS, FONT_DISPLAY_KEYS
 from core.localizer import _
 from core.logger import log
 from ui.dialogs import CustomAskStringDialog, BaseDialog, AutoUpdateConfigDialog  # (已修改)
@@ -218,7 +218,14 @@ class AdvancedTab(BaseTab):
                             font_status = statuses['font']
                             if not preset_use_fonts and font_status == "not_installed":
                                 font_status = "not_required"  # (覆盖)
-                            status_lines.append(f"{_('lki.component.font')}: {status_map.get(font_status)}")
+                            # 显示字体类型和版本
+                            font_detail = ""
+                            if font_status == "ok" and statuses.get('font_id'):
+                                font_display_key = FONT_DISPLAY_KEYS.get(statuses['font_id'])
+                                font_name = _(font_display_key) if font_display_key else statuses['font_id']
+                                fv = statuses.get('font_version', '')
+                                font_detail = f" {font_name}" + (f" v{fv}" if fv else "")
+                            status_lines.append(f"{_('lki.component.font')}: {status_map.get(font_status)}{font_detail}")
 
                         if "mods" in statuses:
                             mods_status = statuses['mods']
@@ -473,7 +480,6 @@ class PresetManagerWindow(BaseDialog):
         self._font_combo = ttk.Combobox(font_frame, state='readonly', width=28)
         self._font_combo.grid(row=0, column=1, sticky='w')
         # 构建字体选项列表
-        from installation.localization_sources import FONT_IDS, FONT_DISPLAY_KEYS
         font_options = [_('lki.preset.manager.font_opt.none')]
         self._font_id_map = {"": _('lki.preset.manager.font_opt.none')}
         for fid in FONT_IDS:

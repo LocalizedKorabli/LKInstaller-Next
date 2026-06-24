@@ -30,11 +30,14 @@ class LocalizationInfo:
     """
 
     def __init__(self, version: str, files: Dict[str, Dict[str, str]], lang_code: Optional[str] = None,
-                 l10n_sub_version: Optional[str] = None):
+                 l10n_sub_version: Optional[str] = None, font_id: Optional[str] = None,
+                 font_version: Optional[str] = None):
         self.version: str = version
-        self.files: Dict[str, Dict[str, str]] = files  # <-- (修改)
+        self.files: Dict[str, Dict[str, str]] = files
         self.lang_code: Optional[str] = lang_code
         self.l10n_sub_version: Optional[str] = l10n_sub_version
+        self.font_id: Optional[str] = font_id
+        self.font_version: Optional[str] = font_version
 
 
 class GameVersion:
@@ -124,7 +127,9 @@ class GameVersion:
                 version=data.get("version"),
                 files=data.get("files", {}),
                 lang_code=data.get("lang_code"),
-                l10n_sub_version=data.get("l10n_sub_version")
+                l10n_sub_version=data.get("l10n_sub_version"),
+                font_id=data.get("font_id"),
+                font_version=data.get("font_version")
             )
         except Exception as e:
             log(f"Error loading {info_path}: {e}")
@@ -132,10 +137,11 @@ class GameVersion:
 
     def get_component_statuses(self) -> Dict[str, str]:
         """
-        验证所有已知组件 (i18n, ee, font) 并返回其状态。
+        验证所有已知组件 (i18n, ee, font, mods) 并返回其状态。
+        对于 font 组件，当状态为 "ok" 时附加 font_id 和 version。
         返回: {"i18n": "ok", "ee": "tampered", "font": "not_installed"}
+              或 {"i18n": "ok", "font": "ok", "font_id": "SrcWagon-MainlandCN", "font_version": "26.6.24"}
         """
-        # (已修改：不再检查预设，始终检查所有组件)
         all_components = ["i18n", "ee", "font", "mods"]
 
         if not self.l10n_info:
@@ -151,24 +157,27 @@ class GameVersion:
             path_dict = files_data.get(component)
 
             if not path_dict:
-                # (组件已启用，但 info.json 中没有条目 = 损坏/未安装)
                 statuses[component] = "not_installed"
                 continue
 
             is_verified = True
             for relative_path, expected_hash in path_dict.items():
-                # (新逻辑：relative_path 是 "mods/file.mkmod")
-                # (self.bin_folder_path 是 ".../bin/8828504")
                 absolute_path = self.bin_folder_path / relative_path
-
                 actual_hash = get_sha256(absolute_path)
-
                 if actual_hash != expected_hash:
                     log(f"Verification FAILED for {relative_path}: Hash mismatch.")
                     is_verified = False
-                    break  # 一个坏文件使该组件失败
+                    break
 
             statuses[component] = "ok" if is_verified else "tampered"
+
+            # 字体组件附加字体 ID 和版本信息
+            if component == "font" and statuses[component] == "ok":
+                font_id = getattr(self.l10n_info, 'font_id', None) or ""
+                font_version = getattr(self.l10n_info, 'font_version', None) or ""
+                if font_id:
+                    statuses['font_id'] = font_id
+                    statuses['font_version'] = font_version
 
         return statuses
 
