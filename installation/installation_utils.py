@@ -112,9 +112,9 @@ def fix_paths_xml(build_dir: Path):
 
         current_paths = [path.text for path in paths_element.findall('Path')]
 
-        # (来自 installer_gui.py)
-        # (已移除 run_dir_num 检查，如您上传的文件所示)
+        # 确保以下路径存在于 <Paths> 中（按优先级从高到低）
         new_paths_to_add = [
+            (r'..\lk_mods', {'type': 'mods'}),
             (r'..\res_mods', {}),
             (r'..\mods', {'type': 'mods'})
         ]
@@ -130,7 +130,18 @@ def fix_paths_xml(build_dir: Path):
                 needs_save = True
 
         if needs_save:
+            # 检测现有缩进模式
+            indent = "\n        "
+            if len(paths_element) > 0:
+                existing_tail = paths_element[0].tail
+                if existing_tail and '\n' in existing_tail:
+                    indent = existing_tail
+            # 确保 <Paths> 后的换行（仅当完全缺失时设置）
+            if not paths_element.text:
+                paths_element.text = indent
+            # 插入新元素并设置尾部缩进
             for element in reversed(elements_to_insert):
+                element.tail = indent
                 paths_element.insert(0, element)
             tree.write(xml_path, encoding='utf-8', xml_declaration=True)
             log(f"Updated '{xml_path}'.")

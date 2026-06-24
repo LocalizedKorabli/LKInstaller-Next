@@ -813,7 +813,7 @@ class InstallationManager:
 
         _log_task(task, _('lki.install.status.installing_to') % version_folder.bin_folder_name, 80)
 
-        mods_dir = version_folder.bin_folder_path / "mods"
+        mods_dir = version_folder.bin_folder_path / "lk_mods"
         dest_core_mod_path = mods_dir / "aa_lk_i18n_pack.mkmod"
         dest_ee_mod_path = mods_dir / "aaaa_lk_i18n_ee.mkmod"
         dest_fo_mod_path = mods_dir / "aaa_srcwagon_mk.mkmod"
@@ -825,6 +825,26 @@ class InstallationManager:
 
         utils.mkdir(mods_dir)
 
+        # 安装前清理：删除 mods/ 和 lk_mods/ 中可能存在的同名文件
+        #（防止 Most 模组站清空 mods/ 后又写入同名文件造成冲突）
+        mod_filenames = [
+            "aa_lk_i18n_pack.mkmod",
+            "aaaa_lk_i18n_ee.mkmod",
+            "aaa_srcwagon_mk.mkmod",
+            "aaaa_lk_i18n_mo_mod.mkmod",
+            "aaaa_lk_i18n_json_mod.mkmod",
+        ]
+        bin_path = version_folder.bin_folder_path
+        for candidate_dir in [bin_path / "mods", bin_path / "lk_mods"]:
+            for fname in mod_filenames:
+                candidate_file = candidate_dir / fname
+                try:
+                    if candidate_file.is_file():
+                        os.remove(candidate_file)
+                        log(f"Pre-install cleanup: removed {candidate_file}")
+                except OSError as e:
+                    log(f"Pre-install cleanup warning: could not remove {candidate_file}: {e}")
+
         try:
             _log_task(task, _('lki.install.status.patching_paths_xml'), 81)
             utils.fix_paths_xml(version_folder.bin_folder_path)
@@ -835,7 +855,7 @@ class InstallationManager:
         root_utils.copy_with_log(core_mkmod_path, dest_core_mod_path)
         files_info = {'i18n': {}, 'ee': {}, 'font': {}, 'mods': {}}
         try:
-            files_info["i18n"][f"mods/{dest_core_mod_path.name}"] = utils.get_sha256(dest_core_mod_path)
+            files_info["i18n"][f"lk_mods/{dest_core_mod_path.name}"] = utils.get_sha256(dest_core_mod_path)
         except Exception as e:
             raise Exception(f"Critical error hashing core mod: {e}") from e
 
@@ -856,7 +876,7 @@ class InstallationManager:
     def _mark_version_inactive(self, task, version_folder):
         from core.localizer import _
         _log_task(task, _('lki.install.status.inactive_skip') % version_folder.bin_folder_name, 85)
-        mods_dir = version_folder.bin_folder_path / "mods"
+        mods_dir = version_folder.bin_folder_path / "lk_mods"
         info_json_path = task.instance.path / "lki" / "info" / version_folder.bin_folder_name
         info_file = info_json_path / "installation_info.json"
         for name in ["aa_lk_i18n_pack.mkmod", "aaaa_lk_i18n_ee.mkmod", "aaa_srcwagon_mk.mkmod",
@@ -987,7 +1007,7 @@ def _copy_and_hash_component(copy_func, src_path, dest_path, component_name, tas
     from core.logger import log as _log
     try:
         copy_func(src_path, dest_path)
-        rel_path = f"mods/{dest_path.name}"
+        rel_path = f"lk_mods/{dest_path.name}"
         files_info[component_name][rel_path] = utils.get_sha256(dest_path)
     except Exception as e:
         _log(_('lki.install.debug.hash_failed') % (f"{task.task_name} ({component_name})", e))
