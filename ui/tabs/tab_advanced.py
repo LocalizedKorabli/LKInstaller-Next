@@ -622,10 +622,9 @@ class PresetManagerWindow(BaseDialog):
         if recommended_font:
             rec_display_key = FONT_DISPLAY_KEYS.get(recommended_font)
             rec_text = _(rec_display_key) if rec_display_key else recommended_font
-            # 用语言默认字体名填充推荐文本: "推荐：xx"
             recommended_label = _('lki.preset.manager.font_opt.recommended_prefix') + rec_text
             font_options.append(recommended_label)
-            font_id_map["__recommended__"] = recommended_label
+            font_id_map[True] = recommended_label  # True 哨兵 → 推荐显示文本
         for fid in FONT_IDS:
             display_key = FONT_DISPLAY_KEYS.get(fid, fid)
             display_text = _(display_key)
@@ -634,7 +633,7 @@ class PresetManagerWindow(BaseDialog):
         self._font_combo['values'] = font_options
         self._font_id_map = font_id_map
         self._display_to_font_id = {v: k for k, v in font_id_map.items()}
-        # 设置字体 Combo 选中项
+        # 设置字体 Combo 选中项（True 也映射到推荐标签）
         display = font_id_map.get(use_fonts, font_id_map.get("", ""))
         self._font_combo.set(display)
         # 动态重建 Combo（跟随全局文本中包含当前全局状态）
@@ -691,9 +690,10 @@ class PresetManagerWindow(BaseDialog):
         return None
 
     def _get_font_value(self):
-        """从字体 Combo 读取选中的字体 ID，空字符串表示不安装。"""
+        """从字体 Combo 读取选中的字体 ID，空字符串表示不安装，True 表示推荐。"""
         display = self._font_combo.get()
-        return self._display_to_font_id.get(display, "")
+        val = self._display_to_font_id.get(display, "")
+        return val
 
     def _update_download_mods_btn_state(self, lang_code: str):
         """根据 lang_code 启用/禁用 mods 下载按钮"""

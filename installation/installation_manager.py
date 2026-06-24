@@ -70,9 +70,9 @@ class InstallationTask:
 
         self.lang_code: str = preset_data.get('lang_code', 'en')
         self.use_ee: bool = preset_data.get('use_ee', False)
-        self.use_fonts: str = preset_data.get('use_fonts', "")  # 字体 ID, ""=不安装, "__recommended__"=按语言推荐
-        # 解析 "__recommended__" → 实际字体 ID
-        if self.use_fonts == "__recommended__":
+        self.use_fonts: str = preset_data.get('use_fonts', "")  # 字体 ID, ""=不安装, True=推荐
+        # 解析 True → 语言默认字体
+        if self.use_fonts is True:
             from installation.localization_sources import global_source_manager
             self.use_fonts = global_source_manager.get_default_font_id(self.lang_code)
         self.use_mods: bool = preset_data.get('use_mods', False)

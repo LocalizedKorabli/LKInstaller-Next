@@ -114,13 +114,9 @@ class InstanceManager:
                         preset_data['use_fonts'] = default_fonts
                         needs_save = True
                     elif isinstance(preset_data['use_fonts'], bool):
-                        # (b2. 迁移旧版布尔值 use_fonts → 推荐字体)
-                        old_val = preset_data['use_fonts']
-                        new_val = "__recommended__" if old_val else ""
-                        log(f"Migrating preset {preset_id} for {instance_id} "
-                            f"(converting use_fonts from bool {old_val} to '{new_val}')...")
-                        preset_data['use_fonts'] = new_val
-                        needs_save = True
+                        # (b2. 旧版布尔值 use_fonts: True/False → 保持不动)
+                        # True 作为"推荐字体"哨兵值，UI 和安装逻辑会处理
+                        pass
 
                     # (c. 补全 use_lk_mods 键)
                     if 'use_lk_mods' not in preset_data:
