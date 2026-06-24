@@ -72,6 +72,7 @@ class InstallationTask:
         self.use_ee: bool = preset_data.get('use_ee', False)
         self.use_fonts: bool = preset_data.get('use_fonts', False)
         self.use_mods: bool = preset_data.get('use_mods', False)
+        self.use_lk_mods: bool = preset_data.get('use_lk_mods', False)
 
         # 跟踪依赖
         self.mo_job_id: Optional[str] = None
@@ -813,7 +814,8 @@ class InstallationManager:
 
         _log_task(task, _('lki.install.status.installing_to') % version_folder.bin_folder_name, 80)
 
-        mods_dir = version_folder.bin_folder_path / "lk_mods"
+        mods_dir_name = "lk_mods" if task.use_lk_mods else "mods"
+        mods_dir = version_folder.bin_folder_path / mods_dir_name
         dest_core_mod_path = mods_dir / "aa_lk_i18n_pack.mkmod"
         dest_ee_mod_path = mods_dir / "aaaa_lk_i18n_ee.mkmod"
         dest_fo_mod_path = mods_dir / "aaa_srcwagon_mk.mkmod"
@@ -855,14 +857,14 @@ class InstallationManager:
         root_utils.copy_with_log(core_mkmod_path, dest_core_mod_path)
         files_info = {'i18n': {}, 'ee': {}, 'font': {}, 'mods': {}}
         try:
-            files_info["i18n"][f"lk_mods/{dest_core_mod_path.name}"] = utils.get_sha256(dest_core_mod_path)
+            files_info["i18n"][f"{mods_dir_name}/{dest_core_mod_path.name}"] = utils.get_sha256(dest_core_mod_path)
         except Exception as e:
             raise Exception(f"Critical error hashing core mod: {e}") from e
 
-        _copy_and_hash_component(root_utils.copy_with_log, ee_mkmod_path, dest_ee_mod_path, "ee", task, files_info, errors)
-        _copy_and_hash_component(root_utils.copy_with_log, fo_mkmod_path, dest_fo_mod_path, "font", task, files_info, errors)
-        _copy_and_hash_component(root_utils.copy_with_log, mods_mo_mkmod_path, dest_mo_mod_path, "mods", task, files_info, errors)
-        _copy_and_hash_component(root_utils.copy_with_log, mods_json_mkmod_path, dest_json_mod_path, "mods", task, files_info, errors)
+        _copy_and_hash_component(root_utils.copy_with_log, ee_mkmod_path, dest_ee_mod_path, "ee", task, files_info, errors, mods_dir_name)
+        _copy_and_hash_component(root_utils.copy_with_log, fo_mkmod_path, dest_fo_mod_path, "font", task, files_info, errors, mods_dir_name)
+        _copy_and_hash_component(root_utils.copy_with_log, mods_mo_mkmod_path, dest_mo_mod_path, "mods", task, files_info, errors, mods_dir_name)
+        _copy_and_hash_component(root_utils.copy_with_log, mods_json_mkmod_path, dest_json_mod_path, "mods", task, files_info, errors, mods_dir_name)
 
         utils.mkdir(info_json_path)
         with open(info_file, 'w', encoding='utf-8') as f:
@@ -876,7 +878,8 @@ class InstallationManager:
     def _mark_version_inactive(self, task, version_folder):
         from core.localizer import _
         _log_task(task, _('lki.install.status.inactive_skip') % version_folder.bin_folder_name, 85)
-        mods_dir = version_folder.bin_folder_path / "lk_mods"
+        mods_dir_name = "lk_mods" if task.use_lk_mods else "mods"
+        mods_dir = version_folder.bin_folder_path / mods_dir_name
         info_json_path = task.instance.path / "lki" / "info" / version_folder.bin_folder_name
         info_file = info_json_path / "installation_info.json"
         for name in ["aa_lk_i18n_pack.mkmod", "aaaa_lk_i18n_ee.mkmod", "aaa_srcwagon_mk.mkmod",
@@ -1000,14 +1003,15 @@ class InstallationManager:
 
 # --- (组件安装助手) ---
 
-def _copy_and_hash_component(copy_func, src_path, dest_path, component_name, task, files_info, errors):
+def _copy_and_hash_component(copy_func, src_path, dest_path, component_name, task, files_info, errors,
+                             mods_dir_name="mods"):
     if not src_path or not src_path.is_file():
         return
     from core.localizer import _
     from core.logger import log as _log
     try:
         copy_func(src_path, dest_path)
-        rel_path = f"lk_mods/{dest_path.name}"
+        rel_path = f"{mods_dir_name}/{dest_path.name}"
         files_info[component_name][rel_path] = utils.get_sha256(dest_path)
     except Exception as e:
         _log(_('lki.install.debug.hash_failed') % (f"{task.task_name} ({component_name})", e))

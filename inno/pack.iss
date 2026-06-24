@@ -62,6 +62,8 @@ ja.MyAppName=澪刻 Next: Mir Korabley オンライン自動インストーラ�
 
 [Registry]
 Root: HKLM; Subkey: "Software\LocalizedKorabli\LKInstallerNext"; ValueType: string; ValueName: "InstallLanguage"; ValueData: "{language}"; Flags: uninsdeletevalue
+Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\LKNext.exe"; ValueType: string; ValueName: ""; ValueData: "{app}\lki.exe"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\LKNext.exe"; ValueType: string; ValueName: "Path"; ValueData: "{app}"; Flags: uninsdeletekey
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked

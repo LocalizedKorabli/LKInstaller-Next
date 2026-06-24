@@ -53,6 +53,7 @@ class InstanceManager:
             "use_ee": True,
             "use_mods": True,
             "use_fonts": default_fonts,
+            "use_lk_mods": False,
             "is_default": True
         }
 
@@ -112,6 +113,11 @@ class InstanceManager:
                         log(
                             f"Migrating preset {preset_id} for {instance_id} (adding use_fonts: {default_fonts} for lang={lang_code})...")
                         preset_data['use_fonts'] = default_fonts
+                        needs_save = True
+
+                    # (c. 补全 use_lk_mods 键)
+                    if 'use_lk_mods' not in preset_data:
+                        preset_data['use_lk_mods'] = False
                         needs_save = True
 
             else:
@@ -240,7 +246,7 @@ class InstanceManager:
         return self.instances[instance_id].get('non_ascii_acknowledged', False)
 
     def add_preset(self, instance_id: str, name: str, lang_code: str, use_ee: bool,
-                   use_mods: bool, use_fonts: bool) -> str:
+                   use_mods: bool, use_fonts: bool, use_lk_mods: bool = False) -> str:
         """为特定实例创建一个新的自定义预设并返回其 ID"""
         if instance_id not in self.instances:
             return None
@@ -254,6 +260,7 @@ class InstanceManager:
             "use_ee": use_ee,
             "use_mods": use_mods,
             "use_fonts": use_fonts,
+            "use_lk_mods": use_lk_mods,
             "is_default": False
         }
         self.save()
