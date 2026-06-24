@@ -120,7 +120,7 @@ class InstanceManager:
 
                     # (c. 补全 use_lk_mods 键)
                     if 'use_lk_mods' not in preset_data:
-                        preset_data['use_lk_mods'] = False
+                        preset_data['use_lk_mods'] = None  # None = 跟随全局设置
                         needs_save = True
 
             else:
