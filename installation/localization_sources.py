@@ -17,123 +17,130 @@ from typing import Dict, Optional, List
 
 from core.localizer import _
 
-MODS_URL_CHS = 'https://tapio.lanzn.com/b0nxzso2b'
-MODS_URL_EN = None
-MODS_URL_CHT = None
-MODS_URL_JA = None
-
-# 1. 简体中文路由
-CHS_LIVE_ROUTES = {
-    'gitee': {
-        'mo': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/global.mo',
-        'version': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/version.info',
-        'ee': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
-    },
-    'gitlab': {
-        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n/-/raw/main/Localizations/latest/global.mo',
-        'version': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n/-/raw/main/Localizations/latest/version.info',
-        'ee': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
-    },
-    'github': {
-        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/global.mo',
-        'version': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/version.info',
-        'ee': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
-    }
-}
-CHS_PT_ROUTES = {
-    'gitee': {
-        'mo': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/global.mo',
-        'version': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/version.info',
-        'ee': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/BuiltInMods/LKExperienceEnhancement.zip'
-    },
-    'gitlab': {
-        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n-publictest/-/raw/Localizations/Localizations/latest/global.mo',
-        'version': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n-publictest/-/raw/Localizations/Localizations/latest/version.info',
-        'ee': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n-publictest/-/raw/Localizations/BuiltInMods/LKExperienceEnhancement.zip'
-    },
-    'github': {
-        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/global.mo',
-        'version': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/version.info',
-        'ee': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/BuiltInMods/LKExperienceEnhancement.zip'
-    }
+# ── 各语言的 mods 下载 URL ──
+MODS_URLS = {
+    "chs": 'https://tapio.lanzn.com/b0nxzso2b',
+    "en": None,
+    "cht": None,
+    "ja": None,
 }
 
-# 2. 英文路由
-EN_LIVE_ROUTES = {
-    'gitlab': {
-        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n/-/raw/main/Localizations/latest/global.mo',
-        'version': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n/-/raw/main/Localizations/latest/version.info',
-        'ee': f'https://gitlab.com/localizedkorabli/korabli-lesta-i18n/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+# ── 本地化包下载路由 ──
+LANG_ROUTES = {
+    "chs": {
+        "production": {
+            'gitee': {
+                'mo': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/global.mo',
+                'version': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/version.info',
+                'ee': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            },
+            'gitlab': {
+                'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n/-/raw/main/Localizations/latest/global.mo',
+                'version': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n/-/raw/main/Localizations/latest/version.info',
+                'ee': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            },
+            'github': {
+                'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/global.mo',
+                'version': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/raw/main/Localizations/latest/version.info',
+                'ee': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            }
+        },
+        "pts": {
+            'gitee': {
+                'mo': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/global.mo',
+                'version': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/version.info',
+                'ee': 'https://gitee.com/localized-korabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/BuiltInMods/LKExperienceEnhancement.zip'
+            },
+            'gitlab': {
+                'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n-publictest/-/raw/Localizations/Localizations/latest/global.mo',
+                'version': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n-publictest/-/raw/Localizations/Localizations/latest/version.info',
+                'ee': 'https://gitlab.com/localizedkorabli/korabli-lesta-l10n-publictest/-/raw/Localizations/BuiltInMods/LKExperienceEnhancement.zip'
+            },
+            'github': {
+                'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/global.mo',
+                'version': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/Localizations/latest/version.info',
+                'ee': 'https://github.com/LocalizedKorabli/Korabli-LESTA-L10N-PublicTest/raw/Localizations/BuiltInMods/LKExperienceEnhancement.zip'
+            }
+        }
     },
-    'github': {
-        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N/raw/main/Localizations/latest/global.mo',
-        'version': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N/raw/main/Localizations/latest/version.info',
-        'ee': f'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
-    }
-}
-EN_PT_ROUTES = {
-    'gitlab': {
-        'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n-publictest/-/raw/main/Localizations/latest/global.mo',
-        'version': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n-publictest/-/raw/main/Localizations/latest/version.info',
-        'ee': f'https://gitlab.com/localizedkorabli/korabli-lesta-i18n-publictest/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+    "en": {
+        "production": {
+            'gitlab': {
+                'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n/-/raw/main/Localizations/latest/global.mo',
+                'version': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n/-/raw/main/Localizations/latest/version.info',
+                'ee': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            },
+            'github': {
+                'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N/raw/main/Localizations/latest/global.mo',
+                'version': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N/raw/main/Localizations/latest/version.info',
+                'ee': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            }
+        },
+        "pts": {
+            'gitlab': {
+                'mo': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n-publictest/-/raw/main/Localizations/latest/global.mo',
+                'version': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n-publictest/-/raw/main/Localizations/latest/version.info',
+                'ee': 'https://gitlab.com/localizedkorabli/korabli-lesta-i18n-publictest/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            },
+            'github': {
+                'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/Localizations/latest/global.mo',
+                'version': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/Localizations/latest/version.info',
+                'ee': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            }
+        }
     },
-    'github': {
-        'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/Localizations/latest/global.mo',
-        'version': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/Localizations/latest/version.info',
-        'ee': f'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
-    }
-}
-
-# 3. 繁体中文路由
-CHT_LIVE_ROUTES = {
-    'gitlab': {
-        'mo': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht/-/raw/main/Localizations/latest/global.mo',
-        'version': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht/-/raw/main/Localizations/latest/version.info',
-        'ee': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+    "cht": {
+        "production": {
+            'gitlab': {
+                'mo': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht/-/raw/main/Localizations/latest/global.mo',
+                'version': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht/-/raw/main/Localizations/latest/version.info',
+                'ee': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            },
+            'github': {
+                'mo': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT/raw/main/Localizations/latest/global.mo',
+                'version': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT/raw/main/Localizations/latest/version.info',
+                'ee': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            }
+        },
+        "pts": {
+            'gitlab': {
+                'mo': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht-publictest/-/raw/main/Localizations/latest/global.mo',
+                'version': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht-publictest/-/raw/main/Localizations/latest/version.info',
+                'ee': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht-publictest/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            },
+            'github': {
+                'mo': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT-PublicTest/raw/main/Localizations/latest/global.mo',
+                'version': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT-PublicTest/raw/main/Localizations/latest/version.info',
+                'ee': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT-PublicTest/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            }
+        }
     },
-    'github': {
-        'mo': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT/raw/main/Localizations/latest/global.mo',
-        'version': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT/raw/main/Localizations/latest/version.info',
-        'ee': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
-    }
-}
-CHT_PT_ROUTES = {
-    'gitlab': {
-        'mo': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht-publictest/-/raw/main/Localizations/latest/global.mo',
-        'version': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht-publictest/-/raw/main/Localizations/latest/version.info',
-        'ee': 'https://gitlab.com/localizedkorabli/korabli-l10n-cht-publictest/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+    "ja": {
+        "production": {
+            'gitlab': {
+                'mo': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja/-/raw/main/Localizations/latest/global.mo',
+                'version': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja/-/raw/main/Localizations/latest/version.info',
+                'ee': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            },
+            'github': {
+                'mo': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA/raw/main/Localizations/latest/global.mo',
+                'version': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA/raw/main/Localizations/latest/version.info',
+                'ee': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            }
+        },
+        "pts": {
+            'gitlab': {
+                'mo': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja-pt/-/raw/main/Localizations/latest/global.mo',
+                'version': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja-pt/-/raw/main/Localizations/latest/version.info',
+                'ee': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja-pt/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            },
+            'github': {
+                'mo': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA-PT/raw/main/Localizations/latest/global.mo',
+                'version': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA-PT/raw/main/Localizations/latest/version.info',
+                'ee': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA-PT/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            }
+        }
     },
-    'github': {
-        'mo': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT-PublicTest/raw/main/Localizations/latest/global.mo',
-        'version': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT-PublicTest/raw/main/Localizations/latest/version.info',
-        'ee': 'https://github.com/LocalizedKorabli/Korabli-L10n-CHT-PublicTest/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
-    }
-}
-
-# 4. 日语路由
-JA_LIVE_ROUTES = {
-    'gitlab': {
-        'mo': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja/-/raw/main/Localizations/latest/global.mo',
-        'version': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja/-/raw/main/Localizations/latest/version.info',
-        'ee': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
-    },
-    'github': {
-        'mo': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA/raw/main/Localizations/latest/global.mo',
-        'version': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA/raw/main/Localizations/latest/version.info',
-        'ee': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
-    }
-}
-JA_PT_ROUTES = {
-    'gitlab': {
-        'mo': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja-pt/-/raw/main/Localizations/latest/global.mo',
-        'version': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja-pt/-/raw/main/Localizations/latest/version.info',
-        'ee': 'https://gitlab.com/localizedkorabli/korabli-i18n-ja-pt/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
-    },
-    'github': {
-        'mo': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA-PT/raw/main/Localizations/latest/global.mo',
-        'version': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA-PT/raw/main/Localizations/latest/version.info',
-        'ee': 'https://github.com/LocalizedKorabli/Korabli-I18n-JA-PT/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
-    }
 }
 
 # 5. 字体包路由
@@ -249,41 +256,16 @@ class SourceManager:
         self._register_sources()
 
     def _register_sources(self):
-        # 1. 简体中文
-        self.add_source(
-            source_id="zh_CN",
-            name_key="lki.i18n.lang.zh_CN.name",
-            routes_live=CHS_LIVE_ROUTES,
-            routes_pt=CHS_PT_ROUTES,
-            mods_url=MODS_URL_CHS
-        )
-
-        # 2. 英文
-        self.add_source(
-            source_id="en",
-            name_key="lki.i18n.lang.en.name",
-            routes_live=EN_LIVE_ROUTES,
-            routes_pt=EN_PT_ROUTES,
-            mods_url=MODS_URL_EN
-        )
-
-        # 3. 繁体中文
-        self.add_source(
-            source_id="zh_TW",
-            name_key="lki.i18n.lang.zh_TW.name",
-            routes_live=CHT_LIVE_ROUTES,
-            routes_pt=CHT_PT_ROUTES,
-            mods_url=MODS_URL_CHT
-        )
-
-        # 4. 日语
-        self.add_source(
-            source_id="ja",
-            name_key="lki.i18n.lang.ja.name",
-            routes_live=JA_LIVE_ROUTES,
-            routes_pt=JA_PT_ROUTES,
-            mods_url=MODS_URL_JA
-        )
+        # 语言简码 → 内部 source_id 映射
+        lang_to_id = {"chs": "zh_CN", "en": "en", "cht": "zh_TW", "ja": "ja"}
+        for code, routes in LANG_ROUTES.items():
+            self.add_source(
+                source_id=lang_to_id[code],
+                name_key=f"lki.i18n.lang.{lang_to_id[code]}.name",
+                routes_live=routes["production"],
+                routes_pt=routes["pts"],
+                mods_url=MODS_URLS.get(code),
+            )
 
         # 注册全局资产 (字体包)
         self.global_assets["fonts"] = FONTS_ROUTES
