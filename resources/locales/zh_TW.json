@@ -219,7 +219,7 @@
   "lki.preset.manager.tooltip_use_lk_mods": "將檔案安裝到 lk_mods/ 而非 mods/，避免與 Most（官方模組站）衝突。實驗性功能。",
   "lki.preset.manager.use_ee": "安裝體驗增強包",
   "lki.preset.manager.use_fonts": "安裝字型優化包",
-  "lki.preset.manager.use_lk_mods": "[實驗性] 隔離安裝到 lk_mods/ 目錄",
+  "lki.preset.manager.use_lk_mods": "[實驗性] 安裝到獨立模組目錄",
   "lki.preset.manager.use_mods": "載入在地化修改包",
   "lki.proxy.error.host_port_required": "使用自訂代理伺服器時必須填寫主機和連接埠。",
   "lki.proxy.host": "主機:",
