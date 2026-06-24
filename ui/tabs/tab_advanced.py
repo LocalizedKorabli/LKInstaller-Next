@@ -188,7 +188,7 @@ class AdvancedTab(BaseTab):
                         l10n_sub_ver = game_version.l10n_info.l10n_sub_version
                         l10n_lang_code = game_version.l10n_info.lang_code
                         l10n_lang_name = self.l10n_id_to_name.get(l10n_lang_code, l10n_lang_code)
-                        lang_str = f" ({l10n_lang_name})" if l10n_lang_name else ""
+                        lang_str = f" {l10n_lang_name}" if l10n_lang_name else ""
 
                         status_map = {
                             "ok": "✔️",
@@ -204,7 +204,7 @@ class AdvancedTab(BaseTab):
                             sub_ver = l10n_sub_ver if (l10n_sub_ver and statuses["i18n"] == "ok") else ""
                             ver_str = f" {sub_ver}" if statuses["i18n"] == "ok" else ""
                             status_lines.append(
-                                f"{_('lki.component.i18n')}: {lang_str}{ver_str} {status_map.get(statuses['i18n'])}")
+                                f"{_('lki.component.i18n')}: {status_map.get(statuses['i18n'])}{lang_str}{ver_str}")
 
                         # 2. 体验增强包 (检查预设)
                         if "ee" in statuses:
