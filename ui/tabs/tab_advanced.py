@@ -170,6 +170,8 @@ class AdvancedTab(BaseTab):
             preset_use_mods = preset_data.get("use_mods", False)
 
             for game_version in versions_to_display:
+                # 重新加载 installation_info.json 以反映最近安装的变化
+                game_version.load_details()
                 ver_str = game_version.exe_version or _('lki.game.version_unknown')
                 version_text = f"{ver_str}: "
 
