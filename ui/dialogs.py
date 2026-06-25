@@ -96,6 +96,7 @@ class TimePicker(ttk.Frame):
             width=4, justify='left', wrap=True
         )
         hour_spin.pack(side='left')
+        hour_spin.bind('<FocusIn>', lambda e: hour_spin.selection_range(0, 'end'))
 
         ttk.Label(self, text=":", font=("TkDefaultFont", 11, "bold")).pack(side='left', padx=2)
 
@@ -104,6 +105,7 @@ class TimePicker(ttk.Frame):
             width=4, justify='left', wrap=True
         )
         min_spin.pack(side='left')
+        min_spin.bind('<FocusIn>', lambda e: min_spin.selection_range(0, 'end'))
 
     def get(self) -> str:
         """返回 'HH:MM' 格式的时间字符串。"""
