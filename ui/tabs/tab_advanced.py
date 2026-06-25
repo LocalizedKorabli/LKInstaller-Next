@@ -657,7 +657,7 @@ class PresetManagerWindow(BaseDialog):
         from core import settings as core_settings
         global_val = core_settings.global_settings.get('use_lk_mods', False)
         global_label = _('lki.generic.yes') if global_val else _('lki.generic.no')
-        follow_text = _('lki.generic.follow_global') + '：' + global_label
+        follow_text = _('lki.generic.follow_global') + ': ' + global_label
         self._lk_mods_combo.lk_mods_values = [
             (_('lki.generic.yes'), True),
             (_('lki.generic.no'), False),
