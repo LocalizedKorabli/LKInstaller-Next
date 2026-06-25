@@ -456,13 +456,10 @@ class PresetManagerWindow(BaseDialog):
         #   5. 安装体验增强包
 
         # Row 2: [实验性] 安装到独立模组目录
-        lk_mods_frame = ttk.Frame(self.details_frame)
-        lk_mods_frame.grid(row=2, column=0, columnspan=2, sticky='we', pady=(8, 0))
-        lk_mods_frame.columnconfigure(1, weight=1)
-        ttk.Label(lk_mods_frame, text=_('lki.preset.manager.use_lk_mods')).grid(
-            row=0, column=0, sticky='w', padx=(0, 5))
-        self._lk_mods_combo = ttk.Combobox(lk_mods_frame, state='readonly', width=18)
-        self._lk_mods_combo.grid(row=0, column=1, sticky='w')
+        ttk.Label(self.details_frame, text=_('lki.preset.manager.use_lk_mods')).grid(
+            row=2, column=0, sticky='e', padx=(0, 10), pady=3)
+        self._lk_mods_combo = ttk.Combobox(self.details_frame, state='readonly', width=18)
+        self._lk_mods_combo.grid(row=2, column=1, sticky='w', pady=3)
         self._lk_mods_combo.lk_mods_values = [
             (_('lki.generic.yes'), True),
             (_('lki.generic.no'), False),
@@ -471,14 +468,11 @@ class PresetManagerWindow(BaseDialog):
         self._lk_mods_combo['values'] = [v[0] for v in self._lk_mods_combo.lk_mods_values]
         ToolTip(self._lk_mods_combo, _('lki.preset.manager.tooltip_use_lk_mods'))
 
-        # Row 3: 字体优化包（Combobox 多选一）
-        font_frame = ttk.Frame(self.details_frame)
-        font_frame.grid(row=3, column=0, columnspan=2, sticky='we', pady=(5, 0))
-        font_frame.columnconfigure(1, weight=1)
-        ttk.Label(font_frame, text=_('lki.preset.manager.use_fonts')).grid(
-            row=0, column=0, sticky='w', padx=(0, 5))
-        self._font_combo = ttk.Combobox(font_frame, state='readonly', width=28)
-        self._font_combo.grid(row=0, column=1, sticky='w')
+        # Row 3: 字体优化包
+        ttk.Label(self.details_frame, text=_('lki.preset.manager.use_fonts')).grid(
+            row=3, column=0, sticky='e', padx=(0, 10), pady=3)
+        self._font_combo = ttk.Combobox(self.details_frame, state='readonly', width=28)
+        self._font_combo.grid(row=3, column=1, sticky='w', pady=3)
         # 初始选项（在 update_content 中会根据语言动态重建）
         self._font_id_map = {"": _('lki.preset.manager.font_opt.none')}
         self._font_combo['values'] = [_('lki.preset.manager.font_opt.none')]
@@ -486,7 +480,7 @@ class PresetManagerWindow(BaseDialog):
 
         # Row 4: 加载本地化修改包
         mods_frame = ttk.Frame(self.details_frame)
-        mods_frame.grid(row=4, column=0, columnspan=2, sticky='we', pady=5)
+        mods_frame.grid(row=4, column=1, sticky='w', pady=3)
 
         self.cb_use_mods = ttk.Checkbutton(mods_frame, text=_('lki.preset.manager.use_mods'),
                                            variable=self.use_mods_var)
@@ -509,7 +503,7 @@ class PresetManagerWindow(BaseDialog):
         # Row 5: 安装体验增强包
         self.cb_use_ee = ttk.Checkbutton(self.details_frame, text=_('lki.preset.manager.use_ee'),
                                          variable=self.use_ee_var)
-        self.cb_use_ee.grid(row=5, column=0, columnspan=2, sticky='w', pady=(10, 0))
+        self.cb_use_ee.grid(row=5, column=1, sticky='w', pady=(5, 0))
 
         # ── 按钮栏（统一 grid 布局，两行等宽对齐）──
         btn_grid = ttk.Frame(main_frame)
