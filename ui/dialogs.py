@@ -105,9 +105,6 @@ class TimePicker(ttk.Frame):
         min_spin.bind('<ButtonRelease-1>', lambda e: min_spin.selection_range(0, 'end'))
         min_spin.bind('<FocusOut>', _on_min_focusout)
 
-    @staticmethod
-
-
     def get(self) -> str:
         """返回 'HH:MM' 格式的时间字符串。"""
         return f"{self._hour_var.get()}:{self._min_var.get()}"
