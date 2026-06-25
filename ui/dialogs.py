@@ -56,9 +56,6 @@ class TimePicker(ttk.Frame):
     def __init__(self, master, initial: str = "08:00", **kwargs):
         super().__init__(master, **kwargs)
 
-        # 外层框架提供边框和背景
-        self.configure(relief='solid', borderwidth=1)
-
         try:
             h, m = initial.strip().split(":")
             h_val, m_val = int(h), int(m)
@@ -71,31 +68,28 @@ class TimePicker(ttk.Frame):
         self._hour_str.trace_add('write', lambda *_: self._pad_var(self._hour_str, 0, 23))
         self._min_str.trace_add('write', lambda *_: self._pad_var(self._min_str, 0, 59))
 
-        hour_spin = ttk.Spinbox(self, from_=0, to=23, textvariable=self._hour_str,
-                                width=5, justify='center', wrap=True)
+        hour_spin = ttk.Spinbox(
+            self, from_=0, to=23, textvariable=self._hour_str,
+            width=4, justify='left', wrap=True
+        )
         hour_spin.pack(side='left')
-        hour_spin.bind('<FocusIn>', lambda e: self._on_focus(True))
-        hour_spin.bind('<FocusOut>', lambda e: self._on_focus(False))
+        hour_spin.bind('<FocusIn>', lambda e: hour_spin.selection_range(0, 'end'))
 
-        sep = ttk.Label(self, text=":", font=("TkDefaultFont", 11, "bold"))
-        sep.pack(side='left')
+        ttk.Label(self, text=":", font=("TkDefaultFont", 11, "bold")).pack(side='left', padx=2)
 
-        min_spin = ttk.Spinbox(self, from_=0, to=59, textvariable=self._min_str,
-                               width=5, justify='center', wrap=True)
+        min_spin = ttk.Spinbox(
+            self, from_=0, to=59, textvariable=self._min_str,
+            width=4, justify='left', wrap=True
+        )
         min_spin.pack(side='left')
-        min_spin.bind('<FocusIn>', lambda e: self._on_focus(True))
-        min_spin.bind('<FocusOut>', lambda e: self._on_focus(False))
-
-        self._on_focus(False)
-
-    def _on_focus(self, focused: bool):
-        self.configure(relief='solid' if focused else 'flat',
-                       borderwidth=2 if focused else 1)
+        min_spin.bind('<FocusIn>', lambda e: min_spin.selection_range(0, 'end'))
 
     @staticmethod
     def _pad_var(var: tk.StringVar, lo: int, hi: int):
+        """Spinbox 值变化后补零为两位数，并钳制到合法范围。"""
+        raw = var.get().strip()
         try:
-            val = int(var.get().strip())
+            val = int(raw)
         except ValueError:
             var.set(f"{lo:02d}")
             return
@@ -106,9 +100,11 @@ class TimePicker(ttk.Frame):
         var.set(f"{val:02d}")
 
     def get(self) -> str:
+        """返回 'HH:MM' 格式的时间字符串。"""
         return f"{self._hour_str.get()}:{self._min_str.get()}"
 
     def set(self, time_str: str):
+        """从 'HH:MM' 字符串设置时间。"""
         try:
             h, m = time_str.strip().split(":")
             self._hour_str.set(f"{int(h):02d}")
