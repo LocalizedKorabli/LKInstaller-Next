@@ -62,53 +62,58 @@ class TimePicker(ttk.Frame):
         except (ValueError, AttributeError):
             h_val, m_val = 8, 0
 
-        self._hour_str = tk.StringVar(value=f"{h_val:02d}")
-        self._min_str = tk.StringVar(value=f"{m_val:02d}")
+        self._hour_var = tk.StringVar(value=f"{h_val:02d}")
+        self._min_var = tk.StringVar(value=f"{m_val:02d}")
 
-        self._hour_str.trace_add('write', lambda *_: self._pad_var(self._hour_str, 0, 23))
-        self._min_str.trace_add('write', lambda *_: self._pad_var(self._min_str, 0, 59))
+        # 失去焦点时补零
+        vcmd_h = (self.register(lambda v: self._on_focusout(self._hour_var, 0, 23)),)
+        vcmd_m = (self.register(lambda v: self._on_focusout(self._min_var, 0, 59)),)
 
         hour_spin = ttk.Spinbox(
-            self, from_=0, to=23, textvariable=self._hour_str,
-            width=4, justify='left', wrap=True
+            self, from_=0, to=23, textvariable=self._hour_var,
+            width=4, justify='left', wrap=True,
+            validate='focusout', validatecommand=vcmd_h
         )
         hour_spin.pack(side='left')
         hour_spin.bind('<FocusIn>', lambda e: hour_spin.selection_range(0, 'end'))
+        hour_spin.bind('<ButtonRelease-1>', lambda e: hour_spin.selection_range(0, 'end'))
 
         ttk.Label(self, text=":", font=("TkDefaultFont", 11, "bold")).pack(side='left', padx=2)
 
         min_spin = ttk.Spinbox(
-            self, from_=0, to=59, textvariable=self._min_str,
-            width=4, justify='left', wrap=True
+            self, from_=0, to=59, textvariable=self._min_var,
+            width=4, justify='left', wrap=True,
+            validate='focusout', validatecommand=vcmd_m
         )
         min_spin.pack(side='left')
         min_spin.bind('<FocusIn>', lambda e: min_spin.selection_range(0, 'end'))
+        min_spin.bind('<ButtonRelease-1>', lambda e: min_spin.selection_range(0, 'end'))
 
     @staticmethod
-    def _pad_var(var: tk.StringVar, lo: int, hi: int):
-        """Spinbox 值变化后补零为两位数，并钳制到合法范围。"""
+    def _on_focusout(var: tk.StringVar, lo: int, hi: int):
+        """失去焦点时补零并钳制范围。"""
         raw = var.get().strip()
         try:
             val = int(raw)
         except ValueError:
-            var.set(f"{lo:02d}")
-            return
+            val = lo
         if val < lo:
             val = lo
         elif val > hi:
             val = hi
         var.set(f"{val:02d}")
+        return True
 
     def get(self) -> str:
         """返回 'HH:MM' 格式的时间字符串。"""
-        return f"{self._hour_str.get()}:{self._min_str.get()}"
+        return f"{self._hour_var.get()}:{self._min_var.get()}"
 
     def set(self, time_str: str):
         """从 'HH:MM' 字符串设置时间。"""
         try:
             h, m = time_str.strip().split(":")
-            self._hour_str.set(f"{int(h):02d}")
-            self._min_str.set(f"{int(m):02d}")
+            self._hour_var.set(f"{int(h):02d}")
+            self._min_var.set(f"{int(m):02d}")
         except (ValueError, AttributeError):
             pass
 
