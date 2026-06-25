@@ -38,6 +38,9 @@ def build_autoexec_args(instance_id: str, preset_id: str, run_client: bool) -> t
     target_alias = "LKNext.exe"
     if utils.is_running_as_msix():
         working_dir = os.path.expanduser("~")
+        # MSIX 执行别名路径（Task Scheduler 可解析）
+        target_alias = os.path.join(os.environ.get('LOCALAPPDATA', working_dir),
+                                     r'Microsoft\WindowsApps\LKNext.exe')
     else:
         working_dir = str(Path(sys.executable).parent)
         target_alias = str(Path(sys.executable))  # 使用完整路径确保计划任务能解析
