@@ -744,8 +744,6 @@ class AutoUpdateConfigDialog(BaseDialog):
             elif trigger_type == 'daily':
                 name_suffix = f"Daily_{time_str}"
                 task_name = utils.sanitize_task_name(f"{instance_name}-{preset_name}_{name_suffix}")
-                path = self._scheduler.create_daily(
-                    task_name, instance_id, preset_id, run_client, time_str, description)
             elif trigger_type == 'weekly':
                 if not days:
                     messagebox.showwarning(_('lki.autoupdate.title'),
@@ -754,18 +752,28 @@ class AutoUpdateConfigDialog(BaseDialog):
                 days_str = "-".join(d[:3].title() for d in days)
                 name_suffix = f"Weekly_{days_str}_{time_str}"
                 task_name = utils.sanitize_task_name(f"{instance_name}-{preset_name}_{name_suffix}")
+            elif trigger_type == 'at_logon':
+                task_name = utils.sanitize_task_name(f"{instance_name}-{preset_name}_AtLogon")
+            elif trigger_type == 'at_startup':
+                task_name = utils.sanitize_task_name(f"{instance_name}-{preset_name}_AtStartup")
+            elif trigger_type == 'on_idle':
+                task_name = utils.sanitize_task_name(f"{instance_name}-{preset_name}_Idle_{idle_min}min")
+            else:
+                return
+
+            if trigger_type == 'daily':
+                path = self._scheduler.create_daily(
+                    task_name, instance_id, preset_id, run_client, time_str, description)
+            elif trigger_type == 'weekly':
                 path = self._scheduler.create_weekly(
                     task_name, instance_id, preset_id, run_client, time_str, days, description)
             elif trigger_type == 'at_logon':
-                task_name = utils.sanitize_task_name(f"{instance_name}-{preset_name}_AtLogon")
                 path = self._scheduler.create_at_logon(
                     task_name, instance_id, preset_id, run_client, description)
             elif trigger_type == 'at_startup':
-                task_name = utils.sanitize_task_name(f"{instance_name}-{preset_name}_AtStartup")
                 path = self._scheduler.create_at_startup(
                     task_name, instance_id, preset_id, run_client, description)
             elif trigger_type == 'on_idle':
-                task_name = utils.sanitize_task_name(f"{instance_name}-{preset_name}_Idle_{idle_min}min")
                 path = self._scheduler.create_on_idle(
                     task_name, instance_id, preset_id, run_client, idle_min, description)
             else:
