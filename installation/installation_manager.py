@@ -527,7 +527,12 @@ class InstallationManager:
             _log_task(task, _('lki.install.status.packing_fonts'))
             temp_7z_path = utils.TEMP_DIR / f"{font_id}.7z"
 
-            if not self._download_file_with_retry(DOWNLOAD_URL, temp_7z_path, f"Fonts ({font_id}) - {route_id}", 30):
+            def _report_font_progress(downloaded, total):
+                pct = min(int(downloaded * 45 / total), 45) if total > 0 else 0
+                _log_task(task, _('lki.install.status.downloading_file') % font_id, 50 + pct)
+
+            if not self._download_file_with_retry(DOWNLOAD_URL, temp_7z_path, f"Fonts ({font_id}) - {route_id}", 30,
+                                                  on_progress=_report_font_progress):
                 continue
 
             try:
@@ -568,8 +573,9 @@ class InstallationManager:
         _log_task(task, _('lki.install.error.fonts_no_url'))
         return False, None
 
-    def _download_file_with_retry(self, url: str, dest: Path, log_prefix: str, timeout: int) -> bool:
-        """使用 requests 下载文件。"""
+    def _download_file_with_retry(self, url: str, dest: Path, log_prefix: str, timeout: int,
+                                  on_progress: Optional[Callable[[int, int], None]] = None) -> bool:
+        """使用 requests 下载文件。支持可选的进度回调 (已下载字节, 总字节)。"""
         from core.localizer import _  # <-- (修复 UnboundLocalError)
         try:
             # (已修改：修复 %s 格式化)
@@ -579,12 +585,18 @@ class InstallationManager:
             response = requests.get(url, stream=True, proxies=proxies, auth=proxy_auth, timeout=(timeout, 60))
             response.raise_for_status()
 
+            total = int(response.headers.get('content-length', 0))
+            downloaded = 0
+
             with open(dest, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if self._cancel_event.is_set():
                         _log_overall(self, f"{log_prefix}: {_('lki.install.status.cancelled')}")
                         return False
                     f.write(chunk)
+                    downloaded += len(chunk)
+                    if on_progress and total > 0:
+                        on_progress(downloaded, total)
 
             _log_overall(self, f"{log_prefix}: {_('lki.install.status.success')}")
             return True
