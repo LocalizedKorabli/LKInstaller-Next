@@ -458,8 +458,8 @@ class PresetManagerWindow(BaseDialog):
         # Row 2: [实验性] 安装到独立模组目录
         ttk.Label(self.details_frame, text=_('lki.preset.manager.use_lk_mods')).grid(
             row=2, column=0, sticky='e', padx=(0, 10), pady=3)
-        self._lk_mods_combo = ttk.Combobox(self.details_frame, state='readonly', width=22)
-        self._lk_mods_combo.grid(row=2, column=1, sticky='w', pady=3)
+        self._lk_mods_combo = ttk.Combobox(self.details_frame, state='readonly')
+        self._lk_mods_combo.grid(row=2, column=1, sticky='we', pady=3)
         self._lk_mods_combo.lk_mods_values = [
             (_('lki.generic.yes'), True),
             (_('lki.generic.no'), False),
@@ -471,8 +471,8 @@ class PresetManagerWindow(BaseDialog):
         # Row 3: 字体优化包
         ttk.Label(self.details_frame, text=_('lki.preset.manager.use_fonts')).grid(
             row=3, column=0, sticky='e', padx=(0, 10), pady=3)
-        self._font_combo = ttk.Combobox(self.details_frame, state='readonly', width=22)
-        self._font_combo.grid(row=3, column=1, sticky='w', pady=3)
+        self._font_combo = ttk.Combobox(self.details_frame, state='readonly')
+        self._font_combo.grid(row=3, column=1, sticky='we', pady=3)
         # 初始选项（在 update_content 中会根据语言动态重建）
         self._font_id_map = {"": _('lki.preset.manager.font_opt.none')}
         self._font_combo['values'] = [_('lki.preset.manager.font_opt.none')]
