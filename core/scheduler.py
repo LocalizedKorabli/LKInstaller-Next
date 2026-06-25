@@ -105,8 +105,7 @@ class SchedulerBackend:
         except Exception:
             return self._schtasks_create(
                 task_name, instance_id, preset_id, run_client,
-                '/SC DAILY', f'/ST {time_str}',
-                description=description
+                '/SC DAILY', f'/ST {time_str}'
             )
 
     def create_weekly(self, task_name: str, instance_id: str, preset_id: str,
@@ -123,8 +122,7 @@ class SchedulerBackend:
             day_str = ",".join(d.upper() for d in day_codes)
             return self._schtasks_create(
                 task_name, instance_id, preset_id, run_client,
-                '/SC WEEKLY', f'/D {day_str} /ST {time_str}',
-                description=description
+                '/SC WEEKLY', f'/D {day_str} /ST {time_str}'
             )
 
     def create_at_logon(self, task_name: str, instance_id: str, preset_id: str,
@@ -138,8 +136,7 @@ class SchedulerBackend:
         except Exception:
             return self._schtasks_create(
                 task_name, instance_id, preset_id, run_client,
-                '/SC ONLOGON', '/IT',
-                description=description
+                '/SC ONLOGON', '/IT'
             )
 
     def create_at_startup(self, task_name: str, instance_id: str, preset_id: str,
@@ -153,8 +150,7 @@ class SchedulerBackend:
         except Exception:
             return self._schtasks_create(
                 task_name, instance_id, preset_id, run_client,
-                '/SC ONSTART', '/IT',
-                description=description
+                '/SC ONSTART', '/IT'
             )
 
     def create_on_idle(self, task_name: str, instance_id: str, preset_id: str,
@@ -168,8 +164,7 @@ class SchedulerBackend:
         except Exception:
             return self._schtasks_create(
                 task_name, instance_id, preset_id, run_client,
-                '/SC ONIDLE', f'/I {idle_minutes}',
-                description=description
+                '/SC ONIDLE', f'/I {idle_minutes}'
             )
 
     def _com_create_trigger(self, task_name: str, instance_id: str, preset_id: str,
@@ -233,8 +228,7 @@ class SchedulerBackend:
             if day_num:
                 trigger.DaysOfWeek |= 1 << (day_num - 1)
 
-    def _schtasks_create(self, task_name, instance_id, preset_id, run_client, sc_args, extra_args,
-                         description="") -> str:
+    def _schtasks_create(self, task_name, instance_id, preset_id, run_client, sc_args, extra_args) -> str:
         target_exe, full_args, working_dir = build_autoexec_args(
             instance_id, preset_id, run_client
         )
@@ -244,8 +238,6 @@ class SchedulerBackend:
             '/TN', full_path,
             '/TR', f'"{target_exe}" {full_args}',
         ]
-        if description:
-            cmd.extend(['/SD', description])
         cmd.extend(sc_args.split())
         if extra_args:
             cmd.extend(extra_args.split())
