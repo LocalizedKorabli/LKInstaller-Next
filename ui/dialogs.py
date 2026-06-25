@@ -179,6 +179,12 @@ class DatePicker(ttk.Frame):
                 pass
 
         def _on_ym_change(*_):
+            try:
+                nm = int(self._month_var.get())
+                if nm < 1 or nm > 12:
+                    return
+            except ValueError:
+                return
             _update_day_to()
             if self._callback:
                 self._callback()
