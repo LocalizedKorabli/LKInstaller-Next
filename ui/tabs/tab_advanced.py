@@ -599,8 +599,9 @@ class PresetManagerWindow(BaseDialog):
         if lang_code:
             lang_name = self.l10n_id_to_name.get(lang_code, self.l10n_id_to_name.get('en'))
             self.lang_combobox.set(lang_name)
-            # 恢复标准语言列表（去掉占位项）
+            # 恢复标准语言列表（去掉占位项）和默认颜色
             self.lang_combobox['values'] = list(self.l10n_id_to_name.values())
+            self.lang_combobox.configure(foreground='')
         else:
             # 新预设尚未选择语言
             self.lang_combobox.set('')
@@ -608,6 +609,7 @@ class PresetManagerWindow(BaseDialog):
             all_langs = list(self.l10n_id_to_name.values())
             self.lang_combobox['values'] = [_('lki.preset.manager.select_language')] + all_langs
             self.lang_combobox.set(_('lki.preset.manager.select_language'))
+            self.lang_combobox.configure(foreground='red')
 
         self.lang_combobox.config(state='readonly')
 
@@ -683,6 +685,8 @@ class PresetManagerWindow(BaseDialog):
         """当语言下拉框更改时，动态更新下载线路下拉框和推荐字体。"""
         lang_name = self.lang_combobox.get()
         lang_code = self.l10n_name_to_id.get(lang_name)
+        if lang_code:
+            self.lang_combobox.configure(foreground='')
         self._update_download_mods_btn_state(lang_code)
         if lang_name in self.l10n_name_to_id:
             self.mods_dir_tooltip = _('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name
