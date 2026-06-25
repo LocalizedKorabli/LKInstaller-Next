@@ -203,7 +203,7 @@
   "lki.install.warn.inactive_cleanup_failed": "Warning: Failed to clean or write inactive status for %s: %s",
   "lki.lang.name": "English",
   "lki.log.overall": "Overall",
-  "lki.preset.btn.configure_autoupdate": "Create Auto-Update Shortcut",
+  "lki.preset.btn.configure_autoupdate": "Configure auto-update",
   "lki.preset.btn.save_select": "Save and Select",
   "lki.preset.default.name": "Default",
   "lki.preset.error.name_exists": "A preset with this name already exists.",

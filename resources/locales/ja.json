@@ -203,7 +203,7 @@
   "lki.install.warn.inactive_cleanup_failed": "警告: %s の非アクティブ状態のクリーンアップまたは書き込みに失敗しました: %s",
   "lki.lang.name": "日本語",
   "lki.log.overall": "全体",
-  "lki.preset.btn.configure_autoupdate": "自動更新ショートカットの作成",
+  "lki.preset.btn.configure_autoupdate": "自動更新を設定",
   "lki.preset.btn.save_select": "保存して選択",
   "lki.preset.default.name": "デフォルト",
   "lki.preset.error.name_exists": "この名前のプリセットは既に存在します。",

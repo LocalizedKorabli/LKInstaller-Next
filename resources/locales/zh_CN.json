@@ -203,7 +203,7 @@
   "lki.install.warn.inactive_cleanup_failed": "警告: 无法清理或写入%s的非活跃状态: %s",
   "lki.lang.name": "简体中文",
   "lki.log.overall": "全局",
-  "lki.preset.btn.configure_autoupdate": "生成自动更新快捷方式",
+  "lki.preset.btn.configure_autoupdate": "配置自动更新",
   "lki.preset.btn.save_select": "保存并选定",
   "lki.preset.default.name": "默认",
   "lki.preset.error.name_exists": "已存在名称相同的预设。",

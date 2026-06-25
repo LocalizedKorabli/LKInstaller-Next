@@ -203,7 +203,7 @@
   "lki.install.warn.inactive_cleanup_failed": "警告: 無法清理或寫入%s的非作用中狀態: %s",
   "lki.lang.name": "繁體中文",
   "lki.log.overall": "全域",
-  "lki.preset.btn.configure_autoupdate": "生成自動更新捷徑",
+  "lki.preset.btn.configure_autoupdate": "配置自動更新",
   "lki.preset.btn.save_select": "儲存並選定",
   "lki.preset.default.name": "初始設定",
   "lki.preset.error.name_exists": "已存在名稱相同的設定檔。",

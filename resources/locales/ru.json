@@ -203,7 +203,7 @@
   "lki.install.warn.inactive_cleanup_failed": "Предупреждение: Не удалось очистить или записать неактивный статус для %s: %s",
   "lki.lang.name": "Русский",
   "lki.log.overall": "Общий",
-  "lki.preset.btn.configure_autoupdate": "Создать ярлык автообновления",
+  "lki.preset.btn.configure_autoupdate": "Настроить автообновление",
   "lki.preset.btn.save_select": "Сохранить и выбрать",
   "lki.preset.default.name": "По умолчанию",
   "lki.preset.error.name_exists": "Пресет с таким именем уже существует.",
