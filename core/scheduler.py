@@ -40,6 +40,7 @@ def build_autoexec_args(instance_id: str, preset_id: str, run_client: bool) -> t
         working_dir = os.path.expanduser("~")
     else:
         working_dir = str(Path(sys.executable).parent)
+        target_alias = str(Path(sys.executable))  # 使用完整路径确保计划任务能解析
 
     return target_alias, full_args, working_dir
 
