@@ -174,8 +174,8 @@ class DatePicker(ttk.Frame):
     def _clamp_year(self):
         try:
             y = int(self._year_var.get().strip())
-            if y < 2020: y = 2020
-            elif y > 2035: y = 2035
+            if y < 1970: y = 1970
+            elif y > 9999: y = 9999
             self._year_var.set(str(y))
         except ValueError:
             import datetime
