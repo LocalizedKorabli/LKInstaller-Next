@@ -771,14 +771,14 @@ class PresetManagerWindow(BaseDialog):
             self.parent_app.on_preset_saved()
 
     def _save_preset(self, show_popup=True):
-        """保存对当前所选预设的更改"""
+        """保存对当前所选预设的更改。返回 True 表示保存成功。"""
         preset_id = self._get_selected_listbox_id()
         if not preset_id:
-            return
+            return False
 
         preset_data = self.presets.get(preset_id)
         if not preset_data:
-            return
+            return False
 
         is_default = preset_data.get('is_default', False)
 
@@ -787,7 +787,7 @@ class PresetManagerWindow(BaseDialog):
         if not new_lang_code:
             messagebox.showwarning(_('lki.btn.save_changes'),
                                    _('lki.preset.manager.error.no_language'), parent=self)
-            return
+            return False
         new_use_ee = self.use_ee_var.get()
         new_use_mods = self.use_mods_var.get()
         new_use_fonts = self._get_font_value()
@@ -809,6 +809,7 @@ class PresetManagerWindow(BaseDialog):
         if show_popup:
             messagebox.showinfo(_('lki.btn.save_changes'), _('lki.preset.manager.saved'), parent=self)
             self.parent_app.update_content(self.parent_app.current_instance)
+        return True
 
     def _rename_preset(self):
         preset_id = self._get_selected_listbox_id()
@@ -851,7 +852,8 @@ class PresetManagerWindow(BaseDialog):
 
     def _select_and_close(self):
         """将列表框中选中的预设保存并应用到实例，并关闭窗口"""
-        self._save_preset(show_popup=False)
+        if not self._save_preset(show_popup=False):
+            return  # 保存失败（如语言未选择）则不关闭
         selected_id = self._get_selected_listbox_id()
         if selected_id:
             self.instance_manager.update_instance_data(self.instance_id, {'active_preset_id': selected_id})
