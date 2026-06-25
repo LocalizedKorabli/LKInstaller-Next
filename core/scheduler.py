@@ -408,7 +408,6 @@ class SchedulerBackend:
             'enabled': task.Enabled,
             'state': task.State,
             'trigger': {'type': 'unknown'},
-            'description': '',
         }
         try:
             triggers = task.Definition.Triggers
@@ -433,13 +432,6 @@ class SchedulerBackend:
                     info['trigger']['days'] = self._com_get_weekdays(trigger)
                 if ttype == 'on_idle':
                     info['trigger']['idle_minutes'] = getattr(trigger, 'IdleWait', 10)
-            # 获取描述
-            try:
-                info['description'] = task.Definition.RegistrationInfo.Description or ''
-            except Exception:
-                info['description'] = ''
-
-            log(f"Task desc: {repr(info['description'])}")
         except Exception:
             pass
         return info
@@ -524,7 +516,6 @@ class SchedulerBackend:
                     'enabled': 'Disabled' not in row.get('Status', 'Ready'),
                     'state': 3,
                     'trigger': trig,
-                    'description': row.get('Description', ''),
                 })
         except Exception as e:
             log(f"schtasks query failed: {e}")

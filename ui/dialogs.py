@@ -924,14 +924,13 @@ class AutoUpdateConfigDialog(BaseDialog):
         self._update_task_buttons()
 
     @staticmethod
+    @staticmethod
     def _format_task_display(task: Dict) -> str:
         base = task.get('name', '?')
         trigger = task.get('trigger', {})
         ttype = trigger.get('type', 'unknown')
         status = _('lki.autoupdate.schedule.status_enabled') if task.get('enabled') else _('lki.autoupdate.schedule.status_disabled')
-        desc = task.get('description', '')
 
-        # 附加触发详情
         detail = ""
         if ttype == 'once':
             t = trigger.get('time', '')
@@ -953,12 +952,9 @@ class AutoUpdateConfigDialog(BaseDialog):
         elif ttype == 'at_startup':
             detail = " @boot"
         else:
-            # 未知类型 → 不显示 "(unknown)"
-            line = f"[{status}] {base}"
-            return f"{line}  {desc}" if desc else line
+            return f"[{status}] {base}"
 
-        line = f"[{status}] {base} ({ttype}{detail})"
-        return f"{line}  {desc}" if desc else line
+        return f"[{status}] {base} ({ttype}{detail})"
 
     def _on_task_select(self, event=None):
         self._update_task_buttons()
