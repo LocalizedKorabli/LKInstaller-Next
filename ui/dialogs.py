@@ -128,7 +128,7 @@ class TimePicker(ttk.Frame):
 class DatePicker(ttk.Frame):
     """一个使用 tkcalendar.DateEntry 的日期选择组件。"""
 
-    def __init__(self, master, initial: str = "", **kwargs):
+    def __init__(self, master, initial: str = "", on_change: Optional[Callable] = None, **kwargs):
         super().__init__(master, **kwargs)
         from tkcalendar import DateEntry
         import datetime
@@ -144,6 +144,10 @@ class DatePicker(ttk.Frame):
         self._entry = DateEntry(self, date_pattern='yyyy-mm-dd', width=12,
                                 year=dt.year, month=dt.month, day=dt.day)
         self._entry.pack(side='left')
+        if on_change:
+            self._entry.bind('<<DateEntrySelected>>', lambda e: on_change())
+            # 也响应键盘输入
+            self._entry.bind('<KeyRelease>', lambda e: on_change())
 
     def get(self) -> str:
         """返回 'YYYY-MM-DD' 格式的日期字符串。"""
@@ -400,7 +404,7 @@ class TriggerConfigDialog(BaseDialog):
             date_row = ttk.Frame(self._trigger_params_frame)
             date_row.pack(fill='x')
             ttk.Label(date_row, text=_('lki.autoupdate.schedule.date')).pack(side='left', padx=(0, 5))
-            self._date_picker = DatePicker(date_row)
+            self._date_picker = DatePicker(date_row, on_change=self._update_full_name_label)
             self._date_picker.pack(side='left')
             time_row = ttk.Frame(self._trigger_params_frame)
             time_row.pack(fill='x', pady=(3, 0))
