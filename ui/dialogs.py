@@ -836,6 +836,8 @@ class AutoUpdateConfigDialog(BaseDialog):
                             task_name=None):
         """创建计划任务的核心逻辑，接收显式参数。"""
         description = _('lki.autoupdate.shortcut_description') % instance_name
+        run_str = " Run" if run_client else ""
+        description += f" ({preset_name}/{trigger_type}{run_str})"
 
         try:
             # 构建或使用指定的任务名
@@ -927,6 +929,7 @@ class AutoUpdateConfigDialog(BaseDialog):
         trigger = task.get('trigger', {})
         ttype = trigger.get('type', 'unknown')
         status = _('lki.autoupdate.schedule.status_enabled') if task.get('enabled') else _('lki.autoupdate.schedule.status_disabled')
+        desc = task.get('description', '')
 
         # 附加触发详情
         detail = ""
@@ -951,9 +954,11 @@ class AutoUpdateConfigDialog(BaseDialog):
             detail = " @boot"
         else:
             # 未知类型 → 不显示 "(unknown)"
-            return f"[{status}] {base}"
+            line = f"[{status}] {base}"
+            return f"{line}  {desc}" if desc else line
 
-        return f"[{status}] {base} ({ttype}{detail})"
+        line = f"[{status}] {base} ({ttype}{detail})"
+        return f"{line}  {desc}" if desc else line
 
     def _on_task_select(self, event=None):
         self._update_task_buttons()
