@@ -471,7 +471,7 @@ class PresetManagerWindow(BaseDialog):
             (_('lki.generic.follow_global'), None),
         ]
         self._lk_mods_combo['values'] = [v[0] for v in self._lk_mods_combo.lk_mods_values]
-        ToolTip(self._lk_mods_combo, _('lki.preset.manager.tooltip_use_lk_mods'))
+        ToolTip(self._lk_mods_combo, _('lki.settings.tooltip_use_lk_mods'))
 
         # Row 3: 字体优化包
         ttk.Label(self.details_frame, text=_('lki.preset.manager.use_fonts')).grid(

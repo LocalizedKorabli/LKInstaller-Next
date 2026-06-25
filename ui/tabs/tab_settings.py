@@ -151,7 +151,7 @@ class SettingsTab(BaseTab):
         current_lk = settings.global_settings.get('use_lk_mods', False)
         self._lk_global_combo.set(_('lki.generic.yes') if current_lk else _('lki.generic.no'))
         self._lk_global_combo.bind('<<ComboboxSelected>>', self._on_lk_global_changed)
-        ToolTip(self._lk_global_combo, _('lki.preset.manager.tooltip_use_lk_mods'))
+        ToolTip(self._lk_global_combo, _('lki.settings.tooltip_use_lk_mods'))
 
         # --- “文件”设置组 (row=3) ---
         files_frame = ttk.LabelFrame(self, text=_('lki.settings.category.files'), padding=10)
