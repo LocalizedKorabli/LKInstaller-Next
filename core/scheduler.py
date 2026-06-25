@@ -175,6 +175,7 @@ class SchedulerBackend:
                             run_client: bool, description: str,
                             trigger_type: int, set_trigger_params) -> str:
         self._ensure_connected()
+        prefixed_name = f"LKInstallerNext-{task_name}"
         try:
             target_exe, full_args, working_dir = build_autoexec_args(
                 instance_id, preset_id, run_client
@@ -198,13 +199,12 @@ class SchedulerBackend:
             set_trigger_params(trigger)
             folder = self._get_folder(TASK_FOLDER)
             folder.RegisterTaskDefinition(
-                task_name, task, 6, "", "", 1
+                prefixed_name, task, 6, "", "", 1
             )
-            full_path = f"{TASK_FOLDER}\\{task_name}"
-            log(f"Scheduled task created via COM: {full_path}")
-            return full_path
+            log(f"Scheduled task created via COM: {prefixed_name}")
+            return prefixed_name
         except Exception as e:
-            log(f"COM task creation failed for '{task_name}': {e}")
+            log(f"COM task creation failed for '{prefixed_name}': {e}")
             import traceback
             log(f"COM traceback: {traceback.format_exc()}")
             raise
