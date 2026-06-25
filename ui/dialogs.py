@@ -421,7 +421,7 @@ class TriggerConfigDialog(BaseDialog):
                         textvariable=self._trigger_idle_var, width=5).pack(side='left')
 
     def _build_default_task_name(self) -> str:
-        """根据当前参数生成默认任务名。"""
+        """根据当前参数生成默认任务名，保留用户自定义前缀。"""
         tt = self._trigger_type_var.get()
         from core.utils import sanitize_task_name
 
@@ -429,6 +429,7 @@ class TriggerConfigDialog(BaseDialog):
             h, m = t.split(":")
             return f"{int(h)}:{int(m):02d}"
 
+        # 构建触发后缀
         if tt == 'once':
             d = self._date_picker.get() if self._date_picker else ""
             t = self._time_picker.get() if self._time_picker else "00:00"
@@ -454,7 +455,28 @@ class TriggerConfigDialog(BaseDialog):
             suffix = f"{_('lki.autoupdate.schedule.trigger_desc.on_idle')}{n}{_('lki.autoupdate.schedule.trigger_desc.min')}"
         else:
             suffix = _('lki.autoupdate.schedule.trigger_desc.daily')
-        return sanitize_task_name(f"{_('lki.autoupdate.schedule.default_name')}-{suffix}")
+
+        # 提取用户前缀
+        current = self._task_name_var.get().strip()
+        if current and self._user_edited_name:
+            # 去掉可能存在的后缀部分
+            found_sep = False
+            for sep in [_('lki.autoupdate.schedule.trigger_desc.daily'),
+                        _('lki.autoupdate.schedule.trigger_desc.weekly'),
+                        _('lki.autoupdate.schedule.trigger_desc.once'),
+                        _('lki.autoupdate.schedule.trigger_desc.at_logon'),
+                        _('lki.autoupdate.schedule.trigger_desc.at_startup'),
+                        _('lki.autoupdate.schedule.trigger_desc.on_idle')]:
+                if sep in current:
+                    prefix = current.split(sep)[0].rstrip('-').strip()
+                    found_sep = True
+                    break
+            if not found_sep:
+                prefix = current
+        else:
+            prefix = _('lki.autoupdate.schedule.default_name')
+
+        return sanitize_task_name(f"{prefix}-{suffix}")
 
     def _update_default_task_name(self):
         """若用户未手动编辑，刷新任务名。"""
@@ -851,15 +873,11 @@ class AutoUpdateConfigDialog(BaseDialog):
             return f"{int(h)}:{int(m):02d}"
 
         try:
-            # 构建或使用指定的任务名
-            if task_name and task_name.strip():
-                task_name = utils.sanitize_task_name(task_name)
-            elif trigger_type == 'once':
+            # 始终从触发参数构建后缀
+            if trigger_type == 'once':
                 suffix = f"{_('lki.autoupdate.schedule.trigger_desc.once')}-{date_str}-{_fmt_time(time_str)}"
-                task_name = utils.sanitize_task_name(f"{_('lki.autoupdate.schedule.default_name')}-{suffix}")
             elif trigger_type == 'daily':
                 suffix = f"{_('lki.autoupdate.schedule.trigger_desc.daily')}-{_fmt_time(time_str)}"
-                task_name = utils.sanitize_task_name(f"{_('lki.autoupdate.schedule.default_name')}-{suffix}")
             elif trigger_type == 'weekly':
                 if not days:
                     messagebox.showwarning(_('lki.autoupdate.title'),
@@ -871,18 +889,35 @@ class AutoUpdateConfigDialog(BaseDialog):
                             'sun': _('lki.autoupdate.schedule.sun')}
                 ds = "-".join(day_names.get(d, d) for d in days)
                 suffix = f"{_('lki.autoupdate.schedule.trigger_desc.weekly')}-{ds}-{_fmt_time(time_str)}"
-                task_name = utils.sanitize_task_name(f"{_('lki.autoupdate.schedule.default_name')}-{suffix}")
             elif trigger_type == 'at_logon':
                 suffix = _('lki.autoupdate.schedule.trigger_desc.at_logon')
-                task_name = utils.sanitize_task_name(f"{_('lki.autoupdate.schedule.default_name')}-{suffix}")
             elif trigger_type == 'at_startup':
                 suffix = _('lki.autoupdate.schedule.trigger_desc.at_startup')
-                task_name = utils.sanitize_task_name(f"{_('lki.autoupdate.schedule.default_name')}-{suffix}")
             elif trigger_type == 'on_idle':
                 suffix = f"{_('lki.autoupdate.schedule.trigger_desc.on_idle')}{idle_min}{_('lki.autoupdate.schedule.trigger_desc.min')}"
-                task_name = utils.sanitize_task_name(f"{_('lki.autoupdate.schedule.default_name')}-{suffix}")
             else:
                 return
+
+            # 用户前缀：若提供了名称则提取前缀，否则用默认名
+            if task_name and task_name.strip():
+                raw_prefix = task_name.strip()
+                # 去掉可能末尾已存在的后缀
+                found_sep = False
+                for sep in [_('lki.autoupdate.schedule.trigger_desc.daily'),
+                            _('lki.autoupdate.schedule.trigger_desc.weekly'),
+                            _('lki.autoupdate.schedule.trigger_desc.once'),
+                            _('lki.autoupdate.schedule.trigger_desc.at_logon'),
+                            _('lki.autoupdate.schedule.trigger_desc.at_startup'),
+                            _('lki.autoupdate.schedule.trigger_desc.on_idle')]:
+                    if sep in raw_prefix:
+                        prefix = raw_prefix.split(sep)[0].rstrip('-').rstrip()
+                        found_sep = True
+                        break
+                if not found_sep:
+                    prefix = raw_prefix
+            else:
+                prefix = _('lki.autoupdate.schedule.default_name')
+            task_name = utils.sanitize_task_name(f"{prefix}-{suffix}")
 
             if trigger_type == 'once':
                 path = self._scheduler.create_once(
