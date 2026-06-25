@@ -60,6 +60,7 @@ class SchedulerBackend:
                 self._service = win32com.client.Dispatch("Schedule.Service")
                 self._service.Connect()
                 self._connected = True
+                log("Task Scheduler COM connected successfully")
             except Exception as e:
                 log(f"Task Scheduler COM connection failed: {e}")
                 raise SchedulerError(f"Cannot connect to Task Scheduler: {e}")
@@ -68,12 +69,15 @@ class SchedulerBackend:
         self._ensure_connected()
         try:
             return self._service.GetFolder(path)
-        except Exception:
+        except Exception as e:
+            log(f"Task Scheduler folder get failed: {e}")
             try:
                 root = self._service.GetFolder("\\")
                 root.CreateFolder(path, "")
+                log(f"Created Task Scheduler folder: {path}")
                 return self._service.GetFolder(path)
             except Exception as e:
+                log(f"Task Scheduler folder creation failed: {e}")
                 raise SchedulerError(f"Cannot create folder {path}: {e}")
 
 
@@ -171,33 +175,39 @@ class SchedulerBackend:
                             run_client: bool, description: str,
                             trigger_type: int, set_trigger_params) -> str:
         self._ensure_connected()
-        target_exe, full_args, working_dir = build_autoexec_args(
-            instance_id, preset_id, run_client
-        )
-        task = self._service.NewTask(0)
-        task.RegistrationInfo.Author = "LKInstallerNext"
-        task.RegistrationInfo.Description = description or f"LK Next: auto-update {instance_id}"
-        task.Settings.Enabled = True
-        task.Settings.StartWhenAvailable = True
-        task.Settings.DisallowStartIfOnBatteries = False
-        task.Settings.StopIfGoingOnBatteries = False
-        task.Settings.RunOnlyIfIdle = False
-        task.Principal.RunLevel = 0
-        action = task.Actions.Create(0)
-        action.Path = target_exe
-        action.Arguments = full_args
-        action.WorkingDirectory = working_dir
-        trigger = task.Triggers.Create(trigger_type)
-        trigger.Enabled = True
-        trigger.StartBoundary = "2000-01-01T00:00:00"
-        set_trigger_params(trigger)
-        folder = self._get_folder(TASK_FOLDER)
-        folder.RegisterTaskDefinition(
-            task_name, task, 6, "", "", 1
-        )
-        full_path = f"{TASK_FOLDER}\\{task_name}"
-        log(f"Scheduled task created via COM: {full_path}")
-        return full_path
+        try:
+            target_exe, full_args, working_dir = build_autoexec_args(
+                instance_id, preset_id, run_client
+            )
+            task = self._service.NewTask(0)
+            task.RegistrationInfo.Author = "LKInstallerNext"
+            task.RegistrationInfo.Description = description or f"LK Next: auto-update {instance_id}"
+            task.Settings.Enabled = True
+            task.Settings.StartWhenAvailable = True
+            task.Settings.DisallowStartIfOnBatteries = False
+            task.Settings.StopIfGoingOnBatteries = False
+            task.Settings.RunOnlyIfIdle = False
+            task.Principal.RunLevel = 0
+            action = task.Actions.Create(0)
+            action.Path = target_exe
+            action.Arguments = full_args
+            action.WorkingDirectory = working_dir
+            trigger = task.Triggers.Create(trigger_type)
+            trigger.Enabled = True
+            trigger.StartBoundary = "2000-01-01T00:00:00"
+            set_trigger_params(trigger)
+            folder = self._get_folder(TASK_FOLDER)
+            folder.RegisterTaskDefinition(
+                task_name, task, 6, "", "", 1
+            )
+            full_path = f"{TASK_FOLDER}\\{task_name}"
+            log(f"Scheduled task created via COM: {full_path}")
+            return full_path
+        except Exception as e:
+            log(f"COM task creation failed for '{task_name}': {e}")
+            import traceback
+            log(f"COM traceback: {traceback.format_exc()}")
+            raise
 
     @staticmethod
     def _set_once_params(trigger, time_str: str, date_str: Optional[str] = None):
