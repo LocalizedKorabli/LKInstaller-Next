@@ -924,7 +924,6 @@ class AutoUpdateConfigDialog(BaseDialog):
         self._update_task_buttons()
 
     @staticmethod
-    @staticmethod
     def _format_task_display(task: Dict) -> str:
         base = task.get('name', '?')
         trigger = task.get('trigger', {})
