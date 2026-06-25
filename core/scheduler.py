@@ -265,15 +265,16 @@ class SchedulerBackend:
             raise SchedulerError("schtasks timed out")
 
     def delete_task(self, task_name: str) -> bool:
+        prefixed = f"LKInstallerNext-{task_name}"
         try:
             folder = self._get_folder(TASK_FOLDER)
-            folder.DeleteTask(task_name, 0)
-            log(f"Deleted scheduled task: {TASK_FOLDER}\\{task_name}")
+            folder.DeleteTask(prefixed, 0)
+            log(f"Deleted scheduled task: {prefixed}")
             return True
         except Exception as e:
             log(f"COM delete failed, trying schtasks: {e}")
         try:
-            full_path = f"LKInstallerNext\\{task_name}"
+            full_path = f"LKInstallerNext-{task_name}"
             result = subprocess.run(
                 ['schtasks', '/Delete', '/F', '/TN', full_path],
                 capture_output=True, text=True, timeout=10
@@ -288,16 +289,18 @@ class SchedulerBackend:
         new_name = utils.sanitize_task_name(new_name)
         if not new_name or new_name == task_name:
             return False
+        prefixed_old = f"LKInstallerNext-{task_name}"
+        prefixed_new = f"LKInstallerNext-{new_name}"
         try:
             self._ensure_connected()
             folder = self._get_folder(TASK_FOLDER)
-            task = folder.GetTask(task_name)
+            task = folder.GetTask(prefixed_old)
             definition = task.Definition
             # 在新名称下注册相同的定义
-            folder.RegisterTaskDefinition(new_name, definition, 6, "", "", 1)
+            folder.RegisterTaskDefinition(prefixed_new, definition, 6, "", "", 3)
             # 删除旧任务
-            folder.DeleteTask(task_name, 0)
-            log(f"Renamed scheduled task: {TASK_FOLDER}\\{task_name} -> {new_name}")
+            folder.DeleteTask(prefixed_old, 0)
+            log(f"Renamed scheduled task: {prefixed_old} -> {prefixed_new}")
             return True
         except Exception as e:
             log(f"COM rename failed, trying schtasks: {e}")
@@ -337,17 +340,18 @@ class SchedulerBackend:
         return self._set_task_enabled(task_name, False)
 
     def _set_task_enabled(self, task_name: str, enabled: bool) -> bool:
+        prefixed = f"LKInstallerNext-{task_name}"
         try:
             self._ensure_connected()
             folder = self._get_folder(TASK_FOLDER)
-            task = folder.GetTask(task_name)
+            task = folder.GetTask(prefixed)
             task.Enabled = enabled
-            log(f"{'Enabled' if enabled else 'Disabled'} task: {TASK_FOLDER}\\{task_name}")
+            log(f"{'Enabled' if enabled else 'Disabled'} task: {prefixed}")
             return True
         except Exception as e:
             log(f"Failed to {'enable' if enabled else 'disable'} task via COM: {e}")
         try:
-            full_path = f"LKInstallerNext\\{task_name}"
+            full_path = f"LKInstallerNext-{task_name}"
             flag = '/ENABLE' if enabled else '/DISABLE'
             result = subprocess.run(
                 ['schtasks', '/Change', flag, '/TN', full_path],
@@ -359,17 +363,18 @@ class SchedulerBackend:
             return False
 
     def run_task_now(self, task_name: str) -> bool:
+        prefixed = f"LKInstallerNext-{task_name}"
         try:
             self._ensure_connected()
             folder = self._get_folder(TASK_FOLDER)
-            task = folder.GetTask(task_name)
+            task = folder.GetTask(prefixed)
             task.Run("")
-            log(f"Triggered task run: {TASK_FOLDER}\\{task_name}")
+            log(f"Triggered task run: {prefixed}")
             return True
         except Exception as e:
             log(f"Failed to run task via COM: {e}")
         try:
-            full_path = f"LKInstallerNext\\{task_name}"
+            full_path = f"LKInstallerNext-{task_name}"
             result = subprocess.run(
                 ['schtasks', '/Run', '/TN', full_path],
                 capture_output=True, text=True, timeout=10
@@ -383,7 +388,7 @@ class SchedulerBackend:
         try:
             self._ensure_connected()
             folder = self._get_folder(TASK_FOLDER)
-            folder.GetTask(task_name)
+            folder.GetTask(f"LKInstallerNext-{task_name}")
             return True
         except Exception:
             return False
