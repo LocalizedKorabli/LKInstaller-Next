@@ -764,6 +764,8 @@ class PresetManagerWindow(BaseDialog):
             self._get_lk_mods_value()
         )
         self._populate_listbox_and_select()
+        if hasattr(self.parent_app, 'on_preset_saved') and self.parent_app.on_preset_saved:
+            self.parent_app.on_preset_saved()
 
     def _save_preset(self, show_popup=True):
         """保存对当前所选预设的更改"""
@@ -795,6 +797,8 @@ class PresetManagerWindow(BaseDialog):
             data_to_save["name"] = preset_data.get('name')
 
         self.instance_manager.update_preset_data(self.instance_id, preset_id, data_to_save)
+        if hasattr(self.parent_app, 'on_preset_saved') and self.parent_app.on_preset_saved:
+            self.parent_app.on_preset_saved()
         if show_popup:
             messagebox.showinfo(_('lki.btn.save_changes'), _('lki.preset.manager.saved'), parent=self)
             self.parent_app.update_content(self.parent_app.current_instance)

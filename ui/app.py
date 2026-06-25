@@ -66,6 +66,7 @@ class LocalizationInstallerApp:
         self.tab_game = GameTab(self.notebook, self.icons, self.type_id_to_name, self._on_instance_select)
 
         self.tab_advanced = AdvancedTab(self.notebook, self.icons, self.type_id_to_name)
+        self.tab_advanced.on_preset_saved = lambda: self.tab_game._clear_selection_and_refresh()
 
         self.tab_settings = SettingsTab(self.notebook, self.icons, self._on_theme_select,
                                         self._on_language_select, self.reload_app)
