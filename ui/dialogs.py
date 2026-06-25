@@ -959,9 +959,6 @@ class AutoUpdateConfigDialog(BaseDialog):
         self._btn_task_toggle = ttk.Button(task_btn_frame, text=_('lki.autoupdate.schedule.btn.disable'),
                                            command=self._on_toggle_task, state='disabled')
         self._btn_task_toggle.pack(side='left', padx=5)
-        self._btn_task_edit = ttk.Button(task_btn_frame, text=_('lki.autoupdate.schedule.btn.edit'),
-                                         command=self._on_edit_task, state='disabled')
-        self._btn_task_edit.pack(side='left', padx=5)
         self._btn_task_delete = ttk.Button(task_btn_frame, text=_('lki.autoupdate.schedule.btn.delete'),
                                            command=self._on_delete_task, state='disabled',
                                            style="danger.TButton")
@@ -1191,34 +1188,7 @@ class AutoUpdateConfigDialog(BaseDialog):
             self._scheduler.delete_task(task['name'])
             self._refresh_task_list()
 
-    def _on_edit_task(self):
-        """编辑已有计划任务：删除旧任务 → 打开创建弹窗（新建即替换）。"""
-        task = self._get_selected_task()
-        if not task:
-            return
-        old_name = task.get('name', '')
-        if not old_name:
-            return
 
-        if not messagebox.askyesno(
-            _('lki.autoupdate.title'),
-            _('lki.autoupdate.schedule.edit_confirm') % old_name,
-            parent=self
-        ):
-            return
-
-        # 先删除旧任务
-        self._scheduler.delete_task(old_name)
-
-        # 打开创建弹窗（新建即替换，预填旧名称）
-        dialog = TriggerConfigDialog(
-            self, self._mgr, self._scheduler,
-            self._selected_instance_id,
-            self._selected_preset_id,
-            initial_task_name=old_name
-        )
-        dialog.wait_window()
-        self._refresh_task_list()
 
     @staticmethod
     def _make_shortcut_name(instance_name: str, preset_name: str) -> str:
