@@ -90,22 +90,54 @@ class TimePicker(ttk.Frame):
             val = hi
         var.set(f"{val:02d}")
 
+    def _make_unit(self, var: tk.StringVar, lo: int, hi: int, width: int = 3):
+        """创建一个带 +/- 按钮的数字输入单元。"""
+        frame = ttk.Frame(self)
+
+        # 右侧按钮列
+        btn_frame = ttk.Frame(frame)
+        btn_frame.pack(side='right', fill='y')
+
+        up_btn = ttk.Button(btn_frame, text='▲', width=2,
+                            command=lambda: self._step(var, lo, hi, 1))
+        up_btn.pack(side='top', fill='x')
+
+        down_btn = ttk.Button(btn_frame, text='▼', width=2,
+                              command=lambda: self._step(var, lo, hi, -1))
+        down_btn.pack(side='bottom', fill='x')
+
+        # 输入框
+        entry = ttk.Entry(frame, textvariable=var, width=width, justify='left')
+        entry.pack(side='left', fill='x', expand=True)
+        entry.bind('<FocusIn>', lambda e: entry.selection_range(0, 'end'))
+        # 键盘上下键调整
+        entry.bind('<Up>', lambda e: self._step(var, lo, hi, 1))
+        entry.bind('<Down>', lambda e: self._step(var, lo, hi, -1))
+
+        return frame
+
+    @staticmethod
+    def _step(var: tk.StringVar, lo: int, hi: int, delta: int):
+        """对时间单元执行一步加减，并钳制范围。"""
+        try:
+            val = int(var.get())
+        except ValueError:
+            val = lo
+        val += delta
+        if val < lo:
+            val = hi
+        elif val > hi:
+            val = lo
+        var.set(f"{val:02d}")
+
     def _build(self):
-        hour_spin = ttk.Spinbox(
-            self, from_=0, to=23, textvariable=self._hour_str,
-            width=4, justify='left', wrap=True
-        )
-        hour_spin.pack(side='left')
-        hour_spin.bind('<FocusIn>', lambda e: hour_spin.selection_range(0, 'end'))
+        hour_unit = self._make_unit(self._hour_str, 0, 23)
+        hour_unit.pack(side='left')
 
         ttk.Label(self, text=":", font=("TkDefaultFont", 11, "bold")).pack(side='left', padx=2)
 
-        min_spin = ttk.Spinbox(
-            self, from_=0, to=59, textvariable=self._min_str,
-            width=4, justify='left', wrap=True
-        )
-        min_spin.pack(side='left')
-        min_spin.bind('<FocusIn>', lambda e: min_spin.selection_range(0, 'end'))
+        min_unit = self._make_unit(self._min_str, 0, 59)
+        min_unit.pack(side='left')
 
     def get(self) -> str:
         """返回 'HH:MM' 格式的时间字符串。"""
