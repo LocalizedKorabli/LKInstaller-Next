@@ -378,6 +378,7 @@ class TriggerConfigDialog(BaseDialog):
     def _on_preset_changed(self, _event=None):
         display = self._preset_var.get()
         self._selected_preset_id = self._preset_name_to_id.get(display, self._selected_preset_id)
+        self._update_full_name_label()
 
     def _populate_presets(self, instance_id: str, default_preset_id: str):
         instance_data = self._mgr.get_instance(instance_id)
@@ -423,6 +424,7 @@ class TriggerConfigDialog(BaseDialog):
             for code in DAYS_OF_WEEK_SHORT:
                 var = tk.BooleanVar(value=(code in ('mon', 'tue', 'wed', 'thu', 'fri')))
                 self._trigger_days_vars[code] = var
+                var.trace_add('write', lambda *_: self._update_full_name_label())
                 cb = ttk.Checkbutton(day_frame, text=_(WEEKDAY_LABELS[code]), variable=var)
                 cb.pack(side='left', padx=2)
             ttk.Label(self._trigger_params_frame, text='  ' + _('lki.autoupdate.schedule.time')).pack(side='left', padx=(5, 5))
