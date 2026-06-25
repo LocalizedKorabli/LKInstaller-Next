@@ -65,44 +65,48 @@ class TimePicker(ttk.Frame):
         self._hour_var = tk.StringVar(value=f"{h_val:02d}")
         self._min_var = tk.StringVar(value=f"{m_val:02d}")
 
-        # 失去焦点时补零（validate='focusout' 不传参给回调）
-        vcmd_h = (self.register(lambda: self._on_focusout(self._hour_var, 0, 23)),)
-        vcmd_m = (self.register(lambda: self._on_focusout(self._min_var, 0, 59)),)
+        def _on_hour_focusout(*_):
+            raw = self._hour_var.get().strip()
+            try:
+                val = int(raw)
+            except ValueError:
+                val = 0
+            if val < 0: val = 0
+            elif val > 23: val = 23
+            self._hour_var.set(f"{val:02d}")
+
+        def _on_min_focusout(*_):
+            raw = self._min_var.get().strip()
+            try:
+                val = int(raw)
+            except ValueError:
+                val = 0
+            if val < 0: val = 0
+            elif val > 59: val = 59
+            self._min_var.set(f"{val:02d}")
 
         hour_spin = ttk.Spinbox(
             self, from_=0, to=23, textvariable=self._hour_var,
-            width=4, justify='left', wrap=True,
-            validate='focusout', validatecommand=vcmd_h
+            width=4, justify='left', wrap=True
         )
         hour_spin.pack(side='left')
         hour_spin.bind('<FocusIn>', lambda e: hour_spin.selection_range(0, 'end'))
         hour_spin.bind('<ButtonRelease-1>', lambda e: hour_spin.selection_range(0, 'end'))
+        hour_spin.bind('<FocusOut>', _on_hour_focusout)
 
         ttk.Label(self, text=":", font=("TkDefaultFont", 11, "bold")).pack(side='left', padx=2)
 
         min_spin = ttk.Spinbox(
             self, from_=0, to=59, textvariable=self._min_var,
-            width=4, justify='left', wrap=True,
-            validate='focusout', validatecommand=vcmd_m
+            width=4, justify='left', wrap=True
         )
         min_spin.pack(side='left')
         min_spin.bind('<FocusIn>', lambda e: min_spin.selection_range(0, 'end'))
         min_spin.bind('<ButtonRelease-1>', lambda e: min_spin.selection_range(0, 'end'))
+        min_spin.bind('<FocusOut>', _on_min_focusout)
 
     @staticmethod
-    def _on_focusout(var: tk.StringVar, lo: int, hi: int):
-        """失去焦点时补零并钳制范围。返回 True 允许焦点移出。"""
-        raw = var.get().strip()
-        try:
-            val = int(raw)
-        except ValueError:
-            val = lo
-        if val < lo:
-            val = lo
-        elif val > hi:
-            val = hi
-        var.set(f"{val:02d}")
-        return True
+
 
     def get(self) -> str:
         """返回 'HH:MM' 格式的时间字符串。"""
