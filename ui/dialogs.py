@@ -158,7 +158,7 @@ class DatePicker(ttk.Frame):
                 cd = int(self._day_var.get())
                 if cd > max_d:
                     self._day_var.set(str(max_d))
-            except (ValueError, AttributeError):
+            except (ValueError, AttributeError, tk.TclError):
                 pass
 
         def _on_ym_change(*_):
@@ -223,7 +223,14 @@ class DatePicker(ttk.Frame):
 
     def get(self) -> str:
         self._clamp_day()
-        return f"{self._year_var.get()}-{int(self._month_var.get()):02d}-{int(self._day_var.get()):02d}"
+        try:
+            y = int(self._year_var.get())
+            m = int(self._month_var.get())
+            d = int(self._day_var.get())
+            return f"{y:04d}-{m:02d}-{d:02d}"
+        except ValueError:
+            import datetime
+            return datetime.date.today().strftime('%Y-%m-%d')
 
     def set(self, date_str: str):
         try:
