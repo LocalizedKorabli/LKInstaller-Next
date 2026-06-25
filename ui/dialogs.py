@@ -303,12 +303,16 @@ class TriggerConfigDialog(BaseDialog):
         name_frame = ttk.Frame(main)
         name_frame.grid(row=row, column=1, sticky='we', pady=3)
         name_frame.columnconfigure(0, weight=1)
-        task_name_entry = ttk.Entry(name_frame, textvariable=self._task_name_var, width=40)
-        task_name_entry.grid(row=0, column=0, sticky='we')
-        task_name_entry.bind('<Key>', lambda e: setattr(self, '_user_edited_name', True))
+        self._prefix_var = tk.StringVar(value=_('lki.autoupdate.schedule.default_name'))
+        prefix_entry = ttk.Entry(name_frame, textvariable=self._prefix_var, width=40)
+        prefix_entry.grid(row=0, column=0, sticky='we')
+        prefix_entry.bind('<Key>', lambda e: setattr(self, '_user_edited_name', True))
         default_btn = ttk.Button(name_frame, text=_('lki.autoupdate.schedule.btn.default'),
                                  command=self._reset_to_default_name, width=6)
         default_btn.grid(row=0, column=1, padx=(5, 0))
+        # 显示完整任务名预览
+        self._full_name_label = ttk.Label(main, text="", foreground='gray')
+        self._full_name_label.grid(row=row, column=0, columnspan=2, sticky='w', padx=(10, 0))
         row += 1
 
         # 是否启动游戏
@@ -420,18 +424,21 @@ class TriggerConfigDialog(BaseDialog):
             ttk.Spinbox(self._trigger_params_frame, from_=1, to=120,
                         textvariable=self._trigger_idle_var, width=5).pack(side='left')
 
-    def _build_default_task_name(self) -> str:
-        """根据当前参数生成完整任务名，保留用户自定义前缀。"""
+    def _build_full_task_name(self, prefix: str, inst: str, preset: str) -> (str, str):
+        """构建完整任务名，返回 (suffix, full_name)。"""
         tt = self._trigger_type_var.get()
-        inst = self._instance_var.get()
-        preset = self._preset_var.get()
         from core.utils import sanitize_task_name
 
         def _fmt_time(t):
             h, m = t.split(":")
-            return f"{int(h)}:{int(m):02d}"
+            h = int(h)
+            m = int(m)
+            tn = _('lki.autoupdate.schedule.trigger_desc.hour_prefix')
+            tn2 = _('lki.autoupdate.schedule.trigger_desc.min_suffix')
+            if m == 0:
+                return f"{h}{tn}"
+            return f"{h}{tn}{m}{tn2}"
 
-        # 构建触发后缀
         if tt == 'once':
             d = self._date_picker.get() if self._date_picker else ""
             t = self._time_picker.get() if self._time_picker else "00:00"
@@ -458,33 +465,31 @@ class TriggerConfigDialog(BaseDialog):
         else:
             trigger_part = _('lki.autoupdate.schedule.trigger_desc.daily')
         suffix = f"{inst}-{preset}-{trigger_part}"
+        full = sanitize_task_name(f"{prefix}-{suffix}")
+        return suffix, full
 
-        # 提取用户前缀：实例名前的内容
-        current = self._task_name_var.get().strip()
-        if current and self._user_edited_name and inst in current:
-            idx = current.index(inst)
-            prefix = current[:idx].rstrip('-').strip()
-        else:
-            prefix = _('lki.autoupdate.schedule.default_name')
+    def _update_full_name_label(self):
+        """更新底部的完整任务名预览。"""
+        prefix = self._prefix_var.get().strip()
+        inst = self._instance_var.get()
+        preset = self._preset_var.get()
+        _suffix, full = self._build_full_task_name(prefix, inst, preset)
+        self._full_name_label.config(text=full)
 
-        return sanitize_task_name(f"{prefix}-{suffix}")
     def _update_default_task_name(self):
-        """若用户未手动编辑，刷新任务名。"""
-        if not self._user_edited_name:
-            self._task_name_var.set(self._build_default_task_name())
+        """触发条件变化后刷新预览。"""
+        self._update_full_name_label()
 
     def _reset_to_default_name(self):
-        """恢复默认任务名。"""
+        """恢复默认前缀。"""
         self._user_edited_name = False
-        self._task_name_var.set(self._build_default_task_name())
-
-    def _on_trigger_type_changed(self, event=None):
+        self._prefix_var.set(_('lki.autoupdate.schedule.default_name'))
         display = self._trigger_combo.get()
         type_map = {_(key): t for t, key in TRIGGER_TYPES}
         trigger_type = type_map.get(display, 'daily')
         self._trigger_type_var.set(trigger_type)
         self._build_trigger_params(trigger_type)
-        self._update_default_task_name()
+        self._update_full_name_label()
 
     # ── 确定 → 创建任务 ──
     def _on_ok(self):
@@ -505,7 +510,9 @@ class TriggerConfigDialog(BaseDialog):
             return
 
         # 交给父窗口创建任务
-        task_name = self._task_name_var.get().strip()
+        # 构建任务名：前缀+自动后缀
+        prefix = self._prefix_var.get().strip() or _('lki.autoupdate.schedule.default_name')
+        _suffix, task_name = self._build_full_task_name(prefix, instance_name, preset_name)
         self.master._on_create_schedule(
             instance_id, preset_id, run_client,
             trigger_type, instance_name, preset_name,
