@@ -51,33 +51,68 @@ WEEKDAY_LABELS = {
 
 
 class TimePicker(ttk.Frame):
-    """使用 SpinTimePickerModern 的时间选择器组件。"""
+    """一个由两个 Spinbox（时:分）组成的时间选择器组件。"""
 
     def __init__(self, master, initial: str = "08:00", **kwargs):
         super().__init__(master, **kwargs)
 
-        from tktimepicker import SpinTimePickerModern, constants
-        self._picker = SpinTimePickerModern(self, orient='horizontal')
-        self._picker.addAll(constants.HOURS24)
-        self._picker.configure_24HrsTime(width=5)
-        self._picker.configure_minute(width=5)
-        self._picker.pack(fill='x')
+        # 外层框架提供边框和背景
+        self.configure(relief='solid', borderwidth=1)
 
         try:
             h, m = initial.strip().split(":")
-            self._picker.set24Hrs(int(h))
-            self._picker.setMins(int(m))
+            h_val, m_val = int(h), int(m)
         except (ValueError, AttributeError):
-            pass
+            h_val, m_val = 8, 0
+
+        self._hour_str = tk.StringVar(value=f"{h_val:02d}")
+        self._min_str = tk.StringVar(value=f"{m_val:02d}")
+
+        self._hour_str.trace_add('write', lambda *_: self._pad_var(self._hour_str, 0, 23))
+        self._min_str.trace_add('write', lambda *_: self._pad_var(self._min_str, 0, 59))
+
+        hour_spin = ttk.Spinbox(self, from_=0, to=23, textvariable=self._hour_str,
+                                width=5, justify='center', wrap=True)
+        hour_spin.pack(side='left')
+        hour_spin.bind('<FocusIn>', lambda e: self._on_focus(True))
+        hour_spin.bind('<FocusOut>', lambda e: self._on_focus(False))
+
+        sep = ttk.Label(self, text=":", font=("TkDefaultFont", 11, "bold"))
+        sep.pack(side='left')
+
+        min_spin = ttk.Spinbox(self, from_=0, to=59, textvariable=self._min_str,
+                               width=5, justify='center', wrap=True)
+        min_spin.pack(side='left')
+        min_spin.bind('<FocusIn>', lambda e: self._on_focus(True))
+        min_spin.bind('<FocusOut>', lambda e: self._on_focus(False))
+
+        self._on_focus(False)
+
+    def _on_focus(self, focused: bool):
+        self.configure(relief='solid' if focused else 'flat',
+                       borderwidth=2 if focused else 1)
+
+    @staticmethod
+    def _pad_var(var: tk.StringVar, lo: int, hi: int):
+        try:
+            val = int(var.get().strip())
+        except ValueError:
+            var.set(f"{lo:02d}")
+            return
+        if val < lo:
+            val = lo
+        elif val > hi:
+            val = hi
+        var.set(f"{val:02d}")
 
     def get(self) -> str:
-        return f"{self._picker.hours24():02d}:{self._picker.minutes():02d}"
+        return f"{self._hour_str.get()}:{self._min_str.get()}"
 
     def set(self, time_str: str):
         try:
             h, m = time_str.strip().split(":")
-            self._picker.set24Hrs(int(h))
-            self._picker.setMins(int(m))
+            self._hour_str.set(f"{int(h):02d}")
+            self._min_str.set(f"{int(m):02d}")
         except (ValueError, AttributeError):
             pass
 
