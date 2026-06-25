@@ -135,7 +135,7 @@
   "lki.game.warning.non_ascii_install_header": "以下のインスタンスのパスに非 ASCII 文字が含まれており、Mir Korabley が起動時にクラッシュする可能性があります：",
   "lki.game.warning.non_ascii_path": "⚠パスに非 ASCII 文字が含まれています。起動時にクラッシュする可能性があります。",
   "lki.generic.copied": "クリップボードにコピーしました",
-  "lki.generic.follow_global": "グローバルに従う",
+  "lki.generic.follow_global": "グローバルに従う: ",
   "lki.generic.no": "いいえ",
   "lki.generic.yes": "はい",
   "lki.i18n.lang.en.name": "英語",

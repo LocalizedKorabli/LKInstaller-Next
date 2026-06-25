@@ -135,7 +135,7 @@
   "lki.game.warning.non_ascii_install_header": "The following instances have paths with non-ASCII characters, which may cause Mir Korabley to crash on launch:",
   "lki.game.warning.non_ascii_path": "⚠Path contains non-ASCII characters.\nThis may cause Mir Korabley to crash.",
   "lki.generic.copied": "Copied to clipboard",
-  "lki.generic.follow_global": "Follow global",
+  "lki.generic.follow_global": "Follow global: ",
   "lki.generic.no": "No",
   "lki.generic.yes": "Yes",
   "lki.i18n.lang.en.name": "English",

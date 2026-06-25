@@ -135,7 +135,7 @@
   "lki.game.warning.non_ascii_install_header": "Следующие экземпляры имеют пути с не-ASCII символами, что может привести к вылету Mir Korabley:",
   "lki.game.warning.non_ascii_path": "⚠Путь содержит не-ASCII символы, что может привести к вылету Мир кораблей при запуске.",
   "lki.generic.copied": "Скопировано в буфер обмена",
-  "lki.generic.follow_global": "По умолчанию",
+  "lki.generic.follow_global": "По умолчанию: ",
   "lki.generic.no": "Нет",
   "lki.generic.yes": "Да",
   "lki.i18n.lang.en.name": "Английский",

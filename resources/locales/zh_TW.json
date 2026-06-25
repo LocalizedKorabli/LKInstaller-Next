@@ -135,7 +135,7 @@
   "lki.game.warning.non_ascii_install_header": "以下實例的路徑包含非ASCII字元，可能導致Mir Korabley啟動時崩潰：",
   "lki.game.warning.non_ascii_path": "⚠路徑含非ASCII字元，可能導致Mir Korabley崩潰。",
   "lki.generic.copied": "已複製到剪貼簿",
-  "lki.generic.follow_global": "跟隨全域",
+  "lki.generic.follow_global": "跟隨全域: ",
   "lki.generic.no": "否",
   "lki.generic.yes": "是",
   "lki.i18n.lang.en.name": "英文",
