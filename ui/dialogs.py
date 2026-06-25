@@ -143,7 +143,7 @@ class DatePicker(ttk.Frame):
 
     def get(self) -> str:
         """返回 'YYYY-MM-DD' 格式的日期字符串。"""
-        return self._entry.get().strftime('%Y-%m-%d')
+        return self._entry.get()
 
     def set(self, date_str: str):
         """从 'YYYY-MM-DD' 字符串设置日期。"""
