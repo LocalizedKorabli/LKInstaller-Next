@@ -56,17 +56,17 @@ class TimePicker(ttk.Frame):
     def __init__(self, master, initial: str = "08:00", **kwargs):
         super().__init__(master, **kwargs)
 
-        from tktimepicker import SpinTimePickerOld, constants
-        self._picker = SpinTimePickerOld(self, orient='horizontal')
+        from tktimepicker import SpinTimePickerModern, constants
+        self._picker = SpinTimePickerModern(self, orient='horizontal')
         self._picker.addAll(constants.HOURS24)
+        self._picker.configure_24HrsTime(width=5)
+        self._picker.configure_minute(width=5)
         self._picker.pack(fill='x')
 
         try:
             h, m = initial.strip().split(":")
-            self._picker._24HrsTime.delete(0, 'end')
-            self._picker._24HrsTime.insert(0, str(int(h)))
-            self._picker._minutes.delete(0, 'end')
-            self._picker._minutes.insert(0, str(int(m)))
+            self._picker.set24Hrs(int(h))
+            self._picker.setMins(int(m))
         except (ValueError, AttributeError):
             pass
 
@@ -76,10 +76,8 @@ class TimePicker(ttk.Frame):
     def set(self, time_str: str):
         try:
             h, m = time_str.strip().split(":")
-            self._picker._24HrsTime.delete(0, 'end')
-            self._picker._24HrsTime.insert(0, str(int(h)))
-            self._picker._minutes.delete(0, 'end')
-            self._picker._minutes.insert(0, str(int(m)))
+            self._picker.set24Hrs(int(h))
+            self._picker.setMins(int(m))
         except (ValueError, AttributeError):
             pass
 
