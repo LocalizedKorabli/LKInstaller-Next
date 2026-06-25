@@ -216,7 +216,12 @@ class AdvancedTab(BaseTab):
                         # 3. 字体优化包 (检查预设)
                         if "font" in statuses:
                             font_status = statuses['font']
-                            if not preset_use_fonts:
+                            # 解析 True（跟随推荐）→ 实际字体 ID
+                            effective_font = preset_use_fonts
+                            if effective_font is True:
+                                preset_lang = preset_data.get('lang_code', 'en')
+                                effective_font = global_source_manager.get_default_font_id(preset_lang)
+                            if not effective_font:
                                 font_status = "not_required"  # 预设不要求字体，忽略实际文件状态
                             # 显示字体类型和版本
                             font_detail = ""

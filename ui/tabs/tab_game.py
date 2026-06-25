@@ -368,12 +368,17 @@ class GameTab(BaseTab):
                 lang_str = f"{l10n_lang_name} " if l10n_lang_name else ""
                 preset_use_ee = preset_data.get("use_ee", False)
                 preset_use_fonts = preset_data.get("use_fonts", False)
+                # 解析 True（跟随推荐）→ 实际字体 ID，用于判断是否需要字体
+                _effective_font = preset_use_fonts
+                if _effective_font is True:
+                    _preset_lang = preset_data.get('lang_code', 'en')
+                    _effective_font = global_source_manager.get_default_font_id(_preset_lang)
                 preset_use_mods = preset_data.get("use_mods", False)
                 is_ok = True
                 for component, status in statuses.items():
                     if status == "tampered":
                         # 跳过预设不使用的组件的篡改检测
-                        if component == "font" and not preset_use_fonts:
+                        if component == "font" and not _effective_font:
                             continue
                         if component == "ee" and not preset_use_ee:
                             continue
@@ -388,7 +393,7 @@ class GameTab(BaseTab):
                         if component == "ee" and preset_use_ee:
                             is_ok = False
                             break
-                        if component == "font" and preset_use_fonts:
+                        if component == "font" and _effective_font:
                             is_ok = False
                             break
                         if component == "mods" and preset_use_mods:
