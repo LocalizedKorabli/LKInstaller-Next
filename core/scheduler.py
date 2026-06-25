@@ -385,8 +385,17 @@ class SchedulerBackend:
             folder = self._get_folder(TASK_FOLDER)
             collection = folder.GetTasks(1)
             for task in collection:
-                if task.Name.startswith('LKInstallerNext-'):
+                name = task.Name
+                if name.startswith('LKInstallerNext-') or name.startswith('LKInstallerNext\\'):
                     tasks.append(self._com_extract_info(task))
+            # 兼容旧版子文件夹中的任务
+            try:
+                old_folder = self._get_folder("\\LKInstallerNext")
+                old_collection = old_folder.GetTasks(1)
+                for task in old_collection:
+                    tasks.append(self._com_extract_info(task))
+            except Exception:
+                pass
         except Exception as e:
             log(f"COM list failed, trying schtasks: {e}")
             return self._schtasks_list()
@@ -440,93 +449,93 @@ class SchedulerBackend:
 
     def _schtasks_list(self) -> List[Dict]:
         tasks = []
-        try:
-            result = subprocess.run(
-                ['schtasks', '/Query', '/FO', 'CSV', '/V', '/TN', f'{TASK_FOLDER}\\*'],
-                capture_output=True, text=True, timeout=15
-            )
-            if result.returncode != 0:
-                return tasks
-            lines = result.stdout.strip().splitlines()
-            if len(lines) < 2:
-                return tasks
-            headers = [h.strip('" ') for h in lines[0].split('","')]
-
-            # 从 CSV 中找到需要的列（不区分大小写）
-            col_map = {}
-            for col_name in ('Schedule Type', 'Scheduled Type', 'Schedule',
-                             'Start Time', 'Start', 'Days', 'Description', 'Status', 'TaskName'):
-                for i, h in enumerate(headers):
-                    if h.lower() == col_name.lower():
-                        col_map[col_name] = i
-
-            # schtasks 文本 → 内部类型 映射
-            SCHTYPE_MAP = {
-                'once': 'once',
-                'daily': 'daily',
-                'weekly': 'weekly',
-                'at logon': 'at_logon',
-                'at system startup': 'at_startup',
-                'on idle': 'on_idle',
-            }
-
-            for line in lines[1:]:
-                if not line.strip():
+        for pattern in ['LKInstallerNext-*', '\\LKInstallerNext\\*']:
+            try:
+                result = subprocess.run(
+                    ['schtasks', '/Query', '/FO', 'CSV', '/V', '/TN', pattern],
+                    capture_output=True, text=True, timeout=15
+                )
+                if result.returncode != 0:
                     continue
-                values = [v.strip('" ') for v in line.split('","')]
-                if len(values) < len(headers):
+                lines = result.stdout.strip().splitlines()
+                if len(lines) < 2:
                     continue
-                row = dict(zip(headers, values))
-                task_name = row.get('TaskName', '')
-                if '\\' in task_name:
-                    task_name = task_name.rsplit('\\', 1)[-1]
+                headers = [h.strip('" ') for h in lines[0].split('","')]
 
-                # 解析触发类型
-                trig = {'type': 'unknown'}
-                schedule_idx = col_map.get('Schedule Type', col_map.get('Scheduled Type', col_map.get('Schedule')))
-                if schedule_idx is not None and schedule_idx < len(values):
-                    raw_type = values[schedule_idx].lower().strip()
-                    for keyword, code in SCHTYPE_MAP.items():
-                        if keyword in raw_type:
-                            trig['type'] = code
-                            break
+                # 从 CSV 中找到需要的列（不区分大小写）
+                col_map = {}
+                for col_name in ('Schedule Type', 'Scheduled Type', 'Schedule',
+                                 'Start Time', 'Start', 'Days', 'Description', 'Status', 'TaskName'):
+                    for i, h in enumerate(headers):
+                        if h.lower() == col_name.lower():
+                            col_map[col_name] = i
 
-                # 解析开始时间
-                time_idx = col_map.get('Start Time', col_map.get('Start'))
-                if time_idx is not None and time_idx < len(values):
-                    raw_time = values[time_idx].strip()
-                    if raw_time:
-                        # 可能格式: "HH:MM:SS" 或 "YYYY/MM/DD HH:MM"
-                        if ' ' in raw_time:
-                            parts = raw_time.split(' ')
-                            trig['date'] = parts[0].replace('/', '-')
-                            if len(parts) > 1 and len(parts[1]) >= 5:
-                                trig['time'] = parts[1][:5]
-                        elif len(raw_time) >= 5:
-                            trig['time'] = raw_time[:5]
+                # schtasks 文本 → 内部类型 映射
+                SCHTYPE_MAP = {
+                    'once': 'once',
+                    'daily': 'daily',
+                    'weekly': 'weekly',
+                    'at logon': 'at_logon',
+                    'at system startup': 'at_startup',
+                    'on idle': 'on_idle',
+                }
 
-                # 解析星期（仅 weekly）
-                days_idx = col_map.get('Days')
-                if days_idx is not None and days_idx < len(values) and trig['type'] == 'weekly':
-                    raw_days = values[days_idx].strip().lower()
-                    day_map = {'mon': 'mon', 'tue': 'tue', 'wed': 'wed',
-                               'thu': 'thu', 'fri': 'fri', 'sat': 'sat', 'sun': 'sun'}
-                    parsed = []
-                    for k, v in day_map.items():
-                        if k in raw_days:
-                            parsed.append(v)
-                    if parsed:
-                        trig['days'] = parsed
+                for line in lines[1:]:
+                    if not line.strip():
+                        continue
+                    values = [v.strip('" ') for v in line.split('","')]
+                    if len(values) < len(headers):
+                        continue
+                    row = dict(zip(headers, values))
+                    task_name = row.get('TaskName', '')
+                    if '\\' in task_name:
+                        task_name = task_name.rsplit('\\', 1)[-1]
 
-                tasks.append({
-                    'name': task_name,
-                    'enabled': 'Disabled' not in row.get('Status', 'Ready'),
-                    'state': 3 if 'Running' in row.get('Status', '') else 3,
-                    'trigger': trig,
-                    'description': row.get('Description', ''),
-                })
-        except Exception as e:
-            log(f"schtasks query failed: {e}")
+                    # 解析触发类型
+                    trig = {'type': 'unknown'}
+                    schedule_idx = col_map.get('Schedule Type', col_map.get('Scheduled Type', col_map.get('Schedule')))
+                    if schedule_idx is not None and schedule_idx < len(values):
+                        raw_type = values[schedule_idx].lower().strip()
+                        for keyword, code in SCHTYPE_MAP.items():
+                            if keyword in raw_type:
+                                trig['type'] = code
+                                break
+
+                    # 解析开始时间
+                    time_idx = col_map.get('Start Time', col_map.get('Start'))
+                    if time_idx is not None and time_idx < len(values):
+                        raw_time = values[time_idx].strip()
+                        if raw_time:
+                            if ' ' in raw_time:
+                                parts = raw_time.split(' ')
+                                trig['date'] = parts[0].replace('/', '-')
+                                if len(parts) > 1 and len(parts[1]) >= 5:
+                                    trig['time'] = parts[1][:5]
+                            elif len(raw_time) >= 5:
+                                trig['time'] = raw_time[:5]
+
+                    # 解析星期（仅 weekly）
+                    days_idx = col_map.get('Days')
+                    if days_idx is not None and days_idx < len(values) and trig['type'] == 'weekly':
+                        raw_days = values[days_idx].strip().lower()
+                        day_map = {'mon': 'mon', 'tue': 'tue', 'wed': 'wed',
+                                   'thu': 'thu', 'fri': 'fri', 'sat': 'sat', 'sun': 'sun'}
+                        parsed = []
+                        for k, v in day_map.items():
+                            if k in raw_days:
+                                parsed.append(v)
+                        if parsed:
+                            trig['days'] = parsed
+
+                    tasks.append({
+                        'name': task_name,
+                        'enabled': 'Disabled' not in row.get('Status', 'Ready'),
+                        'state': 3 if 'Running' in row.get('Status', '') else 3,
+                        'trigger': trig,
+                        'description': row.get('Description', ''),
+                    })
+            except Exception as e:
+                log(f"schtasks query for {pattern} failed: {e}")
         return tasks
 
     def get_task_info(self, task_name: str) -> Optional[Dict]:
