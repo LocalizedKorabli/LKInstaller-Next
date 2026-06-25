@@ -1133,7 +1133,6 @@ class AutoUpdateConfigDialog(BaseDialog):
             self._btn_task_run.config(state='disabled')
             self._btn_task_toggle.config(state='disabled')
             self._btn_task_delete.config(state='disabled')
-            self._btn_task_edit.config(state='disabled')
             return
         display = self._task_listbox.get(selection[0])
         task = self._task_listbox.task_map.get(display)
@@ -1141,7 +1140,6 @@ class AutoUpdateConfigDialog(BaseDialog):
             self._btn_task_run.config(state='disabled')
             self._btn_task_toggle.config(state='disabled')
             self._btn_task_delete.config(state='disabled')
-            self._btn_task_edit.config(state='disabled')
             return
         self._btn_task_run.config(state='normal')
         self._btn_task_toggle.config(
@@ -1149,7 +1147,6 @@ class AutoUpdateConfigDialog(BaseDialog):
             text=_('lki.autoupdate.schedule.btn.disable') if task.get('enabled') else _('lki.autoupdate.schedule.btn.enable')
         )
         self._btn_task_delete.config(state='normal')
-        self._btn_task_edit.config(state='normal')
         self._btn_task_create.config(state='normal')
 
     def _get_selected_task(self) -> Optional[Dict]:
