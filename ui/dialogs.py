@@ -556,6 +556,7 @@ class AutoUpdateConfigDialog(BaseDialog):
 
         self._selected_instance_id = instance_id
         self._selected_preset_id = preset_id
+        self._dialog_instance_name = instance_name  # 供 _build_shortcut_tab 使用
 
         self._run_client_var = tk.BooleanVar(value=True)
 
@@ -603,7 +604,7 @@ class AutoUpdateConfigDialog(BaseDialog):
         # Row 0: 实例选择
         ttk.Label(f, text=_('lki.autoupdate.instance_label')).grid(
             row=row, column=0, sticky='e', padx=(0, 10), pady=3)
-        self._instance_var = tk.StringVar(value=self._instance_names[0] if self._instance_names else '')
+        self._instance_var = tk.StringVar(value=self._dialog_instance_name)
         self._instance_combo = ttk.Combobox(
             f, textvariable=self._instance_var,
             values=self._instance_names, state='readonly', width=40)
