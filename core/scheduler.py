@@ -199,7 +199,7 @@ class SchedulerBackend:
             set_trigger_params(trigger)
             folder = self._get_folder(TASK_FOLDER)
             folder.RegisterTaskDefinition(
-                prefixed_name, task, 6, "", "", 1
+                prefixed_name, task, 6, "", "", 3
             )
             log(f"Scheduled task created via COM: {prefixed_name}")
             return prefixed_name
