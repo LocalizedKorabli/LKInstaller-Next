@@ -8,7 +8,7 @@ from typing import Optional, List, Dict
 from core.logger import log
 from core import utils
 
-TASK_FOLDER = "\\LKInstallerNext"
+TASK_FOLDER = "\\"
 
 DAYS_OF_WEEK_MAP = {
     'mon': 1, 'tue': 2, 'wed': 3, 'thu': 4,
@@ -293,8 +293,8 @@ class SchedulerBackend:
             log(f"COM rename failed, trying schtasks: {e}")
         try:
             # schtasks 回退：通过导出/重新导入实现
-            full_old = f"LKInstallerNext\\{task_name}"
-            full_new = f"LKInstallerNext\\{new_name}"
+            full_old = f"LKInstallerNext-{task_name}"
+            full_new = f"LKInstallerNext-{new_name}"
             # 导出旧任务为 XML
             export = subprocess.run(
                 ['schtasks', '/Query', '/XML', '/TN', full_old],
@@ -385,7 +385,8 @@ class SchedulerBackend:
             folder = self._get_folder(TASK_FOLDER)
             collection = folder.GetTasks(1)
             for task in collection:
-                tasks.append(self._com_extract_info(task))
+                if task.Name.startswith('LKInstallerNext-'):
+                    tasks.append(self._com_extract_info(task))
         except Exception as e:
             log(f"COM list failed, trying schtasks: {e}")
             return self._schtasks_list()
