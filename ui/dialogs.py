@@ -184,6 +184,8 @@ class DatePicker(ttk.Frame):
         self._day_spin = ttk.Spinbox(self, from_=1, to=calendar.monthrange(y, m)[1],
                                      textvariable=self._day_var, width=4, justify='left', wrap=True)
         self._day_spin.pack(side='left')
+        self._day_spin.bind('<FocusIn>', lambda e: self._day_spin.selection_range(0, 'end'))
+        self._day_spin.bind('<FocusOut>', lambda e: self._clamp_day())
 
     def _clamp_year(self):
         try:
