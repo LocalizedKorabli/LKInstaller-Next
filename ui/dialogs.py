@@ -311,6 +311,7 @@ class TriggerConfigDialog(BaseDialog):
                                  command=self._reset_to_default_name, width=6)
         default_btn.grid(row=0, column=1, padx=(5, 0))
         # 显示完整任务名预览
+        row += 1
         self._full_name_label = ttk.Label(main, text="", foreground='gray')
         self._full_name_label.grid(row=row, column=0, columnspan=2, sticky='w', padx=(10, 0))
         row += 1
