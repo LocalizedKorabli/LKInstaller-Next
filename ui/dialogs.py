@@ -485,6 +485,9 @@ class TriggerConfigDialog(BaseDialog):
         """恢复默认前缀。"""
         self._user_edited_name = False
         self._prefix_var.set(_('lki.autoupdate.schedule.default_name'))
+        self._update_full_name_label()
+
+    def _on_trigger_type_changed(self, event=None):
         display = self._trigger_combo.get()
         type_map = {_(key): t for t, key in TRIGGER_TYPES}
         trigger_type = type_map.get(display, 'daily')
