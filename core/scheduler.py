@@ -433,8 +433,11 @@ class SchedulerBackend:
                     info['trigger']['days'] = self._com_get_weekdays(trigger)
                 if ttype == 'on_idle':
                     info['trigger']['idle_minutes'] = getattr(trigger, 'IdleWait', 10)
-            info['description'] = getattr(task.Definition.RegistrationInfo, 'Description', '')
-            log(f"Desc for '{info['name']}': {repr(info['description'])}")
+            # 获取描述
+            try:
+                info['description'] = task.Definition.RegistrationInfo.Description or ''
+            except Exception:
+                info['description'] = ''
         except Exception:
             pass
         return info
