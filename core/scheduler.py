@@ -399,10 +399,13 @@ class SchedulerBackend:
             self._ensure_connected()
             folder = self._get_folder(TASK_FOLDER)
             collection = folder.GetTasks(1)
+            com_count = 0
             for task in collection:
                 name = task.Name
                 if name.startswith('LKInstallerNext-') or name.startswith('LKInstallerNext\\'):
                     tasks.append(self._com_extract_info(task))
+                    com_count += 1
+            log(f"COM list_tasks: found {com_count} tasks via COM")
             # 兼容旧版子文件夹中的任务
             try:
                 old_folder = self._get_folder("\\LKInstallerNext")
@@ -412,7 +415,7 @@ class SchedulerBackend:
             except Exception:
                 pass
         except Exception as e:
-            log(f"COM list failed, trying schtasks: {e}")
+            log(f"COM list_tasks failed: {e}, trying schtasks")
             return self._schtasks_list()
         return tasks
 
