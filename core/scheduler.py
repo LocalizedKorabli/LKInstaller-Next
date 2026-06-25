@@ -438,6 +438,8 @@ class SchedulerBackend:
                 info['description'] = task.Definition.RegistrationInfo.Description or ''
             except Exception:
                 info['description'] = ''
+
+            log(f"Task desc: {repr(info['description'])}")
         except Exception:
             pass
         return info
