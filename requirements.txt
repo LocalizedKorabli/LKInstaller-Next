@@ -9,4 +9,3 @@ tkinter-tooltip~=3.1.2
 keyring~=25.5.0
 py7zr~=0.22.0
 tktimepicker~=2.0.2
-tkcalendar~=1.6.1

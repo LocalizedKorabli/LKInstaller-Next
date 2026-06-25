@@ -126,39 +126,67 @@ class TimePicker(ttk.Frame):
 
 
 class DatePicker(ttk.Frame):
-    """一个使用 tkcalendar.DateEntry 的日期选择组件。"""
+    """一个由 ttk.Entry 组成的日期输入组件（格式 YYYY-MM-DD）。"""
 
     def __init__(self, master, initial: str = "", on_change: Optional[Callable] = None, **kwargs):
         super().__init__(master, **kwargs)
-        from tkcalendar import DateEntry
         import datetime
         today = datetime.date.today()
         if initial:
             try:
                 parts = initial.split("-")
-                dt = datetime.date(int(parts[0]), int(parts[1]), int(parts[2]))
+                y, m, d = int(parts[0]), int(parts[1]), int(parts[2])
             except (ValueError, IndexError):
-                dt = today
+                y, m, d = today.year, today.month, today.day
         else:
-            dt = today
-        self._entry = DateEntry(self, date_pattern='yyyy-mm-dd', width=12,
-                                year=dt.year, month=dt.month, day=dt.day)
+            y, m, d = today.year, today.month, today.day
+
+        self._date_str = tk.StringVar(value=f"{y:04d}-{m:02d}-{d:02d}")
+
+        self._entry = ttk.Entry(self, textvariable=self._date_str, width=14, justify='left')
         self._entry.pack(side='left')
+        self._entry.bind('<FocusIn>', lambda e: self._entry.selection_range(0, 'end'))
+        self._entry.bind('<FocusOut>', lambda e: self._validate())
         if on_change:
-            self._entry.bind('<<DateEntrySelected>>', lambda e: on_change())
-            # 也响应键盘输入
             self._entry.bind('<KeyRelease>', lambda e: on_change())
+
+    def _validate(self):
+        """校验并格式化日期输入。"""
+        raw = self._date_str.get().strip()
+        import datetime
+        try:
+            parts = raw.split("-")
+            y, m, d = int(parts[0]), int(parts[1]), int(parts[2])
+            # 钳制范围
+            if y < 2020: y = 2020
+            elif y > 2035: y = 2035
+            if m < 1: m = 1
+            elif m > 12: m = 12
+            if d < 1: d = 1
+            elif d > 31: d = 31
+            # 验证日期有效性（如 2月30日 → 修正）
+            try:
+                dt = datetime.date(y, m, d)
+            except ValueError:
+                # 日期无效，回退到当月最后一天
+                import calendar
+                last_day = calendar.monthrange(y, m)[1]
+                dt = datetime.date(y, m, min(d, last_day))
+            self._date_str.set(dt.strftime('%Y-%m-%d'))
+        except (ValueError, IndexError):
+            # 格式错误，重置为今天
+            self._date_str.set(datetime.date.today().strftime('%Y-%m-%d'))
 
     def get(self) -> str:
         """返回 'YYYY-MM-DD' 格式的日期字符串。"""
-        return self._entry.get()
+        return self._date_str.get()
 
     def set(self, date_str: str):
         """从 'YYYY-MM-DD' 字符串设置日期。"""
         try:
-            import datetime
             parts = date_str.strip().split("-")
-            self._entry.set_date(datetime.date(int(parts[0]), int(parts[1]), int(parts[2])))
+            y, m, d = int(parts[0]), int(parts[1]), int(parts[2])
+            self._date_str.set(f"{y:04d}-{m:02d}-{d:02d}")
         except (ValueError, IndexError):
             pass
 
