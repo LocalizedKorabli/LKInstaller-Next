@@ -455,6 +455,7 @@ class SchedulerBackend:
                 if ttype == 'on_idle':
                     info['trigger']['idle_minutes'] = getattr(trigger, 'IdleWait', 10)
             info['description'] = getattr(task.Definition.RegistrationInfo, 'Description', '')
+            log(f"Task desc for '{display_name}': {repr(info.get('description', ''))}")
         except Exception:
             pass
         return info
