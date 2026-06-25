@@ -170,7 +170,7 @@ class DatePicker(ttk.Frame):
                 cd = int(self._day_var.get())
                 if cd > max_d:
                     self._day_var.set(str(max_d))
-            except (ValueError, AttributeError, tk.TclError):
+            except (ValueError, AttributeError, tk.TclError, calendar.IllegalMonthError):
                 pass
 
         def _on_ym_change(*_):
@@ -181,6 +181,7 @@ class DatePicker(ttk.Frame):
         year_entry = ttk.Entry(self, textvariable=self._year_var, width=6, justify='left')
         year_entry.pack(side='left')
         year_entry.bind('<FocusIn>', lambda e: year_entry.selection_range(0, 'end'))
+        year_entry.bind('<ButtonRelease-1>', lambda e: year_entry.selection_range(0, 'end'))
         year_entry.bind('<FocusOut>', lambda e: (self._clamp_year(), _update_day_to()))
 
         ttk.Label(self, text="-", font=("TkDefaultFont", 10)).pack(side='left')
@@ -188,6 +189,8 @@ class DatePicker(ttk.Frame):
         month_spin = ttk.Spinbox(self, from_=1, to=12, textvariable=self._month_var,
                                  width=4, justify='left', wrap=True)
         month_spin.pack(side='left')
+        month_spin.bind('<FocusIn>', lambda e: month_spin.selection_range(0, 'end'))
+        month_spin.bind('<ButtonRelease-1>', lambda e: month_spin.selection_range(0, 'end'))
         month_spin.bind('<FocusOut>', lambda e: self._clamp_month())
         self._month_var.trace_add('write', _on_ym_change)
 
@@ -197,6 +200,7 @@ class DatePicker(ttk.Frame):
                                      textvariable=self._day_var, width=4, justify='left', wrap=True)
         self._day_spin.pack(side='left')
         self._day_spin.bind('<FocusIn>', lambda e: self._day_spin.selection_range(0, 'end'))
+        self._day_spin.bind('<ButtonRelease-1>', lambda e: self._day_spin.selection_range(0, 'end'))
         self._day_spin.bind('<FocusOut>', lambda e: self._clamp_day())
 
     def _clamp_year(self):
@@ -225,7 +229,7 @@ class DatePicker(ttk.Frame):
             y = int(self._year_var.get())
             m = int(self._month_var.get())
             d = int(self._day_var.get())
-        except ValueError:
+        except (ValueError, calendar.IllegalMonthError):
             return
         max_d = calendar.monthrange(y, m)[1]
         if d > max_d:
