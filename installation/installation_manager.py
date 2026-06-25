@@ -528,7 +528,7 @@ class InstallationManager:
             temp_7z_path = utils.TEMP_DIR / f"{font_id}.7z"
 
             def _report_font_progress(downloaded, total):
-                pct = min(int(downloaded * 25 / total), 25) if total > 0 else 0
+                pct = min(int(downloaded * 40 / total), 40) if total > 0 else 0
                 _log_task(task, _('lki.install.status.downloading_file') % font_id, 50 + pct)
 
             if not self._download_file_with_retry(DOWNLOAD_URL, temp_7z_path, f"Fonts ({font_id}) - {route_id}", 30,
@@ -843,7 +843,7 @@ class InstallationManager:
                                         errors):
         from core.localizer import _
 
-        _log_task(task, _('lki.install.status.installing_to') % version_folder.bin_folder_name, 80)
+        _log_task(task, _('lki.install.status.installing_to') % version_folder.bin_folder_name, 92)
 
         mods_dir_name = "lk_mods" if task.use_lk_mods else "mods"
         mods_dir = version_folder.bin_folder_path / mods_dir_name
@@ -880,7 +880,7 @@ class InstallationManager:
                     log(f"Pre-install cleanup warning: could not remove {candidate_file}: {e}")
 
         try:
-            _log_task(task, _('lki.install.status.patching_paths_xml'), 81)
+            _log_task(task, _('lki.install.status.patching_paths_xml'), 93)
             utils.fix_paths_xml(version_folder.bin_folder_path)
         except Exception as e:
             _log_task(task, _('lki.install.error.paths_xml_failed') % e)
@@ -921,7 +921,7 @@ class InstallationManager:
 
     def _mark_version_inactive(self, task, version_folder):
         from core.localizer import _
-        _log_task(task, _('lki.install.status.inactive_skip') % version_folder.bin_folder_name, 85)
+        _log_task(task, _('lki.install.status.inactive_skip') % version_folder.bin_folder_name, 94)
         mods_dir_name = "lk_mods" if task.use_lk_mods else "mods"
         mods_dir = version_folder.bin_folder_path / mods_dir_name
         info_json_path = task.instance.path / "lki" / "info" / version_folder.bin_folder_name
