@@ -374,6 +374,7 @@ class TriggerConfigDialog(BaseDialog):
         instance_data = self._mgr.get_instance(iid)
         active_preset = instance_data.get('active_preset_id', 'default') if instance_data else 'default'
         self._populate_presets(iid, active_preset)
+        self._update_full_name_label()
 
     def _on_preset_changed(self, _event=None):
         display = self._preset_var.get()
