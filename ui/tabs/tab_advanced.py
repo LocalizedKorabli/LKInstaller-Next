@@ -191,7 +191,7 @@ class AdvancedTab(BaseTab):
                         lang_str = f" {l10n_lang_name}" if l10n_lang_name else ""
 
                         status_map = {
-                            "ok": "✔️",
+                            "ok": "✔",
                             "tampered": "❗",
                             "not_installed": "❌",
                             "not_required": "⭕"
