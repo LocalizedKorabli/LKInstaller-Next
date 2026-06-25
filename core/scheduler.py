@@ -412,8 +412,15 @@ class SchedulerBackend:
         return tasks
 
     def _com_extract_info(self, task) -> Dict:
+        raw_name = task.Name
+        # 去掉应用于识别的前缀
+        display_name = raw_name
+        if display_name.startswith('LKInstallerNext-'):
+            display_name = display_name[len('LKInstallerNext-'):]
+        elif '\\' in display_name:
+            display_name = display_name.rsplit('\\', 1)[-1]
         info = {
-            'name': task.Name,
+            'name': display_name,
             'enabled': task.Enabled,
             'state': task.State,
             'trigger': {'type': 'unknown'},
@@ -500,6 +507,8 @@ class SchedulerBackend:
                     task_name = row.get('TaskName', '')
                     if '\\' in task_name:
                         task_name = task_name.rsplit('\\', 1)[-1]
+                    if task_name.startswith('LKInstallerNext-'):
+                        task_name = task_name[len('LKInstallerNext-'):]
 
                     # 解析触发类型
                     trig = {'type': 'unknown'}
