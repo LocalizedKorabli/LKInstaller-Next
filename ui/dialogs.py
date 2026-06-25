@@ -126,7 +126,8 @@ class TimePicker(ttk.Frame):
 
 
 class DatePicker(ttk.Frame):
-    """一个由 ttk.Entry 组成的日期输入组件（格式 YYYY-MM-DD）。"""
+    """由年(Entry)、月(Spinbox)、日(Spinbox)组成的日期选择组件。
+    月/年变化时自动校验日期的有效性（闰年、月天数）。"""
 
     def __init__(self, master, initial: str = "", on_change: Optional[Callable] = None, **kwargs):
         super().__init__(master, **kwargs)
@@ -141,52 +142,80 @@ class DatePicker(ttk.Frame):
         else:
             y, m, d = today.year, today.month, today.day
 
-        self._date_str = tk.StringVar(value=f"{y:04d}-{m:02d}-{d:02d}")
+        self._callback = on_change
+        self._year_var = tk.StringVar(value=str(y))
+        self._month_var = tk.StringVar(value=str(m))
+        self._day_var = tk.StringVar(value=str(d))
 
-        self._entry = ttk.Entry(self, textvariable=self._date_str, width=14, justify='left')
-        self._entry.pack(side='left')
-        self._entry.bind('<FocusIn>', lambda e: self._entry.selection_range(0, 'end'))
-        self._entry.bind('<FocusOut>', lambda e: self._validate())
-        if on_change:
-            self._entry.bind('<KeyRelease>', lambda e: on_change())
+        def _on_ym_change(*_):
+            self._clamp_day()
+            if self._callback:
+                self._callback()
 
-    def _validate(self):
-        """校验并格式化日期输入。"""
-        raw = self._date_str.get().strip()
-        import datetime
+        year_entry = ttk.Entry(self, textvariable=self._year_var, width=6, justify='left')
+        year_entry.pack(side='left')
+        year_entry.bind('<FocusIn>', lambda e: year_entry.selection_range(0, 'end'))
+        year_entry.bind('<FocusOut>', lambda e: self._clamp_year())
+
+        ttk.Label(self, text="-", font=("TkDefaultFont", 10)).pack(side='left')
+
+        month_spin = ttk.Spinbox(self, from_=1, to=12, textvariable=self._month_var,
+                                 width=4, justify='left', wrap=True)
+        month_spin.pack(side='left')
+        month_spin.bind('<FocusOut>', lambda e: self._clamp_month())
+        self._month_var.trace_add('write', _on_ym_change)
+
+        ttk.Label(self, text="-", font=("TkDefaultFont", 10)).pack(side='left')
+
+        day_spin = ttk.Spinbox(self, from_=1, to=31, textvariable=self._day_var,
+                               width=4, justify='left', wrap=True)
+        day_spin.pack(side='left')
+
+    def _clamp_year(self):
         try:
-            parts = raw.split("-")
-            y, m, d = int(parts[0]), int(parts[1]), int(parts[2])
-            # 钳制范围
+            y = int(self._year_var.get().strip())
             if y < 2020: y = 2020
             elif y > 2035: y = 2035
+            self._year_var.set(str(y))
+        except ValueError:
+            import datetime
+            self._year_var.set(str(datetime.date.today().year))
+
+    def _clamp_month(self):
+        try:
+            m = int(self._month_var.get().strip())
             if m < 1: m = 1
             elif m > 12: m = 12
-            if d < 1: d = 1
-            elif d > 31: d = 31
-            # 验证日期有效性（如 2月30日 → 修正）
-            try:
-                dt = datetime.date(y, m, d)
-            except ValueError:
-                # 日期无效，回退到当月最后一天
-                import calendar
-                last_day = calendar.monthrange(y, m)[1]
-                dt = datetime.date(y, m, min(d, last_day))
-            self._date_str.set(dt.strftime('%Y-%m-%d'))
-        except (ValueError, IndexError):
-            # 格式错误，重置为今天
-            self._date_str.set(datetime.date.today().strftime('%Y-%m-%d'))
+            self._month_var.set(str(m))
+        except ValueError:
+            self._month_var.set("1")
+
+    def _clamp_day(self):
+        """根据当前年和月修正日的值，处理闰年。"""
+        import calendar
+        try:
+            y = int(self._year_var.get())
+            m = int(self._month_var.get())
+            d = int(self._day_var.get())
+        except ValueError:
+            return
+        max_d = calendar.monthrange(y, m)[1]
+        if d > max_d:
+            self._day_var.set(str(max_d))
+        elif d < 1:
+            self._day_var.set("1")
 
     def get(self) -> str:
-        """返回 'YYYY-MM-DD' 格式的日期字符串。"""
-        return self._date_str.get()
+        self._clamp_day()
+        return f"{self._year_var.get()}-{int(self._month_var.get()):02d}-{int(self._day_var.get()):02d}"
 
     def set(self, date_str: str):
-        """从 'YYYY-MM-DD' 字符串设置日期。"""
         try:
             parts = date_str.strip().split("-")
             y, m, d = int(parts[0]), int(parts[1]), int(parts[2])
-            self._date_str.set(f"{y:04d}-{m:02d}-{d:02d}")
+            self._year_var.set(str(y))
+            self._month_var.set(str(m))
+            self._day_var.set(str(d))
         except (ValueError, IndexError):
             pass
 
