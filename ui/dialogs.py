@@ -111,7 +111,19 @@ class TimePicker(ttk.Frame):
 
     def get(self) -> str:
         """返回 'HH:MM' 格式的时间字符串。"""
-        return f"{self._hour_var.get()}:{self._min_var.get()}"
+        h_raw = self._hour_var.get()
+        m_raw = self._min_var.get()
+        try:
+            h = int(h_raw) if h_raw and h_raw.strip().lstrip('-').isdigit() else 0
+            h = max(0, min(h, 23))
+        except ValueError:
+            h = 0
+        try:
+            m = int(m_raw) if m_raw and m_raw.strip().lstrip('-').isdigit() else 0
+            m = max(0, min(m, 59))
+        except ValueError:
+            m = 0
+        return f"{h:02d}:{m:02d}"
 
     def set(self, time_str: str):
         """从 'HH:MM' 字符串设置时间。"""
