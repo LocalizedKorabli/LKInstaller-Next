@@ -379,11 +379,15 @@ class TriggerConfigDialog(BaseDialog):
         for w in self._trigger_params_frame.winfo_children():
             w.destroy()
         if trigger_type == 'once':
-            ttk.Label(self._trigger_params_frame, text=_('lki.autoupdate.schedule.date')).pack(side='left', padx=(0, 5))
-            self._date_picker = DatePicker(self._trigger_params_frame)
+            date_row = ttk.Frame(self._trigger_params_frame)
+            date_row.pack(fill='x')
+            ttk.Label(date_row, text=_('lki.autoupdate.schedule.date')).pack(side='left', padx=(0, 5))
+            self._date_picker = DatePicker(date_row)
             self._date_picker.pack(side='left')
-            ttk.Label(self._trigger_params_frame, text='  ' + _('lki.autoupdate.schedule.time')).pack(side='left', padx=(5, 5))
-            self._time_picker = TimePicker(self._trigger_params_frame, initial='08:00')
+            time_row = ttk.Frame(self._trigger_params_frame)
+            time_row.pack(fill='x', pady=(3, 0))
+            ttk.Label(time_row, text=_('lki.autoupdate.schedule.time')).pack(side='left', padx=(0, 5))
+            self._time_picker = TimePicker(time_row, initial='08:00')
             self._time_picker.pack(side='left')
         elif trigger_type == 'daily':
             ttk.Label(self._trigger_params_frame, text=_('lki.autoupdate.schedule.time')).pack(side='left', padx=(0, 5))
