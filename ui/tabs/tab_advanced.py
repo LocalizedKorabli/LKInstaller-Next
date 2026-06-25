@@ -596,10 +596,19 @@ class PresetManagerWindow(BaseDialog):
         btn_state = 'disabled' if is_default else 'normal'
 
         lang_code = preset_data.get('lang_code', 'en')
-        lang_name = self.l10n_id_to_name.get(lang_code, self.l10n_id_to_name.get('en'))
-        self.lang_combobox.set(lang_name)
+        if lang_code:
+            lang_name = self.l10n_id_to_name.get(lang_code, self.l10n_id_to_name.get('en'))
+            self.lang_combobox.set(lang_name)
+            # 恢复标准语言列表（去掉占位项）
+            self.lang_combobox['values'] = list(self.l10n_id_to_name.values())
+        else:
+            # 新预设尚未选择语言
+            self.lang_combobox.set('')
+            # 在 values 中临时插入占位文本
+            all_langs = list(self.l10n_id_to_name.values())
+            self.lang_combobox['values'] = [_('lki.preset.manager.select_language')] + all_langs
+            self.lang_combobox.set(_('lki.preset.manager.select_language'))
 
-        # (已修改：语言在默认预设中可编辑)
         self.lang_combobox.config(state='readonly')
 
         use_ee = preset_data.get('use_ee', False)
@@ -611,6 +620,10 @@ class PresetManagerWindow(BaseDialog):
         self.use_fonts_var.set(use_fonts)
         # 动态重建字体 Combo（根据当前语言添加推荐项）
         lang_code = preset_data.get('lang_code', 'en')
+        if not lang_code:
+            # 语言未选择时，推荐字体预设为 True（跟随推荐）
+            self.use_fonts_var.set(True)
+            lang_code = 'en'  # fallback for font list construction
         recommended_font = global_source_manager.get_default_font_id(lang_code)
         font_options = [_('lki.preset.manager.font_opt.none')]
         font_id_map = {"": _('lki.preset.manager.font_opt.none')}
@@ -725,19 +738,9 @@ class PresetManagerWindow(BaseDialog):
             messagebox.showwarning(_('lki.btn.new'), _('lki.preset.error.name_exists'), parent=self)
             return
 
-        current_ui_lang = settings.global_settings.language
-        default_lang_code = determine_default_l10n_lang(current_ui_lang)
-        default_use_ee = True
-        default_use_mods = True
-        default_use_fonts = global_source_manager.get_default_font_id(default_lang_code)
-
-        # try:
-        #     default_use_fonts = global_source_manager.lang_code_requires_fonts(default_lang_code)
-        # except Exception:
-        #     default_use_fonts = True  # (回退)
-
+        # 新建预设：语言为空（未选择），字体跟随推荐
         self.active_preset_id = self.instance_manager.add_preset(
-            self.instance_id, new_name, default_lang_code, default_use_ee, default_use_mods, default_use_fonts
+            self.instance_id, new_name, "", True, True, True  # lang_code="" 表示未选择
         )
         self._populate_listbox_and_select()
 
@@ -781,6 +784,10 @@ class PresetManagerWindow(BaseDialog):
 
         new_lang_name = self.lang_combobox.get()
         new_lang_code = self.l10n_name_to_id.get(new_lang_name)
+        if not new_lang_code:
+            messagebox.showwarning(_('lki.btn.save_changes'),
+                                   _('lki.preset.manager.error.no_language'), parent=self)
+            return
         new_use_ee = self.use_ee_var.get()
         new_use_mods = self.use_mods_var.get()
         new_use_fonts = self._get_font_value()
