@@ -511,37 +511,38 @@ class PresetManagerWindow(BaseDialog):
                                          variable=self.use_ee_var)
         self.cb_use_ee.grid(row=5, column=0, columnspan=2, sticky='w', pady=(10, 0))
 
-        button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=1, column=0, columnspan=2, sticky='ew', pady=(10, 0))
+        # ── 按钮栏（统一 grid 布局，两行等宽对齐）──
+        btn_grid = ttk.Frame(main_frame)
+        btn_grid.grid(row=1, column=0, columnspan=2, sticky='ew', pady=(10, 0))
+        for i in range(5):
+            btn_grid.columnconfigure(i, weight=1)
 
-        self.btn_new = ttk.Button(button_frame, text=_('lki.btn.new'), command=self._new_preset)
-        self.btn_new.pack(side='left')
+        self.btn_new = ttk.Button(btn_grid, text=_('lki.btn.new'), command=self._new_preset)
+        self.btn_new.grid(row=0, column=0, sticky='ew', padx=(0, 2))
 
-        self.btn_save_as = ttk.Button(button_frame, text=_('lki.btn.save_as'), command=self._save_as_preset)
-        self.btn_save_as.pack(side='left', padx=5)
+        self.btn_save_as = ttk.Button(btn_grid, text=_('lki.btn.save_as'), command=self._save_as_preset)
+        self.btn_save_as.grid(row=0, column=1, sticky='ew', padx=2)
 
-        self.btn_rename = ttk.Button(button_frame, text=_('lki.btn.rename'), command=self._rename_preset)
-        self.btn_rename.pack(side='left')
+        self.btn_rename = ttk.Button(btn_grid, text=_('lki.btn.rename'), command=self._rename_preset)
+        self.btn_rename.grid(row=0, column=2, sticky='ew', padx=2)
 
-        self.btn_delete = ttk.Button(button_frame, text=_('lki.btn.delete'), command=self._delete_preset)
-        self.btn_delete.pack(side='left', padx=5)
+        self.btn_delete = ttk.Button(btn_grid, text=_('lki.btn.delete'), command=self._delete_preset)
+        self.btn_delete.grid(row=0, column=3, sticky='ew', padx=2)
 
-        self.btn_save = ttk.Button(button_frame, text=_('lki.btn.save_changes'), command=self._save_preset)
-        self.btn_save.pack(side='right')
+        self.btn_save = ttk.Button(btn_grid, text=_('lki.btn.save_changes'), command=self._save_preset)
+        self.btn_save.grid(row=0, column=4, sticky='ew', padx=(2, 0))
 
-        # --- (已修改：布局更改为 Grid) ---
-        select_frame = ttk.Frame(main_frame)
-        select_frame.grid(row=2, column=0, columnspan=2, sticky='ew', pady=(10, 0))
-        select_frame.columnconfigure((0, 1), weight=1)  # 配置 2 列以共享空间
+        # 第二行：操作按钮（2 列等宽）
+        action_grid = ttk.Frame(main_frame)
+        action_grid.grid(row=2, column=0, columnspan=2, sticky='ew', pady=(6, 0))
+        action_grid.columnconfigure((0, 1), weight=1)
 
-        # (新增) 按钮 1: 创建快捷方式
-        self.btn_create_shortcut = ttk.Button(select_frame, text=_('lki.preset.btn.configure_autoupdate'),
+        self.btn_create_shortcut = ttk.Button(action_grid, text=_('lki.preset.btn.configure_autoupdate'),
                                               command=self._open_auto_update_config)
-        self.btn_create_shortcut.grid(row=0, column=0, sticky='ew', padx=(0, 5))  # 居左
+        self.btn_create_shortcut.grid(row=0, column=0, sticky='ew', padx=(0, 3))
 
-        # (已修改) 按钮 2: 保存并选定
-        self.btn_select = ttk.Button(select_frame, text=_('lki.preset.btn.save_select'), command=self._select_and_close)
-        self.btn_select.grid(row=0, column=1, sticky='ew', padx=(5, 0))  # 居右
+        self.btn_select = ttk.Button(action_grid, text=_('lki.preset.btn.save_select'), command=self._select_and_close)
+        self.btn_select.grid(row=0, column=1, sticky='ew', padx=(3, 0))
         # --- (修改结束) ---
 
         self._populate_listbox_and_select()
