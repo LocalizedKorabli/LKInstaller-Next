@@ -147,15 +147,29 @@ class DatePicker(ttk.Frame):
         self._month_var = tk.StringVar(value=str(m))
         self._day_var = tk.StringVar(value=str(d))
 
+        import calendar
+        def _update_day_to():
+            """根据当前年月更新日的 Spinbox 最大值（防止出现2月30日）。"""
+            try:
+                ny = int(self._year_var.get())
+                nm = int(self._month_var.get())
+                max_d = calendar.monthrange(ny, nm)[1]
+                self._day_spin.config(to=max_d)
+                cd = int(self._day_var.get())
+                if cd > max_d:
+                    self._day_var.set(str(max_d))
+            except (ValueError, AttributeError):
+                pass
+
         def _on_ym_change(*_):
-            self._clamp_day()
+            _update_day_to()
             if self._callback:
                 self._callback()
 
         year_entry = ttk.Entry(self, textvariable=self._year_var, width=6, justify='left')
         year_entry.pack(side='left')
         year_entry.bind('<FocusIn>', lambda e: year_entry.selection_range(0, 'end'))
-        year_entry.bind('<FocusOut>', lambda e: self._clamp_year())
+        year_entry.bind('<FocusOut>', lambda e: (self._clamp_year(), _update_day_to()))
 
         ttk.Label(self, text="-", font=("TkDefaultFont", 10)).pack(side='left')
 
@@ -167,9 +181,9 @@ class DatePicker(ttk.Frame):
 
         ttk.Label(self, text="-", font=("TkDefaultFont", 10)).pack(side='left')
 
-        day_spin = ttk.Spinbox(self, from_=1, to=31, textvariable=self._day_var,
-                               width=4, justify='left', wrap=True)
-        day_spin.pack(side='left')
+        self._day_spin = ttk.Spinbox(self, from_=1, to=calendar.monthrange(y, m)[1],
+                                     textvariable=self._day_var, width=4, justify='left', wrap=True)
+        self._day_spin.pack(side='left')
 
     def _clamp_year(self):
         try:
