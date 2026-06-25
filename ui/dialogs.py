@@ -467,6 +467,9 @@ class TriggerConfigDialog(BaseDialog):
                         'fri': _('lki.autoupdate.schedule.fri'), 'sat': _('lki.autoupdate.schedule.sat'),
                         'sun': _('lki.autoupdate.schedule.sun')}
             ds = "-".join(day_names.get(d, d) for d in days) if days else _('lki.autoupdate.schedule.all')
+            # 选中全部7天时显示"全部"
+            if days and len(days) == 7:
+                ds = _('lki.autoupdate.schedule.all')
             trigger_part = f"{_('lki.autoupdate.schedule.trigger_desc.weekly')}-{ds}-{_fmt_time(t)}"
         elif tt == 'at_logon':
             trigger_part = _('lki.autoupdate.schedule.trigger_desc.at_logon')
@@ -901,6 +904,8 @@ class AutoUpdateConfigDialog(BaseDialog):
                             'fri': _('lki.autoupdate.schedule.fri'), 'sat': _('lki.autoupdate.schedule.sat'),
                             'sun': _('lki.autoupdate.schedule.sun')}
                 ds = "-".join(day_names.get(d, d) for d in days)
+                if len(days) == 7:
+                    ds = _('lki.autoupdate.schedule.all')
                 trigger_part = f"{_('lki.autoupdate.schedule.trigger_desc.weekly')}-{ds}-{_fmt_time(time_str)}"
             elif trigger_type == 'at_logon':
                 trigger_part = _('lki.autoupdate.schedule.trigger_desc.at_logon')
