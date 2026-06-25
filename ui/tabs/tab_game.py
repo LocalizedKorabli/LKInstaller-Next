@@ -372,6 +372,13 @@ class GameTab(BaseTab):
                 is_ok = True
                 for component, status in statuses.items():
                     if status == "tampered":
+                        # 跳过预设不使用的组件的篡改检测
+                        if component == "font" and not preset_use_fonts:
+                            continue
+                        if component == "ee" and not preset_use_ee:
+                            continue
+                        if component == "mods" and not preset_use_mods:
+                            continue
                         is_ok = False
                         break
                     if status == "not_installed":
