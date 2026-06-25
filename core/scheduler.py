@@ -78,17 +78,20 @@ class SchedulerBackend:
 
 
     def create_once(self, task_name: str, instance_id: str, preset_id: str,
-                    run_client: bool, time_str: str, description: str = "") -> str:
+                    run_client: bool, time_str: str, description: str = "",
+                    date_str: Optional[str] = None) -> str:
         try:
             return self._com_create_trigger(
                 task_name, instance_id, preset_id, run_client,
                 description, TASK_TRIGGER_ONCE,
-                lambda trigger: self._set_once_params(trigger, time_str)
+                lambda trigger: self._set_once_params(trigger, time_str, date_str)
             )
         except Exception:
+            if not date_str:
+                date_str = time.strftime("%Y/%m/%d")
             return self._schtasks_create(
                 task_name, instance_id, preset_id, run_client,
-                '/SC ONCE', f'/ST {time_str} /SD {time.strftime("%Y/%m/%d")}'
+                '/SC ONCE', f'/ST {time_str} /SD {date_str.replace("-", "/")}'
             )
 
     def create_daily(self, task_name: str, instance_id: str, preset_id: str,
@@ -197,11 +200,17 @@ class SchedulerBackend:
         return full_path
 
     @staticmethod
-    def _set_once_params(trigger, time_str: str):
+    def _set_once_params(trigger, time_str: str, date_str: Optional[str] = None):
         hours, minutes = time_str.split(":") if ":" in time_str else (time_str[:2], time_str[2:])
-        import datetime
-        today = datetime.date.today()
-        trigger.StartBoundary = f"{today}T{int(hours):02d}:{int(minutes):02d}:00"
+        if date_str:
+            # date_str 格式为 YYYY-MM-DD
+            date_clean = date_str.replace("-", "")
+            y, m, d = date_clean[:4], date_clean[4:6], date_clean[6:8]
+            trigger.StartBoundary = f"{y}-{m}-{d}T{int(hours):02d}:{int(minutes):02d}:00"
+        else:
+            import datetime
+            today = datetime.date.today()
+            trigger.StartBoundary = f"{today}T{int(hours):02d}:{int(minutes):02d}:00"
 
     @staticmethod
     def _set_daily_params(trigger, time_str: str):
@@ -408,6 +417,7 @@ class SchedulerBackend:
                 sb = getattr(trigger, 'StartBoundary', '')
                 if sb and len(sb) >= 16:
                     info['trigger']['time'] = sb[11:16]
+                    info['trigger']['date'] = sb[0:10]
                 if ttype == 'weekly':
                     info['trigger']['days'] = self._com_get_weekdays(trigger)
                 if ttype == 'on_idle':
@@ -484,8 +494,15 @@ class SchedulerBackend:
                 time_idx = col_map.get('Start Time', col_map.get('Start'))
                 if time_idx is not None and time_idx < len(values):
                     raw_time = values[time_idx].strip()
-                    if raw_time and len(raw_time) >= 5:
-                        trig['time'] = raw_time[:5]  # "HH:MM"
+                    if raw_time:
+                        # 可能格式: "HH:MM:SS" 或 "YYYY/MM/DD HH:MM"
+                        if ' ' in raw_time:
+                            parts = raw_time.split(' ')
+                            trig['date'] = parts[0].replace('/', '-')
+                            if len(parts) > 1 and len(parts[1]) >= 5:
+                                trig['time'] = parts[1][:5]
+                        elif len(raw_time) >= 5:
+                            trig['time'] = raw_time[:5]
 
                 # 解析星期（仅 weekly）
                 days_idx = col_map.get('Days')

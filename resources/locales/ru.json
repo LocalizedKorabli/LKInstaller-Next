@@ -45,6 +45,7 @@
   "lki.autoupdate.schedule.btn.run_now": "Выполнить",
   "lki.autoupdate.schedule.created": "Плановая задача создана:\n%s",
   "lki.autoupdate.schedule.daily": "Ежедневно",
+  "lki.autoupdate.schedule.date": "Дата:",
   "lki.autoupdate.schedule.days": "Дни:",
   "lki.autoupdate.schedule.delete_confirm": "Удалить плановую задачу \"%s\"?",
   "lki.autoupdate.schedule.description": "Создаёт плановую задачу, которая автоматически проверяет и устанавливает обновления по расписанию.",

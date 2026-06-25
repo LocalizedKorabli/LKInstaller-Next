@@ -121,6 +121,40 @@ class TimePicker(ttk.Frame):
             pass
 
 
+class DatePicker(ttk.Frame):
+    """一个使用 tkcalendar.DateEntry 的日期选择组件。"""
+
+    def __init__(self, master, initial: str = "", **kwargs):
+        super().__init__(master, **kwargs)
+        from tkcalendar import DateEntry
+        import datetime
+        today = datetime.date.today()
+        if initial:
+            try:
+                parts = initial.split("-")
+                dt = datetime.date(int(parts[0]), int(parts[1]), int(parts[2]))
+            except (ValueError, IndexError):
+                dt = today
+        else:
+            dt = today
+        self._entry = DateEntry(self, date_pattern='yyyy-mm-dd', width=12,
+                                year=dt.year, month=dt.month, day=dt.day)
+        self._entry.pack(side='left')
+
+    def get(self) -> str:
+        """返回 'YYYY-MM-DD' 格式的日期字符串。"""
+        return self._entry.get().strftime('%Y-%m-%d')
+
+    def set(self, date_str: str):
+        """从 'YYYY-MM-DD' 字符串设置日期。"""
+        try:
+            import datetime
+            parts = date_str.strip().split("-")
+            self._entry.set_date(datetime.date(int(parts[0]), int(parts[1]), int(parts[2])))
+        except (ValueError, IndexError):
+            pass
+
+
 class BaseDialog(tk.Toplevel):
     """
     一个会自动在屏幕上居中的 Toplevel 弹窗基类。
@@ -233,6 +267,7 @@ class TriggerConfigDialog(BaseDialog):
         # 触发类型变量
         self._trigger_type_var = tk.StringVar(value='daily')
         self._time_picker: Optional[TimePicker] = None
+        self._date_picker: Optional[DatePicker] = None  # 用于 'once' 触发类型
         self._trigger_idle_var = tk.IntVar(value=10)
         self._trigger_days_vars: Dict[str, tk.BooleanVar] = {}
 
@@ -344,7 +379,10 @@ class TriggerConfigDialog(BaseDialog):
         for w in self._trigger_params_frame.winfo_children():
             w.destroy()
         if trigger_type == 'once':
-            ttk.Label(self._trigger_params_frame, text=_('lki.autoupdate.schedule.time')).pack(side='left', padx=(0, 5))
+            ttk.Label(self._trigger_params_frame, text=_('lki.autoupdate.schedule.date')).pack(side='left', padx=(0, 5))
+            self._date_picker = DatePicker(self._trigger_params_frame)
+            self._date_picker.pack(side='left')
+            ttk.Label(self._trigger_params_frame, text='  ' + _('lki.autoupdate.schedule.time')).pack(side='left', padx=(5, 5))
             self._time_picker = TimePicker(self._trigger_params_frame, initial='08:00')
             self._time_picker.pack(side='left')
         elif trigger_type == 'daily':
@@ -385,6 +423,7 @@ class TriggerConfigDialog(BaseDialog):
         instance_name = self._instance_var.get()
         preset_name = self._preset_var.get()
         time_str = self._time_picker.get() if self._time_picker else None
+        date_str = self._date_picker.get() if self._date_picker else None
         idle_min = self._trigger_idle_var.get()
         days = [code for code, var in self._trigger_days_vars.items() if var.get()] if trigger_type == 'weekly' else None
 
@@ -398,7 +437,7 @@ class TriggerConfigDialog(BaseDialog):
         self.master._on_create_schedule(
             instance_id, preset_id, run_client,
             trigger_type, instance_name, preset_name,
-            time_str=time_str, days=days, idle_min=idle_min,
+            time_str=time_str, date_str=date_str, days=days, idle_min=idle_min,
             task_name=task_name or None
         )
         self.destroy()
@@ -740,7 +779,7 @@ class AutoUpdateConfigDialog(BaseDialog):
 
     def _on_create_schedule(self, instance_id, preset_id, run_client,
                             trigger_type, instance_name, preset_name,
-                            time_str=None, days=None, idle_min=None,
+                            time_str=None, date_str=None, days=None, idle_min=None,
                             task_name=None):
         """创建计划任务的核心逻辑，接收显式参数。"""
         description = _('lki.autoupdate.shortcut_description') % instance_name
@@ -750,7 +789,8 @@ class AutoUpdateConfigDialog(BaseDialog):
             if task_name and task_name.strip():
                 task_name = utils.sanitize_task_name(task_name)
             elif trigger_type == 'once':
-                name_suffix = f"Once_{time_str}"
+                date_part = date_str.replace("-", "") if date_str else ""
+                name_suffix = f"Once_{date_part}_{time_str}"
                 task_name = utils.sanitize_task_name(f"{instance_name}-{preset_name}_{name_suffix}")
             elif trigger_type == 'daily':
                 name_suffix = f"Daily_{time_str}"
@@ -774,7 +814,7 @@ class AutoUpdateConfigDialog(BaseDialog):
 
             if trigger_type == 'once':
                 path = self._scheduler.create_once(
-                    task_name, instance_id, preset_id, run_client, time_str, description)
+                    task_name, instance_id, preset_id, run_client, time_str, description, date_str)
             elif trigger_type == 'daily':
                 path = self._scheduler.create_daily(
                     task_name, instance_id, preset_id, run_client, time_str, description)
@@ -839,7 +879,8 @@ class AutoUpdateConfigDialog(BaseDialog):
         detail = ""
         if ttype == 'once':
             t = trigger.get('time', '')
-            detail = f" {t}" if t else ""
+            d = trigger.get('date', '')
+            detail = f" {d} {t}" if d and t else f" {t}" if t else ""
         elif ttype == 'daily':
             t = trigger.get('time', '')
             detail = f" {t}" if t else ""

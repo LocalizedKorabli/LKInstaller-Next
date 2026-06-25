@@ -45,6 +45,7 @@
   "lki.autoupdate.schedule.btn.run_now": "Run Now",
   "lki.autoupdate.schedule.created": "Scheduled task created:\n%s",
   "lki.autoupdate.schedule.daily": "Daily",
+  "lki.autoupdate.schedule.date": "Date:",
   "lki.autoupdate.schedule.days": "Days:",
   "lki.autoupdate.schedule.delete_confirm": "Delete scheduled task \"%s\"?",
   "lki.autoupdate.schedule.description": "Creates a scheduled task that will automatically check for and install updates on the configured schedule.",

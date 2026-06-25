@@ -45,6 +45,7 @@
   "lki.autoupdate.schedule.btn.run_now": "立即執行",
   "lki.autoupdate.schedule.created": "排程工作已建立:\n%s",
   "lki.autoupdate.schedule.daily": "每天",
+  "lki.autoupdate.schedule.date": "日期：",
   "lki.autoupdate.schedule.days": "天數:",
   "lki.autoupdate.schedule.delete_confirm": "刪除排程工作「%s」？",
   "lki.autoupdate.schedule.description": "建立一個排程工作，按照設定的時間自動檢查並安裝更新。",

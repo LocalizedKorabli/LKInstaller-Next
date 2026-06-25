@@ -45,6 +45,7 @@
   "lki.autoupdate.schedule.btn.run_now": "立即运行",
   "lki.autoupdate.schedule.created": "计划任务已创建:\n%s",
   "lki.autoupdate.schedule.daily": "每天",
+  "lki.autoupdate.schedule.date": "日期：",
   "lki.autoupdate.schedule.days": "星期:",
   "lki.autoupdate.schedule.delete_confirm": "删除计划任务\"%s\"？",
   "lki.autoupdate.schedule.description": "创建一个计划任务，按照设定的时间自动检查并安装更新。",

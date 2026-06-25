@@ -45,6 +45,7 @@
   "lki.autoupdate.schedule.btn.run_now": "今すぐ実行",
   "lki.autoupdate.schedule.created": "スケジュールタスクを作成しました:\n%s",
   "lki.autoupdate.schedule.daily": "毎日",
+  "lki.autoupdate.schedule.date": "日付：",
   "lki.autoupdate.schedule.days": "曜日:",
   "lki.autoupdate.schedule.delete_confirm": "スケジュールタスク「%s」を削除しますか？",
   "lki.autoupdate.schedule.description": "スケジュールタスクを作成し、設定したスケジュールで自動的に更新を確認・インストールします。",
