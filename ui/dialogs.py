@@ -53,7 +53,7 @@ WEEKDAY_LABELS = {
 class TimePicker(ttk.Frame):
     """一个由两个 Spinbox（时:分）组成的时间选择器组件。"""
 
-    def __init__(self, master, initial: str = "08:00", **kwargs):
+    def __init__(self, master, initial: str = "08:00", on_change: Optional[Callable] = None, **kwargs):
         super().__init__(master, **kwargs)
 
         try:
@@ -64,6 +64,10 @@ class TimePicker(ttk.Frame):
 
         self._hour_var = tk.StringVar(value=f"{h_val:02d}")
         self._min_var = tk.StringVar(value=f"{m_val:02d}")
+        self._on_change = on_change
+        if on_change:
+            self._hour_var.trace_add('write', lambda *_: on_change())
+            self._min_var.trace_add('write', lambda *_: on_change())
 
         def _on_hour_focusout(*_):
             raw = self._hour_var.get().strip()
@@ -401,11 +405,11 @@ class TriggerConfigDialog(BaseDialog):
             time_row = ttk.Frame(self._trigger_params_frame)
             time_row.pack(fill='x', pady=(3, 0))
             ttk.Label(time_row, text=_('lki.autoupdate.schedule.time')).pack(side='left', padx=(0, 5))
-            self._time_picker = TimePicker(time_row, initial='08:00')
+            self._time_picker = TimePicker(time_row, initial='08:00', on_change=self._update_full_name_label)
             self._time_picker.pack(side='left')
         elif trigger_type == 'daily':
             ttk.Label(self._trigger_params_frame, text=_('lki.autoupdate.schedule.time')).pack(side='left', padx=(0, 5))
-            self._time_picker = TimePicker(self._trigger_params_frame, initial='08:00')
+            self._time_picker = TimePicker(self._trigger_params_frame, initial='08:00', on_change=self._update_full_name_label)
             self._time_picker.pack(side='left')
         elif trigger_type == 'weekly':
             ttk.Label(self._trigger_params_frame, text=_('lki.autoupdate.schedule.days')).pack(side='left', padx=(0, 5))
@@ -418,7 +422,7 @@ class TriggerConfigDialog(BaseDialog):
                 cb = ttk.Checkbutton(day_frame, text=_(WEEKDAY_LABELS[code]), variable=var)
                 cb.pack(side='left', padx=2)
             ttk.Label(self._trigger_params_frame, text='  ' + _('lki.autoupdate.schedule.time')).pack(side='left', padx=(5, 5))
-            self._time_picker = TimePicker(self._trigger_params_frame, initial='08:00')
+            self._time_picker = TimePicker(self._trigger_params_frame, initial='08:00', on_change=self._update_full_name_label)
             self._time_picker.pack(side='left')
         elif trigger_type == 'on_idle':
             ttk.Label(self._trigger_params_frame, text=_('lki.autoupdate.schedule.idle_minutes')).pack(side='left', padx=(0, 5))
