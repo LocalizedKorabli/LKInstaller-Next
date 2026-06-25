@@ -89,9 +89,13 @@ class TimePicker(ttk.Frame):
             elif val > 59: val = 59
             self._min_var.set(f"{val:02d}")
 
+        # 仅允许输入数字
+        _digits_only = (self.register(lambda P: P == "" or P.isdigit()), '%P')
+
         hour_spin = ttk.Spinbox(
             self, from_=0, to=23, textvariable=self._hour_var,
-            width=4, justify='left', wrap=True
+            width=4, justify='left', wrap=True,
+            validate='key', validatecommand=_digits_only
         )
         hour_spin.pack(side='left')
         hour_spin.bind('<FocusIn>', lambda e: hour_spin.selection_range(0, 'end'))
@@ -102,7 +106,8 @@ class TimePicker(ttk.Frame):
 
         min_spin = ttk.Spinbox(
             self, from_=0, to=59, textvariable=self._min_var,
-            width=4, justify='left', wrap=True
+            width=4, justify='left', wrap=True,
+            validate='key', validatecommand=_digits_only
         )
         min_spin.pack(side='left')
         min_spin.bind('<FocusIn>', lambda e: min_spin.selection_range(0, 'end'))
@@ -178,7 +183,10 @@ class DatePicker(ttk.Frame):
             if self._callback:
                 self._callback()
 
-        year_entry = ttk.Entry(self, textvariable=self._year_var, width=6, justify='left')
+        _digits_only = (self.register(lambda P: P == "" or P.isdigit()), '%P')
+
+        year_entry = ttk.Entry(self, textvariable=self._year_var, width=6, justify='left',
+                               validate='key', validatecommand=_digits_only)
         year_entry.pack(side='left')
         year_entry.bind('<FocusIn>', lambda e: year_entry.selection_range(0, 'end'))
         year_entry.bind('<ButtonRelease-1>', lambda e: year_entry.selection_range(0, 'end'))
@@ -187,7 +195,8 @@ class DatePicker(ttk.Frame):
         ttk.Label(self, text="-", font=("TkDefaultFont", 10)).pack(side='left')
 
         month_spin = ttk.Spinbox(self, from_=1, to=12, textvariable=self._month_var,
-                                 width=4, justify='left', wrap=True)
+                                 width=4, justify='left', wrap=True,
+                                 validate='key', validatecommand=_digits_only)
         month_spin.pack(side='left')
         month_spin.bind('<FocusIn>', lambda e: month_spin.selection_range(0, 'end'))
         month_spin.bind('<ButtonRelease-1>', lambda e: month_spin.selection_range(0, 'end'))
@@ -197,7 +206,8 @@ class DatePicker(ttk.Frame):
         ttk.Label(self, text="-", font=("TkDefaultFont", 10)).pack(side='left')
 
         self._day_spin = ttk.Spinbox(self, from_=1, to=calendar.monthrange(y, m)[1],
-                                     textvariable=self._day_var, width=4, justify='left', wrap=True)
+                                     textvariable=self._day_var, width=4, justify='left', wrap=True,
+                                     validate='key', validatecommand=_digits_only)
         self._day_spin.pack(side='left')
         self._day_spin.bind('<FocusIn>', lambda e: self._day_spin.selection_range(0, 'end'))
         self._day_spin.bind('<ButtonRelease-1>', lambda e: self._day_spin.selection_range(0, 'end'))
