@@ -65,9 +65,9 @@ class TimePicker(ttk.Frame):
         self._hour_var = tk.StringVar(value=f"{h_val:02d}")
         self._min_var = tk.StringVar(value=f"{m_val:02d}")
 
-        # 失去焦点时补零
-        vcmd_h = (self.register(lambda v: self._on_focusout(self._hour_var, 0, 23)),)
-        vcmd_m = (self.register(lambda v: self._on_focusout(self._min_var, 0, 59)),)
+        # 失去焦点时补零（validate='focusout' 不传参给回调）
+        vcmd_h = (self.register(lambda: self._on_focusout(self._hour_var, 0, 23)),)
+        vcmd_m = (self.register(lambda: self._on_focusout(self._min_var, 0, 59)),)
 
         hour_spin = ttk.Spinbox(
             self, from_=0, to=23, textvariable=self._hour_var,
@@ -91,7 +91,7 @@ class TimePicker(ttk.Frame):
 
     @staticmethod
     def _on_focusout(var: tk.StringVar, lo: int, hi: int):
-        """失去焦点时补零并钳制范围。"""
+        """失去焦点时补零并钳制范围。返回 True 允许焦点移出。"""
         raw = var.get().strip()
         try:
             val = int(raw)
