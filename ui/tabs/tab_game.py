@@ -207,10 +207,6 @@ class GameTab(BaseTab):
         self._build_client_list_ui(default_checked_ids=default_checked_ids)
         self._update_select_all_state()
 
-        # 实例存在时允许配置自动更新（即使未选中具体实例）
-        if self.loaded_game_instances and not self.selected_instance_id:
-            self.btn_auto_update_shortcut.config(state='normal')
-
     def _build_client_list_ui(self, default_checked_ids: Optional[Set[str]] = None):
         """
         使用 self.game_instances 中的数据填充客户端列表 UI。
@@ -249,6 +245,10 @@ class GameTab(BaseTab):
             self._on_client_select(frame_to_select, id_to_select)
 
         self._update_select_all_state()
+
+        # 实例存在时允许配置自动更新（即使未选中具体实例）
+        if self.loaded_game_instances and not self.selected_instance_id:
+            self.btn_auto_update_shortcut.config(state='normal')
 
     def get_selected_game_instance(self) -> Optional[GameInstance]:
         if not self.selected_instance_id:
