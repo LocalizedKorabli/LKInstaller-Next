@@ -528,7 +528,7 @@ class InstallationManager:
             temp_7z_path = utils.TEMP_DIR / f"{font_id}.7z"
 
             def _report_font_progress(downloaded, total):
-                pct = min(int(downloaded * 45 / total), 45) if total > 0 else 0
+                pct = min(int(downloaded * 25 / total), 25) if total > 0 else 0
                 _log_task(task, _('lki.install.status.downloading_file') % font_id, 50 + pct)
 
             if not self._download_file_with_retry(DOWNLOAD_URL, temp_7z_path, f"Fonts ({font_id}) - {route_id}", 30,
