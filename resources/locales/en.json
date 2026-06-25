@@ -58,6 +58,7 @@
   "lki.autoupdate.schedule.mon": "Mon",
   "lki.autoupdate.schedule.no_tasks": "(No scheduled tasks)",
   "lki.autoupdate.schedule.on_idle": "On Idle",
+  "lki.autoupdate.schedule.once": "Once",
   "lki.autoupdate.schedule.rename.prompt": "Enter a new name for the task:",
   "lki.autoupdate.schedule.rename.title": "Rename Task",
   "lki.autoupdate.schedule.run_now_confirm": "Run scheduled task \"%s\" now?",

@@ -58,6 +58,7 @@
   "lki.autoupdate.schedule.mon": "Пн",
   "lki.autoupdate.schedule.no_tasks": "(Нет плановых задач)",
   "lki.autoupdate.schedule.on_idle": "В простое",
+  "lki.autoupdate.schedule.once": "Однократно",
   "lki.autoupdate.schedule.rename.prompt": "Введите новое имя задачи:",
   "lki.autoupdate.schedule.rename.title": "Переименовать задачу",
   "lki.autoupdate.schedule.run_now_confirm": "Выполнить плановую задачу \"%s\" сейчас?",

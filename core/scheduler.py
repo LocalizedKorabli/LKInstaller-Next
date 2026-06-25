@@ -15,6 +15,7 @@ DAYS_OF_WEEK_MAP = {
 }
 DAYS_OF_WEEK_SHORT = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 
+TASK_TRIGGER_ONCE = 1
 TASK_TRIGGER_DAILY = 2
 TASK_TRIGGER_WEEKLY = 3
 TASK_TRIGGER_LOGON = 9
@@ -70,6 +71,20 @@ class SchedulerBackend:
             except Exception as e:
                 raise SchedulerError(f"Cannot create folder {path}: {e}")
 
+
+    def create_once(self, task_name: str, instance_id: str, preset_id: str,
+                    run_client: bool, time_str: str, description: str = "") -> str:
+        try:
+            return self._com_create_trigger(
+                task_name, instance_id, preset_id, run_client,
+                description, TASK_TRIGGER_ONCE,
+                lambda trigger: self._set_once_params(trigger, time_str)
+            )
+        except Exception:
+            return self._schtasks_create(
+                task_name, instance_id, preset_id, run_client,
+                '/SC ONCE', f'/ST {time_str} /SD {time.strftime("%Y/%m/%d")}'
+            )
 
     def create_daily(self, task_name: str, instance_id: str, preset_id: str,
                      run_client: bool, time_str: str, description: str = "") -> str:
@@ -175,6 +190,13 @@ class SchedulerBackend:
         full_path = f"{TASK_FOLDER}\\{task_name}"
         log(f"Scheduled task created via COM: {full_path}")
         return full_path
+
+    @staticmethod
+    def _set_once_params(trigger, time_str: str):
+        hours, minutes = time_str.split(":") if ":" in time_str else (time_str[:2], time_str[2:])
+        import datetime
+        today = datetime.date.today()
+        trigger.StartBoundary = f"{today}T{int(hours):02d}:{int(minutes):02d}:00"
 
     @staticmethod
     def _set_daily_params(trigger, time_str: str):
@@ -369,6 +391,7 @@ class SchedulerBackend:
                 trigger = triggers[1]
                 trigger_type = trigger.Type
                 type_map = {
+                    TASK_TRIGGER_ONCE: 'once',
                     TASK_TRIGGER_DAILY: 'daily',
                     TASK_TRIGGER_WEEKLY: 'weekly',
                     TASK_TRIGGER_LOGON: 'at_logon',
@@ -423,6 +446,7 @@ class SchedulerBackend:
 
             # schtasks 文本 → 内部类型 映射
             SCHTYPE_MAP = {
+                'once': 'once',
                 'daily': 'daily',
                 'weekly': 'weekly',
                 'at logon': 'at_logon',

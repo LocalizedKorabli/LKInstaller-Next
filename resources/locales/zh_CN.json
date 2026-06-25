@@ -58,6 +58,7 @@
   "lki.autoupdate.schedule.mon": "一",
   "lki.autoupdate.schedule.no_tasks": "(无计划任务)",
   "lki.autoupdate.schedule.on_idle": "空闲时",
+  "lki.autoupdate.schedule.once": "一次性",
   "lki.autoupdate.schedule.rename.prompt": "请输入任务的新名称:",
   "lki.autoupdate.schedule.rename.title": "重命名任务",
   "lki.autoupdate.schedule.run_now_confirm": "立即运行计划任务\"%s\"？",

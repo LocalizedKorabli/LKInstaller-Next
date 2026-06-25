@@ -58,6 +58,7 @@
   "lki.autoupdate.schedule.mon": "一",
   "lki.autoupdate.schedule.no_tasks": "（無排程工作）",
   "lki.autoupdate.schedule.on_idle": "閒置時",
+  "lki.autoupdate.schedule.once": "一次性",
   "lki.autoupdate.schedule.rename.prompt": "請輸入工作的新名稱:",
   "lki.autoupdate.schedule.rename.title": "重新命名工作",
   "lki.autoupdate.schedule.run_now_confirm": "立即執行排程工作「%s」？",

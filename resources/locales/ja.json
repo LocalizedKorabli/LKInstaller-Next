@@ -58,6 +58,7 @@
   "lki.autoupdate.schedule.mon": "月",
   "lki.autoupdate.schedule.no_tasks": "（スケジュールタスクはありません）",
   "lki.autoupdate.schedule.on_idle": "アイドル時",
+  "lki.autoupdate.schedule.once": "一度だけ",
   "lki.autoupdate.schedule.rename.prompt": "タスクの新しい名前を入力してください:",
   "lki.autoupdate.schedule.rename.title": "タスク名を変更",
   "lki.autoupdate.schedule.run_now_confirm": "スケジュールタスク「%s」を今すぐ実行しますか？",

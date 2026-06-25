@@ -29,6 +29,7 @@ from installation.localization_sources import get_route_id_to_name
 from core.localizer import _
 
 TRIGGER_TYPES = [
+    ('once', 'lki.autoupdate.schedule.once'),
     ('daily', 'lki.autoupdate.schedule.daily'),
     ('weekly', 'lki.autoupdate.schedule.weekly'),
     ('at_logon', 'lki.autoupdate.schedule.at_logon'),
@@ -340,7 +341,11 @@ class TriggerConfigDialog(BaseDialog):
     def _build_trigger_params(self, trigger_type: str):
         for w in self._trigger_params_frame.winfo_children():
             w.destroy()
-        if trigger_type == 'daily':
+        if trigger_type == 'once':
+            ttk.Label(self._trigger_params_frame, text=_('lki.autoupdate.schedule.time')).pack(side='left', padx=(0, 5))
+            self._time_picker = TimePicker(self._trigger_params_frame, initial='08:00')
+            self._time_picker.pack(side='left')
+        elif trigger_type == 'daily':
             ttk.Label(self._trigger_params_frame, text=_('lki.autoupdate.schedule.time')).pack(side='left', padx=(0, 5))
             self._time_picker = TimePicker(self._trigger_params_frame, initial='08:00')
             self._time_picker.pack(side='left')
@@ -741,6 +746,9 @@ class AutoUpdateConfigDialog(BaseDialog):
             # 构建或使用指定的任务名
             if task_name and task_name.strip():
                 task_name = utils.sanitize_task_name(task_name)
+            elif trigger_type == 'once':
+                name_suffix = f"Once_{time_str}"
+                task_name = utils.sanitize_task_name(f"{instance_name}-{preset_name}_{name_suffix}")
             elif trigger_type == 'daily':
                 name_suffix = f"Daily_{time_str}"
                 task_name = utils.sanitize_task_name(f"{instance_name}-{preset_name}_{name_suffix}")
@@ -761,7 +769,10 @@ class AutoUpdateConfigDialog(BaseDialog):
             else:
                 return
 
-            if trigger_type == 'daily':
+            if trigger_type == 'once':
+                path = self._scheduler.create_once(
+                    task_name, instance_id, preset_id, run_client, time_str, description)
+            elif trigger_type == 'daily':
                 path = self._scheduler.create_daily(
                     task_name, instance_id, preset_id, run_client, time_str, description)
             elif trigger_type == 'weekly':
@@ -823,7 +834,10 @@ class AutoUpdateConfigDialog(BaseDialog):
 
         # 附加触发详情
         detail = ""
-        if ttype == 'daily':
+        if ttype == 'once':
+            t = trigger.get('time', '')
+            detail = f" {t}" if t else ""
+        elif ttype == 'daily':
             t = trigger.get('time', '')
             detail = f" {t}" if t else ""
         elif ttype == 'weekly':
