@@ -432,6 +432,7 @@ class TriggerConfigDialog(BaseDialog):
             ttk.Label(self._trigger_params_frame, text=_('lki.autoupdate.schedule.idle_minutes')).pack(side='left', padx=(0, 5))
             ttk.Spinbox(self._trigger_params_frame, from_=1, to=120,
                         textvariable=self._trigger_idle_var, width=5).pack(side='left')
+            self._trigger_idle_var.trace_add('write', lambda *_: self._update_full_name_label())
 
     def _build_full_task_name(self, prefix: str, inst: str, preset: str) -> (str, str):
         """构建完整任务名，返回 (suffix, full_name)。"""
