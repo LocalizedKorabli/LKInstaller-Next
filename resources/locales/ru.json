@@ -37,6 +37,7 @@
   "lki.autoupdate.schedule.at_logon": "При входе",
   "lki.autoupdate.schedule.at_startup": "При запуске",
   "lki.autoupdate.schedule.btn.create": "Создать задачу",
+  "lki.autoupdate.schedule.btn.default": "По умолч.",
   "lki.autoupdate.schedule.btn.delete": "Удалить",
   "lki.autoupdate.schedule.btn.disable": "Отключить",
   "lki.autoupdate.schedule.btn.edit": "Изменить",

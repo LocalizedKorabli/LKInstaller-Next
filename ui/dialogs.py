@@ -263,6 +263,7 @@ class TriggerConfigDialog(BaseDialog):
         # 任务名称：编辑时预填旧名称，新建时自动生成
         self._task_name_var = tk.StringVar(value=initial_task_name)
         self._initial_task_name = initial_task_name
+        self._user_edited_name = bool(initial_task_name)  # 有初始值说明是编辑模式
 
         # 触发类型变量
         self._trigger_type_var = tk.StringVar(value='daily')
@@ -299,8 +300,15 @@ class TriggerConfigDialog(BaseDialog):
         # 任务名称
         ttk.Label(main, text=_('lki.autoupdate.schedule.task_name')).grid(
             row=row, column=0, sticky='e', padx=(0, 10), pady=3)
-        task_name_entry = ttk.Entry(main, textvariable=self._task_name_var, width=40)
-        task_name_entry.grid(row=row, column=1, sticky='we', pady=3)
+        name_frame = ttk.Frame(main)
+        name_frame.grid(row=row, column=1, sticky='we', pady=3)
+        name_frame.columnconfigure(0, weight=1)
+        task_name_entry = ttk.Entry(name_frame, textvariable=self._task_name_var, width=40)
+        task_name_entry.grid(row=0, column=0, sticky='we')
+        task_name_entry.bind('<Key>', lambda e: setattr(self, '_user_edited_name', True))
+        default_btn = ttk.Button(name_frame, text=_('lki.autoupdate.schedule.btn.default'),
+                                 command=self._reset_to_default_name, width=6)
+        default_btn.grid(row=0, column=1, padx=(5, 0))
         row += 1
 
         # 是否启动游戏
@@ -331,6 +339,7 @@ class TriggerConfigDialog(BaseDialog):
         self._trigger_params_frame = ttk.Frame(trigger_row)
         self._trigger_params_frame.pack(side='left', padx=(10, 0))
         self._build_trigger_params('daily')
+        self._update_default_task_name()
         row += 1
 
         # 按钮
@@ -411,12 +420,52 @@ class TriggerConfigDialog(BaseDialog):
             ttk.Spinbox(self._trigger_params_frame, from_=1, to=120,
                         textvariable=self._trigger_idle_var, width=5).pack(side='left')
 
+    def _build_default_task_name(self) -> str:
+        """根据当前参数生成默认任务名。"""
+        instance_name = self._instance_var.get()
+        preset_name = self._preset_var.get()
+        tt = self._trigger_type_var.get()
+        from core.utils import sanitize_task_name
+        if tt == 'once':
+            d = self._date_picker.get() if self._date_picker else ""
+            t = self._time_picker.get() if self._time_picker else "00:00"
+            suffix = f"Once_{d}_{t}"
+        elif tt == 'daily':
+            t = self._time_picker.get() if self._time_picker else "00:00"
+            suffix = f"Daily_{t}"
+        elif tt == 'weekly':
+            t = self._time_picker.get() if self._time_picker else "00:00"
+            days = [code for code, var in self._trigger_days_vars.items() if var.get()]
+            ds = "-".join(d[:3].title() for d in days) if days else "All"
+            suffix = f"Weekly_{ds}_{t}"
+        elif tt == 'at_logon':
+            suffix = "AtLogon"
+        elif tt == 'at_startup':
+            suffix = "AtStartup"
+        elif tt == 'on_idle':
+            n = self._trigger_idle_var.get()
+            suffix = f"Idle_{n}min"
+        else:
+            suffix = "Task"
+        return sanitize_task_name(f"{instance_name}-{preset_name}_{suffix}")
+
+    def _update_default_task_name(self):
+        """若用户未手动编辑，刷新任务名。"""
+        if not self._user_edited_name:
+            self._task_name_var.set(self._build_default_task_name())
+
+    def _reset_to_default_name(self):
+        """恢复默认任务名。"""
+        self._user_edited_name = False
+        self._task_name_var.set(self._build_default_task_name())
+
     def _on_trigger_type_changed(self, event=None):
         display = self._trigger_combo.get()
         type_map = {_(key): t for t, key in TRIGGER_TYPES}
         trigger_type = type_map.get(display, 'daily')
         self._trigger_type_var.set(trigger_type)
         self._build_trigger_params(trigger_type)
+        self._update_default_task_name()
 
     # ── 确定 → 创建任务 ──
     def _on_ok(self):
