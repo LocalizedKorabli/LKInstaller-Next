@@ -8,7 +8,7 @@ from typing import Optional, List, Dict
 from core.logger import log
 from core import utils
 
-TASK_FOLDER = "\\"
+TASK_FOLDER = "\\LKInstallerNext"
 
 DAYS_OF_WEEK_MAP = {
     'mon': 1, 'tue': 2, 'wed': 3, 'thu': 4,
@@ -175,7 +175,6 @@ class SchedulerBackend:
                             run_client: bool, description: str,
                             trigger_type: int, set_trigger_params) -> str:
         self._ensure_connected()
-        prefixed_name = f"LKInstallerNext-{task_name}"
         try:
             target_exe, full_args, working_dir = build_autoexec_args(
                 instance_id, preset_id, run_client
@@ -199,12 +198,13 @@ class SchedulerBackend:
             set_trigger_params(trigger)
             folder = self._get_folder(TASK_FOLDER)
             folder.RegisterTaskDefinition(
-                prefixed_name, task, 6, "", "", 3
+                task_name, task, 6, "", "", 3
             )
-            log(f"Scheduled task created via COM: {prefixed_name}")
-            return prefixed_name
+            full_path = f"{TASK_FOLDER}\\{task_name}"
+            log(f"Scheduled task created via COM: {full_path}")
+            return full_path
         except Exception as e:
-            log(f"COM task creation failed for '{prefixed_name}': {e}")
+            log(f"COM task creation failed for '{task_name}': {e}")
             import traceback
             log(f"COM traceback: {traceback.format_exc()}")
             raise
@@ -265,16 +265,15 @@ class SchedulerBackend:
             raise SchedulerError("schtasks timed out")
 
     def delete_task(self, task_name: str) -> bool:
-        prefixed = f"LKInstallerNext-{task_name}"
         try:
             folder = self._get_folder(TASK_FOLDER)
-            folder.DeleteTask(prefixed, 0)
-            log(f"Deleted scheduled task: {prefixed}")
+            folder.DeleteTask(task_name, 0)
+            log(f"Deleted scheduled task: {TASK_FOLDER}\\{task_name}")
             return True
         except Exception as e:
             log(f"COM delete failed, trying schtasks: {e}")
         try:
-            full_path = f"LKInstallerNext-{task_name}"
+            full_path = f"LKInstallerNext\\{task_name}"
             result = subprocess.run(
                 ['schtasks', '/Delete', '/F', '/TN', full_path],
                 capture_output=True, text=True, timeout=10
@@ -289,25 +288,23 @@ class SchedulerBackend:
         new_name = utils.sanitize_task_name(new_name)
         if not new_name or new_name == task_name:
             return False
-        prefixed_old = f"LKInstallerNext-{task_name}"
-        prefixed_new = f"LKInstallerNext-{new_name}"
         try:
             self._ensure_connected()
             folder = self._get_folder(TASK_FOLDER)
-            task = folder.GetTask(prefixed_old)
+            task = folder.GetTask(task_name)
             definition = task.Definition
             # 在新名称下注册相同的定义
-            folder.RegisterTaskDefinition(prefixed_new, definition, 6, "", "", 3)
+            folder.RegisterTaskDefinition(new_name, definition, 6, "", "", 3)
             # 删除旧任务
-            folder.DeleteTask(prefixed_old, 0)
-            log(f"Renamed scheduled task: {prefixed_old} -> {prefixed_new}")
+            folder.DeleteTask(task_name, 0)
+            log(f"Renamed scheduled task: {TASK_FOLDER}\\{task_name} -> {new_name}")
             return True
         except Exception as e:
             log(f"COM rename failed, trying schtasks: {e}")
         try:
             # schtasks 回退：通过导出/重新导入实现
-            full_old = f"LKInstallerNext-{task_name}"
-            full_new = f"LKInstallerNext-{new_name}"
+            full_old = f"LKInstallerNext\\{task_name}"
+            full_new = f"LKInstallerNext\\{new_name}"
             # 导出旧任务为 XML
             export = subprocess.run(
                 ['schtasks', '/Query', '/XML', '/TN', full_old],
@@ -340,18 +337,17 @@ class SchedulerBackend:
         return self._set_task_enabled(task_name, False)
 
     def _set_task_enabled(self, task_name: str, enabled: bool) -> bool:
-        prefixed = f"LKInstallerNext-{task_name}"
         try:
             self._ensure_connected()
             folder = self._get_folder(TASK_FOLDER)
-            task = folder.GetTask(prefixed)
+            task = folder.GetTask(task_name)
             task.Enabled = enabled
-            log(f"{'Enabled' if enabled else 'Disabled'} task: {prefixed}")
+            log(f"{'Enabled' if enabled else 'Disabled'} task: {TASK_FOLDER}\\{task_name}")
             return True
         except Exception as e:
             log(f"Failed to {'enable' if enabled else 'disable'} task via COM: {e}")
         try:
-            full_path = f"LKInstallerNext-{task_name}"
+            full_path = f"LKInstallerNext\\{task_name}"
             flag = '/ENABLE' if enabled else '/DISABLE'
             result = subprocess.run(
                 ['schtasks', '/Change', flag, '/TN', full_path],
@@ -363,18 +359,17 @@ class SchedulerBackend:
             return False
 
     def run_task_now(self, task_name: str) -> bool:
-        prefixed = f"LKInstallerNext-{task_name}"
         try:
             self._ensure_connected()
             folder = self._get_folder(TASK_FOLDER)
-            task = folder.GetTask(prefixed)
+            task = folder.GetTask(task_name)
             task.Run("")
-            log(f"Triggered task run: {prefixed}")
+            log(f"Triggered task run: {TASK_FOLDER}\\{task_name}")
             return True
         except Exception as e:
             log(f"Failed to run task via COM: {e}")
         try:
-            full_path = f"LKInstallerNext-{task_name}"
+            full_path = f"LKInstallerNext\\{task_name}"
             result = subprocess.run(
                 ['schtasks', '/Run', '/TN', full_path],
                 capture_output=True, text=True, timeout=10
@@ -388,7 +383,7 @@ class SchedulerBackend:
         try:
             self._ensure_connected()
             folder = self._get_folder(TASK_FOLDER)
-            folder.GetTask(f"LKInstallerNext-{task_name}")
+            folder.GetTask(task_name)
             return True
         except Exception:
             return False
@@ -399,36 +394,17 @@ class SchedulerBackend:
             self._ensure_connected()
             folder = self._get_folder(TASK_FOLDER)
             collection = folder.GetTasks(1)
-            com_count = 0
             for task in collection:
-                name = task.Name
-                if name.startswith('LKInstallerNext-') or name.startswith('LKInstallerNext\\'):
-                    tasks.append(self._com_extract_info(task))
-                    com_count += 1
-            log(f"COM list_tasks: found {com_count} tasks via COM")
-            # 兼容旧版子文件夹中的任务
-            try:
-                old_folder = self._get_folder("\\LKInstallerNext")
-                old_collection = old_folder.GetTasks(1)
-                for task in old_collection:
-                    tasks.append(self._com_extract_info(task))
-            except Exception:
-                pass
+                tasks.append(self._com_extract_info(task))
+            log(f"COM list_tasks: found {len(tasks)} tasks in {TASK_FOLDER}")
         except Exception as e:
             log(f"COM list_tasks failed: {e}, trying schtasks")
             return self._schtasks_list()
         return tasks
 
     def _com_extract_info(self, task) -> Dict:
-        raw_name = task.Name
-        # 去掉应用于识别的前缀
-        display_name = raw_name
-        if display_name.startswith('LKInstallerNext-'):
-            display_name = display_name[len('LKInstallerNext-'):]
-        elif '\\' in display_name:
-            display_name = display_name.rsplit('\\', 1)[-1]
         info = {
-            'name': display_name,
+            'name': task.Name,
             'enabled': task.Enabled,
             'state': task.State,
             'trigger': {'type': 'unknown'},
@@ -475,97 +451,79 @@ class SchedulerBackend:
 
     def _schtasks_list(self) -> List[Dict]:
         tasks = []
-        for pattern in ['LKInstallerNext-*', '\\LKInstallerNext\\*']:
-            try:
-                result = subprocess.run(
-                    ['schtasks', '/Query', '/FO', 'CSV', '/V', '/TN', pattern],
-                    capture_output=True, text=True, timeout=15
-                )
-                if result.returncode != 0:
+        try:
+            result = subprocess.run(
+                ['schtasks', '/Query', '/FO', 'CSV', '/V', '/TN', f'{TASK_FOLDER}\*'],
+                capture_output=True, text=True, timeout=15
+            )
+            if result.returncode != 0:
+                return tasks
+            lines = result.stdout.strip().splitlines()
+            if len(lines) < 2:
+                return tasks
+            headers = [h.strip('" ') for h in lines[0].split('","')]
+
+            col_map = {}
+            for col_name in ('Schedule Type', 'Scheduled Type', 'Schedule',
+                             'Start Time', 'Start', 'Days', 'Description', 'Status', 'TaskName'):
+                for i, h in enumerate(headers):
+                    if h.lower() == col_name.lower():
+                        col_map[col_name] = i
+
+            SCHTYPE_MAP = {
+                'once': 'once', 'daily': 'daily', 'weekly': 'weekly',
+                'at logon': 'at_logon', 'at system startup': 'at_startup', 'on idle': 'on_idle',
+            }
+
+            for line in lines[1:]:
+                if not line.strip():
                     continue
-                lines = result.stdout.strip().splitlines()
-                if len(lines) < 2:
+                values = [v.strip('" ') for v in line.split('","')]
+                if len(values) < len(headers):
                     continue
-                headers = [h.strip('" ') for h in lines[0].split('","')]
+                row = dict(zip(headers, values))
+                task_name = row.get('TaskName', '')
+                if '\\' in task_name:
+                    task_name = task_name.rsplit('\\', 1)[-1]
 
-                # 从 CSV 中找到需要的列（不区分大小写）
-                col_map = {}
-                for col_name in ('Schedule Type', 'Scheduled Type', 'Schedule',
-                                 'Start Time', 'Start', 'Days', 'Description', 'Status', 'TaskName'):
-                    for i, h in enumerate(headers):
-                        if h.lower() == col_name.lower():
-                            col_map[col_name] = i
+                trig = {'type': 'unknown'}
+                sidx = col_map.get('Schedule Type', col_map.get('Scheduled Type', col_map.get('Schedule')))
+                if sidx is not None and sidx < len(values):
+                    for kw, code in SCHTYPE_MAP.items():
+                        if kw in values[sidx].lower().strip():
+                            trig['type'] = code
+                            break
 
-                # schtasks 文本 → 内部类型 映射
-                SCHTYPE_MAP = {
-                    'once': 'once',
-                    'daily': 'daily',
-                    'weekly': 'weekly',
-                    'at logon': 'at_logon',
-                    'at system startup': 'at_startup',
-                    'on idle': 'on_idle',
-                }
+                tidx = col_map.get('Start Time', col_map.get('Start'))
+                if tidx is not None and tidx < len(values):
+                    rt = values[tidx].strip()
+                    if rt:
+                        if ' ' in rt:
+                            p = rt.split(' ')
+                            trig['date'] = p[0].replace('/', '-')
+                            if len(p) > 1 and len(p[1]) >= 5:
+                                trig['time'] = p[1][:5]
+                        elif len(rt) >= 5:
+                            trig['time'] = rt[:5]
 
-                for line in lines[1:]:
-                    if not line.strip():
-                        continue
-                    values = [v.strip('" ') for v in line.split('","')]
-                    if len(values) < len(headers):
-                        continue
-                    row = dict(zip(headers, values))
-                    task_name = row.get('TaskName', '')
-                    if '\\' in task_name:
-                        task_name = task_name.rsplit('\\', 1)[-1]
-                    if task_name.startswith('LKInstallerNext-'):
-                        task_name = task_name[len('LKInstallerNext-'):]
+                didx = col_map.get('Days')
+                if didx is not None and didx < len(values) and trig['type'] == 'weekly':
+                    rd = values[didx].strip().lower()
+                    dm = {'mon':'mon','tue':'tue','wed':'wed','thu':'thu','fri':'fri','sat':'sat','sun':'sun'}
+                    parsed = [v for k,v in dm.items() if k in rd]
+                    if parsed:
+                        trig['days'] = parsed
 
-                    # 解析触发类型
-                    trig = {'type': 'unknown'}
-                    schedule_idx = col_map.get('Schedule Type', col_map.get('Scheduled Type', col_map.get('Schedule')))
-                    if schedule_idx is not None and schedule_idx < len(values):
-                        raw_type = values[schedule_idx].lower().strip()
-                        for keyword, code in SCHTYPE_MAP.items():
-                            if keyword in raw_type:
-                                trig['type'] = code
-                                break
-
-                    # 解析开始时间
-                    time_idx = col_map.get('Start Time', col_map.get('Start'))
-                    if time_idx is not None and time_idx < len(values):
-                        raw_time = values[time_idx].strip()
-                        if raw_time:
-                            if ' ' in raw_time:
-                                parts = raw_time.split(' ')
-                                trig['date'] = parts[0].replace('/', '-')
-                                if len(parts) > 1 and len(parts[1]) >= 5:
-                                    trig['time'] = parts[1][:5]
-                            elif len(raw_time) >= 5:
-                                trig['time'] = raw_time[:5]
-
-                    # 解析星期（仅 weekly）
-                    days_idx = col_map.get('Days')
-                    if days_idx is not None and days_idx < len(values) and trig['type'] == 'weekly':
-                        raw_days = values[days_idx].strip().lower()
-                        day_map = {'mon': 'mon', 'tue': 'tue', 'wed': 'wed',
-                                   'thu': 'thu', 'fri': 'fri', 'sat': 'sat', 'sun': 'sun'}
-                        parsed = []
-                        for k, v in day_map.items():
-                            if k in raw_days:
-                                parsed.append(v)
-                        if parsed:
-                            trig['days'] = parsed
-
-                    tasks.append({
-                        'name': task_name,
-                        'enabled': 'Disabled' not in row.get('Status', 'Ready'),
-                        'state': 3 if 'Running' in row.get('Status', '') else 3,
-                        'trigger': trig,
-                        'description': row.get('Description', ''),
-                    })
-            except Exception as e:
-                log(f"schtasks query for {pattern} failed: {e}")
+                tasks.append({
+                    'name': task_name,
+                    'enabled': 'Disabled' not in row.get('Status', 'Ready'),
+                    'state': 3,
+                    'trigger': trig,
+                    'description': row.get('Description', ''),
+                })
+        except Exception as e:
+            log(f"schtasks query failed: {e}")
         return tasks
-
     def get_task_info(self, task_name: str) -> Optional[Dict]:
         tasks = self.list_tasks()
         for t in tasks:
