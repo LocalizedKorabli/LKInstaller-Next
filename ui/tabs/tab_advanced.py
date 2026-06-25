@@ -460,9 +460,10 @@ class PresetManagerWindow(BaseDialog):
         #   4. 加载本地化修改包
         #   5. 安装体验增强包
 
-        # Row 2: [实验性] 安装到独立模组目录
-        ttk.Label(self.details_frame, text=_('lki.preset.manager.use_lk_mods')).grid(
-            row=2, column=0, sticky='e', padx=(0, 10), pady=3)
+        # Row 2: ⚠独立安装目录
+        lk_label = ttk.Label(self.details_frame, text=_('lki.preset.manager.use_lk_mods'))
+        lk_label.grid(row=2, column=0, sticky='e', padx=(0, 10), pady=3)
+        ToolTip(lk_label, _('lki.settings.tooltip_use_lk_mods'))
         self._lk_mods_combo = ttk.Combobox(self.details_frame, state='readonly')
         self._lk_mods_combo.grid(row=2, column=1, sticky='we', pady=3)
         self._lk_mods_combo.lk_mods_values = [
@@ -471,7 +472,6 @@ class PresetManagerWindow(BaseDialog):
             (_('lki.generic.follow_global'), None),
         ]
         self._lk_mods_combo['values'] = [v[0] for v in self._lk_mods_combo.lk_mods_values]
-        ToolTip(self._lk_mods_combo, _('lki.settings.tooltip_use_lk_mods'))
 
         # Row 3: 字体优化包
         ttk.Label(self.details_frame, text=_('lki.preset.manager.use_fonts')).grid(

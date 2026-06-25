@@ -145,14 +145,14 @@ class SettingsTab(BaseTab):
         # ⚠独立安装目录
         lk_label = ttk.Label(install_frame, text=_('lki.settings.use_lk_mods'))
         lk_label.grid(row=0, column=0, sticky='e', padx=(0, 10), pady=10)
+        ToolTip(lk_label, _('lki.settings.tooltip_use_lk_mods'))
         self._lk_global_combo = ttk.Combobox(install_frame, state='readonly', width=10)
         self._lk_global_combo.grid(row=0, column=1, sticky='w', pady=10)
         self._lk_global_combo['values'] = [_('lki.generic.yes'), _('lki.generic.no')]
         current_lk = settings.global_settings.get('use_lk_mods', False)
         self._lk_global_combo.set(_('lki.generic.yes') if current_lk else _('lki.generic.no'))
         self._lk_global_combo.bind('<<ComboboxSelected>>', self._on_lk_global_changed)
-        ToolTip(self._lk_global_combo, _('lki.settings.tooltip_use_lk_mods'))
-
+        
         # --- “文件”设置组 (row=3) ---
         files_frame = ttk.LabelFrame(self, text=_('lki.settings.category.files'), padding=10)
         files_frame.grid(row=3, column=0, sticky='we', pady=5)
