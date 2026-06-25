@@ -514,6 +514,14 @@ class GameTab(BaseTab):
         self.btn_move_down.config(state='disabled')
         self.btn_open_folder.config(state='disabled')
         self.btn_play.config(state='disabled')
+        # 启用按钮（即使未选中实例，有实例存在即可用）
+        if self.loaded_game_instances:
+            self.btn_auto_update_shortcut.config(state='normal')
+            self.btn_play.config(state='disabled')
+            self.btn_open_folder.config(state='disabled')
+            self.btn_edit_instance.config(state='disabled')
+            self.btn_remove.config(state='disabled')
+            return
         self.btn_auto_update_shortcut.config(state='disabled')
         self.selected_client_widget = None
 
@@ -958,14 +966,19 @@ class GameTab(BaseTab):
 
     def _open_auto_update_shortcut_dialog(self):
         """点击"生成自动更新快捷方式"按钮的回调。"""
-        if not self.selected_instance_id:
-            return
+        instance_id = self.selected_instance_id
+        if not instance_id:
+            # 没有选中实例时默认使用第一个
+            if self.loaded_game_instances:
+                instance_id = next(iter(self.loaded_game_instances.keys()))
+            if not instance_id:
+                return
 
-        instance_data = self.instance_manager.get_instance(self.selected_instance_id)
+        instance_data = self.instance_manager.get_instance(instance_id)
         if not instance_data:
             return
 
-        instance_name = instance_data.get('name', self.selected_instance_id)
+        instance_name = instance_data.get('name', instance_id)
         active_preset_id = instance_data.get('active_preset_id', 'default')
         presets = instance_data.get('presets', {})
         preset_data = presets.get(active_preset_id, {})
@@ -977,7 +990,7 @@ class GameTab(BaseTab):
         AutoUpdateConfigDialog(
             self.app_master,
             self.instance_manager,
-            self.selected_instance_id,
+            instance_id,
             instance_name,
             active_preset_id,
             preset_name
