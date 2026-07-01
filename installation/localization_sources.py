@@ -21,6 +21,7 @@ from core.localizer import _
 MODS_URLS = {
     "chs": 'https://tapio.lanzn.com/b0nxzso2b',
     "en": None,
+    "de": None,
     "cht": None,
     "ja": None,
 }
@@ -86,6 +87,32 @@ LANG_ROUTES = {
                 'mo': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/Localizations/latest/global.mo',
                 'version': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/Localizations/latest/version.info',
                 'ee': 'https://github.com/LocalizedKorabli/Korabli-LESTA-I18N-PublicTest/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            }
+        }
+    },
+    "de": {
+        "production": {
+            'gitlab': {
+                'mo': 'https://gitlab.com/localizedkorabli/korabli-i18n-de/-/raw/main/Localizations/latest/global.mo',
+                'version': 'https://gitlab.com/localizedkorabli/korabli-i18n-de/-/raw/main/Localizations/latest/version.info',
+                'ee': 'https://gitlab.com/localizedkorabli/korabli-i18n-de/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            },
+            'github': {
+                'mo': 'https://github.com/LocalizedKorabli/Korabli-I18n-DE/raw/main/Localizations/latest/global.mo',
+                'version': 'https://github.com/LocalizedKorabli/Korabli-I18n-DE/raw/main/Localizations/latest/version.info',
+                'ee': 'https://github.com/LocalizedKorabli/Korabli-I18n-DE/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            }
+        },
+        "pts": {
+            'gitlab': {
+                'mo': 'https://gitlab.com/localizedkorabli/korabli-i18n-de-pt/-/raw/main/Localizations/latest/global.mo',
+                'version': 'https://gitlab.com/localizedkorabli/korabli-i18n-de-pt/-/raw/main/Localizations/latest/version.info',
+                'ee': 'https://gitlab.com/localizedkorabli/korabli-i18n-de-pt/-/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
+            },
+            'github': {
+                'mo': 'https://github.com/LocalizedKorabli/Korabli-I18n-DE-PT/raw/main/Localizations/latest/global.mo',
+                'version': 'https://github.com/LocalizedKorabli/Korabli-I18n-DE-PT/raw/main/Localizations/latest/version.info',
+                'ee': 'https://github.com/LocalizedKorabli/Korabli-I18n-DE-PT/raw/main/BuiltInMods/LKExperienceEnhancement.zip'
             }
         }
     },
@@ -257,7 +284,7 @@ class SourceManager:
 
     def _register_sources(self):
         # 语言简码 → 内部 source_id 映射
-        lang_to_id = {"chs": "zh_CN", "en": "en", "cht": "zh_TW", "ja": "ja"}
+        lang_to_id = {"chs": "zh_CN", "en": "en", "de": "de", "cht": "zh_TW", "ja": "ja"}
         for code, routes in LANG_ROUTES.items():
             self.add_source(
                 source_id=lang_to_id[code],
