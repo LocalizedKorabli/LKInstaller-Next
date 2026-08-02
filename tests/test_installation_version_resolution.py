@@ -2,17 +2,17 @@ import queue
 import threading
 import unittest
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, Mock, patch
 
 from installation.installation_manager import InstallationManager
 
 
 class InstallationVersionResolutionTests(unittest.TestCase):
-    def test_uses_cached_remote_version_for_second_local_version(self):
+    def test_matches_second_local_version_without_querying_remaining_routes(self):
         manager = InstallationManager.__new__(InstallationManager)
         manager._cancel_event = threading.Event()
         manager._lock = threading.Lock()
-        manager.download_routes_priority = ["primary"]
+        manager.download_routes_priority = ["primary", "secondary", "tertiary"]
         manager.download_jobs = {}
         manager.download_queue = queue.Queue()
 
@@ -38,7 +38,7 @@ class InstallationVersionResolutionTests(unittest.TestCase):
         )
 
         source = Mock()
-        source.get_available_route_ids.return_value = ["primary"]
+        source.get_available_route_ids.return_value = ["primary", "secondary", "tertiary"]
         source.get_urls.return_value = {
             "version": "https://example.invalid/version.txt",
             "mo": "https://example.invalid/global.mo",
@@ -56,6 +56,12 @@ class InstallationVersionResolutionTests(unittest.TestCase):
                 manager._resolve_task_version(task)
 
         self.assertEqual(get.call_count, 1)
+        get.assert_called_once_with(
+            "https://example.invalid/version.txt",
+            timeout=5,
+            proxies=ANY,
+            auth=ANY,
+        )
         self.assertEqual(task.mo_job_id, "zh_cn_26.7_2026.08.01")
         self.assertEqual(task.status, "downloading")
         self.assertEqual(manager.download_jobs[task.mo_job_id].version_info, {

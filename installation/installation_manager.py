@@ -283,9 +283,35 @@ class InstallationManager:
             self._mark_task_failed(task, _('lki.install.error.no_version_url') % task.lang_code)
             return
 
-        # 同一路由的远程版本在本任务内只需拉取一次。缓存时必须同时保留
-        # 大版本和小版本：最新本地版本不匹配后，次新版本仍需要小版本来创建下载任务。
-        route_remote: Dict[str, Tuple[str, str]] = {}
+        # 远程仓库只发布一个大版本，各下载线路只是该元数据的镜像。
+        # 因此只从首个可用线路取得一次远程版本，再与最新的两个本地版本匹配。
+        remote_version_info: Optional[Tuple[str, str]] = None
+        for route_id in self.download_routes_priority:
+            if self._cancel_event.is_set(): return
+
+            route_urls = source.get_urls(task.instance.type, route_id)
+            if not route_urls or not route_urls.get('version'):
+                continue
+
+            _log_task(task,
+                      _('lki.install.status.getting_version_from') % get_route_id_to_name().get(route_id, route_id))
+
+            try:
+                proxies, proxy_auth = root_utils.get_configured_proxies()
+                resp = requests.get(route_urls['version'], timeout=5, proxies=proxies, auth=proxy_auth)
+                resp.raise_for_status()
+                lines = resp.text.splitlines()
+                if len(lines) >= 2:
+                    remote_version_info = (lines[1].strip(), lines[0].strip())
+                    break
+            except requests.exceptions.RequestException as e:
+                _log_task(task, f"{_('lki.install.status.failed')}: {route_id} ({e})")
+
+        if not remote_version_info:
+            self._mark_task_failed(task, _('lki.install.status.no_compatible_version'))
+            return
+
+        remote_major, remote_sub_version = remote_version_info
         for game_version_obj in task.instance.versions[:2]:
             if self._cancel_event.is_set(): return
 
@@ -297,43 +323,11 @@ class InstallationManager:
 
             log(f"Attempting to find remote version for local major version: {major_version}")
 
-            sub_version = None
-            for route_id in self.download_routes_priority:
-                if self._cancel_event.is_set(): return
-
-                route_urls = source.get_urls(task.instance.type, route_id)
-                if not route_urls: continue
-
-                if route_id in route_remote:
-                    remote_major, remote_sub_version = route_remote[route_id]
-                    if remote_major == major_version:
-                        sub_version = remote_sub_version
-                        _log_task(task, _('lki.install.status.version_match_found') % sub_version)
-                        break
-                    continue
-
-                v_url = route_urls.get('version')
-                _log_task(task,
-                          _('lki.install.status.getting_version_from') % get_route_id_to_name().get(route_id, route_id))
-
-                try:
-                    proxies, proxy_auth = root_utils.get_configured_proxies()
-                    resp = requests.get(v_url, timeout=5, proxies=proxies, auth=proxy_auth)
-                    resp.raise_for_status()
-                    lines = resp.text.splitlines()
-                    if len(lines) >= 2:
-                        remote_sub_version = lines[0].strip()
-                        remote_major = lines[1].strip()
-                        route_remote[route_id] = (remote_major, remote_sub_version)
-                        if remote_major == major_version:
-                            sub_version = remote_sub_version
-                            _log_task(task, _('lki.install.status.version_match_found') % sub_version)
-                            break
-                        else:
-                            _log_task(task, _('lki.install.status.version_mismatch') % (remote_major, major_version))
-
-                except requests.exceptions.RequestException as e:
-                    _log_task(task, f"{_('lki.install.status.failed')}: {route_id} ({e})")
+            sub_version = remote_sub_version if remote_major == major_version else None
+            if sub_version:
+                _log_task(task, _('lki.install.status.version_match_found') % sub_version)
+            else:
+                _log_task(task, _('lki.install.status.version_mismatch') % (remote_major, major_version))
 
             if sub_version:
                 mo_job_id = f"{task.lang_code}_{major_version}_{sub_version}"
