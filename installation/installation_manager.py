@@ -116,6 +116,7 @@ class InstallationManager:
         self.on_complete_callback: Optional[Callable] = None
         self.is_uninstalling: bool = False  # (新增)
         self._install_phase_started = False  # <-- (修改 1: 新增标志)
+        self._all_finished_notified = False
 
     def start_installation(self, tasks: List[InstallationTask], on_complete_callback: Optional[Callable] = None):
         from core.localizer import _  # (为 Messagebox 导入)
@@ -131,6 +132,7 @@ class InstallationManager:
         self.on_complete_callback = on_complete_callback
         self.is_uninstalling = False  # (新增)
         self._install_phase_started = False  # <-- (修改 2: 重置标志)
+        self._all_finished_notified = False
         self.download_routes_priority = settings.global_settings.get('download_routes_priority')
 
         tasks_data = {t.task_name : t.instance for t in self.tasks}
@@ -153,6 +155,7 @@ class InstallationManager:
         while not self.download_queue.empty():
             try:
                 self.download_queue.get_nowait()
+                self.download_queue.task_done()
             except queue.Empty:
                 break
 
@@ -168,6 +171,7 @@ class InstallationManager:
         self.tasks = tasks
         self.on_complete_callback = on_complete_callback
         self.is_uninstalling = True  # (新增)
+        self._all_finished_notified = False
 
         tasks_data = {t.task_name : None for t in self.tasks}
         # (新增：使用卸载标题)
@@ -218,6 +222,8 @@ class InstallationManager:
 
         self._pending_version_count = len(self.tasks)
         self._version_all_done = threading.Event()
+        if self._pending_version_count == 0:
+            self._version_all_done.set()
 
         def _resolve_and_notify(task):
             try:
@@ -234,18 +240,21 @@ class InstallationManager:
             t = threading.Thread(target=_resolve_and_notify, args=(task,), daemon=True)
             t.start()
 
-        num_workers = min(6, max(len(self.tasks) * 3, 1))
-        _log_overall(self, _('lki.install.status.downloading_files') % (len(self.tasks) * 3))
-
-        for _i in range(num_workers):
-            threading.Thread(target=self._download_worker, daemon=True).start()
-
+        # 先等待所有任务完成版本解析和共享 Job 依赖登记，再启动下载。
+        # 否则缓存命中或高速下载可能在后续任务加入 dependent_tasks 前完成。
         self._version_all_done.wait()
 
         if self._cancel_event.is_set():
             return
 
-        if self.download_queue.empty():
+        queued_job_count = self.download_queue.qsize()
+        num_workers = min(6, queued_job_count)
+        _log_overall(self, _('lki.install.status.downloading_files') % queued_job_count)
+
+        for _i in range(num_workers):
+            threading.Thread(target=self._download_worker, daemon=True).start()
+
+        if queued_job_count == 0:
             _log_overall(self, _('lki.install.status.install_phase'))
             self._install_phase_started = True
             self.root_tk.after(0, self._on_download_complete, None, True)
@@ -274,8 +283,10 @@ class InstallationManager:
             self._mark_task_failed(task, _('lki.install.error.no_version_url') % task.lang_code)
             return
 
-        route_remote = {}  # route_id → remote_major, 在本task内复用
-        for game_version_obj in task.instance.versions:
+        # 同一路由的远程版本在本任务内只需拉取一次。缓存时必须同时保留
+        # 大版本和小版本：最新本地版本不匹配后，次新版本仍需要小版本来创建下载任务。
+        route_remote: Dict[str, Tuple[str, str]] = {}
+        for game_version_obj in task.instance.versions[:2]:
             if self._cancel_event.is_set(): return
 
             if not game_version_obj or not game_version_obj.exe_version:
@@ -294,8 +305,11 @@ class InstallationManager:
                 if not route_urls: continue
 
                 if route_id in route_remote:
-                    if route_remote[route_id] == major_version:
-                        _log_task(task, _('lki.install.status.version_match_found') % '(cached)')
+                    remote_major, remote_sub_version = route_remote[route_id]
+                    if remote_major == major_version:
+                        sub_version = remote_sub_version
+                        _log_task(task, _('lki.install.status.version_match_found') % sub_version)
+                        break
                     continue
 
                 v_url = route_urls.get('version')
@@ -308,10 +322,11 @@ class InstallationManager:
                     resp.raise_for_status()
                     lines = resp.text.splitlines()
                     if len(lines) >= 2:
+                        remote_sub_version = lines[0].strip()
                         remote_major = lines[1].strip()
-                        route_remote[route_id] = remote_major
+                        route_remote[route_id] = (remote_major, remote_sub_version)
                         if remote_major == major_version:
-                            sub_version = lines[0].strip()
+                            sub_version = remote_sub_version
                             _log_task(task, _('lki.install.status.version_match_found') % sub_version)
                             break
                         else:
@@ -366,30 +381,44 @@ class InstallationManager:
                     return
                 continue
 
-            if not job:
-                self.download_queue.task_done()
-                continue
-
             try:
-                representative_task = next(iter(job.dependent_tasks))
-            except StopIteration:
+                if not job:
+                    continue
+
+                try:
+                    representative_task = next(iter(job.dependent_tasks))
+                except StopIteration:
+                    continue
+
+                for task in list(job.dependent_tasks):
+                    _log_task(task, _('lki.install.status.downloading_file') % job.job_id)
+
+                try:
+                    success, result_path = self._perform_download(job, representative_task)
+                except Exception as e:
+                    import traceback
+                    log(f"Unhandled download error for {job.job_id}: {e}")
+                    traceback.print_exc()
+                    success, result_path = False, None
+
+                if self._cancel_event.is_set():
+                    return
+
+                if success:
+                    job.result_path = result_path
+
+                self.root_tk.after(0, self._on_download_complete, job, success)
+            except Exception as e:
+                import traceback
+                log(f"Download worker error for {getattr(job, 'job_id', '<unknown>')}: {e}")
+                traceback.print_exc()
+                if job and not self._cancel_event.is_set():
+                    try:
+                        self.root_tk.after(0, self._on_download_complete, job, False)
+                    except Exception as callback_error:
+                        log(f"Could not report failed download {job.job_id}: {callback_error}")
+            finally:
                 self.download_queue.task_done()
-                continue
-
-            for task in list(job.dependent_tasks):
-                _log_task(task, _('lki.install.status.downloading_file') % job.job_id)
-
-            success, result_path = self._perform_download(job, representative_task)
-
-            if self._cancel_event.is_set():
-                self.download_queue.task_done()
-                return
-
-            if success:
-                job.result_path = result_path
-
-            self.root_tk.after(0, self._on_download_complete, job, success)
-            self.download_queue.task_done()
 
     def _perform_download(self, job: DownloadJob, task: InstallationTask) -> Tuple[bool, Optional[Path]]:
         from core.localizer import _
@@ -639,19 +668,22 @@ class InstallationManager:
         elif job:  # 下载失败
             from core.localizer import _  # (为日志导入)
             for task in job.dependent_tasks:
-                with self._lock:
-                    if job.file_type == 'mo':
-                        # MO 是关键任务，使整个任务失败
-                        self._mark_task_failed(task, _('lki.install.status.download_failed') % job.job_id)
-                    elif job.file_type == 'ee':
-                        # EE 不是关键任务，记录日志并解除阻塞
+                if job.file_type == 'mo':
+                    # _mark_task_failed 自身会加锁，不能在持有同一非重入锁时调用。
+                    self._mark_task_failed(task, _('lki.install.status.download_failed') % job.job_id)
+                else:
+                    with self._lock:
+                        if job.file_type == 'ee':
+                            # EE 不是关键任务，解除阻塞以继续安装。
+                            task.ee_ready = True  # <-- 设为 True 以便安装可以开始
+                        elif job.file_type == 'fonts':
+                            # 字体不是关键任务，解除阻塞以继续安装。
+                            task.fo_ready = True  # <-- 设为 True 以便安装可以开始
+                    if job.file_type == 'ee':
                         _log_task(task, _('lki.install.status.ee_failed_skip') % job.job_id)
-                        task.ee_ready = True  # <-- 设为 True 以便安装可以开始
                         tasks_to_check.append(task)
                     elif job.file_type == 'fonts':
-                        # 字体不是关键任务，记录日志并解除阻塞
                         _log_task(task, _('lki.install.status.fonts_failed_skip') % job.job_id)
-                        task.fo_ready = True  # <-- 设为 True 以便安装可以开始
                         tasks_to_check.append(task)
         elif not job and success:
             tasks_to_check = self.tasks
@@ -1024,7 +1056,10 @@ class InstallationManager:
                 status_text = f"{_(status_key)}: {reason}"
             else:
                 status_text = _(status_key)
-            _log_task(task, status_text, 100)
+        _log_task(task, status_text, 100)
+        if self.window:
+            self.root_tk.after(0, self.window.mark_task_complete, task.task_name, False, status_text)
+        self._check_if_all_finished()
 
     def _mark_task_finished(self, task: InstallationTask, success: bool, status_key: str = 'lki.install.status.done'):
         from core.localizer import _
@@ -1038,12 +1073,16 @@ class InstallationManager:
         from core.localizer import _
         with self._lock:
             all_done = all(t.status in ["done", "failed"] for t in self.tasks)
-            if all_done:
-                all_done_key = 'lki.uninstall.status.all_done' if self.is_uninstalling else 'lki.action.status.all_done'
-                _log_overall(self, _(all_done_key))
-                self.root_tk.after(0, self.window.all_tasks_finished)
-                if self.on_complete_callback:
-                    self.root_tk.after(0, self.on_complete_callback)
+            if not all_done or self._all_finished_notified:
+                return
+            self._all_finished_notified = True
+
+        all_done_key = 'lki.uninstall.status.all_done' if self.is_uninstalling else 'lki.action.status.all_done'
+        _log_overall(self, _(all_done_key))
+        if self.window:
+            self.root_tk.after(0, self.window.all_tasks_finished)
+        if self.on_complete_callback:
+            self.root_tk.after(0, self.on_complete_callback)
 
 
 # --- (组件安装助手) ---
