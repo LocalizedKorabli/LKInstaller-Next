@@ -23,6 +23,11 @@ from pathlib import Path
 
 import semver
 
+ROOT_DIR = Path(__file__).resolve().parent.parent
+SRC_DIR = ROOT_DIR / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
 from core import constants
 
 PFX_SHA1 = "43ff9aecc348a54ed61178eda015832ec5b050fc"
@@ -58,8 +63,8 @@ def run_nuitka(major: int, minor: int, patch: int) -> None:
         "--standalone",
         "--assume-yes-for-downloads",
         "--windows-console-mode=disable",
-        f"--windows-icon-from-ico={Path('resources', 'logo', 'logo.ico')}",
-        "--include-data-dir=resources=resources",
+        f"--windows-icon-from-ico={Path('src', 'resources', 'logo', 'logo.ico')}",
+        "--include-data-dir=src/resources=resources",
         "--enable-plugin=tk-inter",
         "--include-package=win32api",
         "--include-package=win32com.client",
@@ -73,7 +78,7 @@ def run_nuitka(major: int, minor: int, patch: int) -> None:
         f"--windows-product-version={major}.{minor}.{patch}.0",
         "--output-filename=lki.exe",
         "--output-dir=dist",
-        "lki.py",
+        str(Path("src", "lki.py")),
     ]
     print("Running Nuitka:", " ".join(cmd), flush=True)
     subprocess.run(cmd, check=True)
@@ -115,7 +120,7 @@ def build_msix(build_nuitka: bool = False, sign: bool = True) -> Path:
             shutil.rmtree("dist")
         run_nuitka(major, minor, patch)
 
-    msix_root = Path("msix")
+    msix_root = Path("packaging") / "msix"
     staging = msix_root / "staging"
     output_dir = msix_root / "Output"
     if staging.exists():

@@ -24,6 +24,11 @@ from pathlib import Path
 
 import semver
 
+ROOT_DIR = Path(__file__).resolve().parent.parent
+SRC_DIR = ROOT_DIR / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
 from core import constants
 
 PFX_SHA1 = "43ff9aecc348a54ed61178eda015832ec5b050fc"
@@ -68,8 +73,8 @@ def run_build(major, minor, patch):
         '--standalone',
         '--assume-yes-for-downloads',
         '--windows-console-mode=disable',
-        f'--windows-icon-from-ico={os.path.join("resources", "logo", "logo.ico")}',
-        '--include-data-dir=resources=resources',
+        f'--windows-icon-from-ico={os.path.join("src", "resources", "logo", "logo.ico")}',
+        '--include-data-dir=src/resources=resources',
         '--enable-plugin=tk-inter',
         '--include-package=win32api',
         '--include-package=win32com.client',
@@ -85,7 +90,7 @@ def run_build(major, minor, patch):
         '--output-dir=dist',
     ]
 
-    command = [python_exe] + nuitka_args + ['lki.py']
+    command = [python_exe] + nuitka_args + [os.path.join('src', 'lki.py')]
 
     print("--- Run Commands in venv ---")
     print(" ".join(f'"{arg}"' if " " in arg else arg for arg in command))
@@ -116,7 +121,7 @@ minor = sem_ver.get('minor', 0)
 patch = sem_ver.get('patch', 0)
 
 # Modify Inno Setup file
-iss_path = Path('inno').joinpath('pack.iss')
+iss_path = Path('packaging', 'inno', 'pack.iss')
 
 pattern = re.compile(r'(^\s*#define\s+MyAppVersion\s+)"(.*?)"', re.M)
 
@@ -158,14 +163,14 @@ if not args.no_sign:
     sign_file(Path('dist') / 'lki.dist' / 'lki.exe')
 
 # Run Inno Setup to compile; /Smysign passes the sign tool used by SignTool=mysign in pack.iss
-output_path = Path('inno').joinpath('Output')
+output_path = Path('packaging', 'inno', 'Output')
 
 iscc_candidates = [
     r'C:\Program Files (x86)\Inno Setup 6\ISCC.exe',
     os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs', 'Inno Setup 6', 'ISCC.exe'),
 ]
 iscc_path = next((p for p in iscc_candidates if os.path.exists(p)), iscc_candidates[0])
-target_iss_file = os.path.join('inno', 'pack.iss')
+target_iss_file = os.path.join('packaging', 'inno', 'pack.iss')
 
 iscc_cmd = [iscc_path, target_iss_file]
 if args.no_sign:

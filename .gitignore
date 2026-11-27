@@ -6,9 +6,9 @@ __pycache__/
 /lki/settings/
 /lki/
 
-/inno/Output/
-/msix/staging/
-/msix/Output/
+/packaging/inno/Output/
+/packaging/msix/staging/
+/packaging/msix/Output/
 /.codegraph/
 /.claude/
 /.reasonix/
