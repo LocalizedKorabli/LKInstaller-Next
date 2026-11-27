@@ -15,14 +15,14 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import sys
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, font as tkfont
 from typing import Dict, Optional
 
 from core import settings
 from core import utils
 from instance import instance_manager
 from instance.game_instance import GameInstance
-from core.localizer import _, global_translator
+from core.localizer import _, global_translator, select_best_font
 from core.logger import log
 from ui.tabs.tab_about import AboutTab
 from ui.tabs.tab_advanced import AdvancedTab
@@ -185,10 +185,13 @@ class LocalizationInstallerApp:
                 widget.destroy()
 
             current_theme = settings.global_settings.get('theme', 'light')
-            self.master.call('set_theme', current_theme, self.font_family)
+            font_family = select_best_font(
+                settings.global_settings.language,
+                tkfont.families(self.master),
+            )
+            self.master.call('set_theme', current_theme, font_family)
 
             root = self.master
-            font_family = self.font_family
             scaling_factor = self.master.scaling_factor
 
             def _rebuild():

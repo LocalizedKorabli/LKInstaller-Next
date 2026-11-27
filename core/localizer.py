@@ -16,20 +16,37 @@
 import glob
 import json
 import os
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, Iterable
 
 from core import dirs
 from core.logger import log
 
 locales_dir = dirs.base_path.joinpath('resources/locales')
 
-_best_fonts: Dict[str, Tuple[str, str]] = {
-    'zh_CN': ('Segoe UI', 'Microsoft YaHei'),
-    'zh_TW': ('Segoe UI', 'Microsoft JhengHei'),
+_best_fonts: Dict[str, Tuple[str, ...]] = {
+    'zh_CN': ('Microsoft YaHei UI', 'Microsoft YaHei', 'Segoe UI'),
+    'zh_TW': ('Microsoft JhengHei UI', 'Microsoft JhengHei', 'Segoe UI'),
     'en': ('Segoe UI', 'Arial'),
-    'ja': ('Yu Gothic', 'MS Gothic'),
-    'ru': ('Aptos', 'Arial')
+    'de': ('Segoe UI', 'Arial'),
+    'es': ('Segoe UI', 'Arial'),
+    'ja': ('Yu Gothic UI', 'Yu Gothic', 'Meiryo UI', 'Segoe UI'),
+    'ru': ('Segoe UI', 'Arial'),
 }
+_DEFAULT_FONTS: Tuple[str, ...] = ('Microsoft YaHei UI', 'Microsoft YaHei', 'Segoe UI')
+
+
+def select_best_font(
+    lang_code: Optional[str],
+    available_families: Optional[Iterable[str]] = None,
+) -> str:
+    """Pick the first available vector UI font for the given language."""
+    candidates = _best_fonts.get(lang_code or '', _DEFAULT_FONTS)
+    if available_families is not None:
+        family_set = set(available_families)
+        for font in candidates:
+            if font in family_set:
+                return font
+    return candidates[0]
 
 
 class Localizer:
@@ -64,8 +81,8 @@ class Localizer:
         return self.translations.get(text, text)
 
     # Currently not used
-    def get_language_defined_best_fonts(self) -> Tuple[str, str]:
-        return _best_fonts.get(self.current_lang, ('Segoe UI', 'Microsoft YaHei'))
+    def get_language_defined_best_fonts(self) -> Tuple[str, ...]:
+        return _best_fonts.get(self.current_lang or '', _DEFAULT_FONTS)
 
 global_translator = Localizer(None)
 _ = global_translator.gettext

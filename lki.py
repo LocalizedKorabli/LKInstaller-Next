@@ -15,6 +15,7 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import platform
 import tkinter as tk
+from tkinter import font as tkfont
 import sys
 from pathlib import Path
 
@@ -23,7 +24,7 @@ from core import settings
 from instance import instance_manager
 from installation.installation_manager import InstallationManager, InstallationTask
 from instance.game_instance import GameInstance
-from core.localizer import global_translator, _, _best_fonts
+from core.localizer import global_translator, _, select_best_font
 from core.logger import setup_logger, log
 
 def run_auto_execute(root, arg, run_client):
@@ -243,16 +244,7 @@ if __name__ == '__main__':
         log(f"Could not load settings, defaulting theme. Error: {e}")
         theme = 'light'
 
-    font_family = "Microsoft YaHei"
-
-    try:
-        if platform.system() == "Windows":
-            # Windows 11 Build Number >= 22000
-            build_number = int(platform.version().split('.')[-1])
-            if build_number >= 22000:
-                font_family = "Segoe UI"
-    except (ValueError, IndexError):
-        pass
+    font_family = select_best_font(settings.global_settings.language, tkfont.families(root))
 
     root.call('source', dirs.base_path.joinpath('resources/theme/azure/azure.tcl'))
     root.call('set_theme', theme, font_family)

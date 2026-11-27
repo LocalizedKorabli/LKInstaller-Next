@@ -17,13 +17,14 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import List
 import os
+from pathlib import Path
 import sys
 import subprocess
 import shutil
 
 from core import settings
 from core import logger
-from core.dirs import APP_DATA_PATH, CACHE_DIR, LOG_DIR
+from core.dirs import APP_DATA_PATH, CACHE_DIR, LOG_DIR, resolve_real_path
 from installation.localization_sources import global_source_manager, get_route_id_to_name
 from core.localizer import _, get_available_languages
 from core.logger import log
@@ -315,7 +316,9 @@ class SettingsTab(BaseTab):
     def _open_directory(self, path_to_open):
         """在系统的文件资源管理器中打开一个目录。"""
         try:
-            path_str = str(path_to_open)
+            target = Path(path_to_open)
+            os.makedirs(target, exist_ok=True)
+            path_str = str(resolve_real_path(target))
             if sys.platform == "win32":
                 os.startfile(path_str)
             elif sys.platform == "darwin":  # macOS
