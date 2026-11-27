@@ -59,6 +59,13 @@ zh_TW.MyAppName=澪刻 Next: Mir Korabley 在地化安裝器
 en.MyAppName=LK Next: Mir Korabley L10n Installer
 ru.MyAppName=LK Next: Установщик локализации «Мира кораблей»
 ja.MyAppName=澪刻 Next: Mir Korabley オンライン自動インストーラー
+; Shortcut names must not contain ':' because NTFS interprets it as an
+; alternate-data-stream separator, producing an empty extensionless file.
+zh_CN.MyAppShortcutName=澪刻 Next
+zh_TW.MyAppShortcutName=澪刻 Next
+en.MyAppShortcutName=LK Next
+ru.MyAppShortcutName=LK Next
+ja.MyAppShortcutName=澪刻 Next
 
 [Registry]
 Root: HKLM; Subkey: "Software\LocalizedKorabli\LKInstallerNext"; ValueType: string; ValueName: "InstallLanguage"; ValueData: "{language}"; Flags: uninsdeletevalue
@@ -69,8 +76,8 @@ Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\LKNext.
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Icons]
-Name: "{autoprograms}\{cm:MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{autodesktop}\{cm:MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{autoprograms}\{cm:MyAppShortcutName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{autodesktop}\{cm:MyAppShortcutName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{cm:MyAppName}}"; Flags: nowait postinstall shellexec
