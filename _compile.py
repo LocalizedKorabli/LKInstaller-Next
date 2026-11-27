@@ -25,8 +25,6 @@ import semver
 
 from core import constants
 
-PFX_PATH = os.environ.get("PFX_PATH", r"")
-PFX_PASSWORD = os.environ.get("PFX_PASSWORD", "")
 PFX_SHA1 = "43ff9aecc348a54ed61178eda015832ec5b050fc"
 TIMESTAMP_URL = "http://timestamp.digicert.com"
 # signtool.exe from Windows SDK; adjust the version folder if needed
@@ -36,8 +34,6 @@ def sign_file(file_path):
     cmd = [
         SIGNTOOL_PATH, "sign",
         "/fd", "SHA256",
-        "/f", PFX_PATH,
-        "/p", PFX_PASSWORD,
         "/sha1", PFX_SHA1,
         "/tr", TIMESTAMP_URL,
         "/td", "SHA256",
@@ -147,10 +143,14 @@ sign_file(Path('dist') / 'lki.dist' / 'lki.exe')
 # Run Inno Setup to compile; /Smysign passes the sign tool used by SignTool=mysign in pack.iss
 output_path = Path('inno').joinpath('Output')
 
-iscc_path = r'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+iscc_candidates = [
+    r'C:\Program Files (x86)\Inno Setup 6\ISCC.exe',
+    os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs', 'Inno Setup 6', 'ISCC.exe'),
+]
+iscc_path = next((p for p in iscc_candidates if os.path.exists(p)), iscc_candidates[0])
 target_iss_file = os.path.join('inno', 'pack.iss')
 sign_cmd = (
-    f'{SIGNTOOL_PATH} sign /fd SHA256 /f $q{PFX_PATH}$q /p $q{PFX_PASSWORD}$q'
+    f'{SIGNTOOL_PATH} sign /fd SHA256'
     f' /sha1 {PFX_SHA1} /tr {TIMESTAMP_URL} /td SHA256 $f'
 )
 result = subprocess.run(
