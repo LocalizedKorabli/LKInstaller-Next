@@ -877,22 +877,8 @@ class InstallationManager:
         if not ee_zip_path:
             return None
         try:
-            ee_unpack_dir = utils.EE_UNPACK_TEMP / task.instance.instance_id
-            _log_task(task, _('lki.install.status.unpacking_ee'), 61)
-            if ee_unpack_dir.exists():
-                shutil.rmtree(ee_unpack_dir)
-            utils.mkdir(ee_unpack_dir)
-            with zipfile.ZipFile(ee_zip_path, 'r') as zf:
-                utils.process_possible_gbk_zip(zf).extractall(ee_unpack_dir)
-            ee_files_to_add: Dict[str, Path] = {}
-            for root, dirnames, files in os.walk(ee_unpack_dir):
-                for file in files:
-                    local_path = Path(root) / file
-                    arcname = str(local_path.relative_to(ee_unpack_dir)).replace("\\", "/")
-                    ee_files_to_add[arcname] = local_path
-            if ee_files_to_add:
-                ee_mkmod_path = utils.TEMP_DIR / f"{task.instance.instance_id}_ee.mkmod"
-                utils.create_mkmod(ee_mkmod_path, ee_files_to_add)
+            ee_mkmod_path = utils.TEMP_DIR / f"{task.instance.instance_id}_ee.mkmod"
+            if utils.repack_zip_to_mkmod(ee_zip_path, ee_mkmod_path):
                 return ee_mkmod_path
         except Exception as e:
             _log_task(task, _('lki.install.error.ee_pack_failed') % e)
