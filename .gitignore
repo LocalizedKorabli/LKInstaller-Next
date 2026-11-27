@@ -7,6 +7,8 @@ __pycache__/
 /lki/
 
 /inno/Output/
+/msix/staging/
+/msix/Output/
 /.claude/
 /.reasonix/
 /reasonix.toml

@@ -1,0 +1,56 @@
+name: Build MSIX
+
+on:
+  push:
+    branches: [main, dev]
+    tags: ["v*"]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+jobs:
+  build-msix:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.8"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Build MSIX
+        shell: pwsh
+        env:
+          PFX_BASE64: ${{ secrets.LK_NEXT_PFX_BASE64 }}
+          PFX_PASSWORD: ${{ secrets.LK_NEXT_PFX_PASSWORD }}
+        run: |
+          if ($env:PFX_BASE64) {
+            $pfxPath = Join-Path $env:RUNNER_TEMP "signing.pfx"
+            [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:PFX_BASE64))
+            $env:PFX_PATH = $pfxPath
+            try {
+              python _compile_msix.py --build
+            } finally {
+              Remove-Item $pfxPath -Force -ErrorAction SilentlyContinue
+            }
+          } else {
+            python _compile_msix.py --build --no-sign
+          }
+
+      - name: Upload MSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lk-next-msix
+          path: msix/Output/*.msix
