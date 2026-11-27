@@ -59,8 +59,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install boto3
-        run: pip install --quiet boto3
+      - name: Install upload SDKs
+        run: pip install --quiet boto3 cos-python-sdk-v5
 
       - name: Upload assets to Cloudflare R2 and Tencent Cloud COS
         env:
@@ -78,9 +78,9 @@ jobs:
           python - <<'PY'
           import os
           from pathlib import Path
-          from urllib.parse import urlparse, urlunparse
+          from urllib.parse import urlparse
           import boto3
-          from botocore.config import Config
+          from qcloud_cos import CosConfig, CosS3Client
 
           FILES = [
               ("lki_setup.exe", "application/vnd.microsoft.portable-executable", None),
@@ -88,38 +88,17 @@ jobs:
               ("version_info.json", "application/json", "no-cache, max-age=0"),
           ]
 
-          def upload_target(name, endpoint, bucket, key_id, secret_key, prefix):
+          def upload_r2(endpoint, bucket, key_id, secret_key, prefix):
               endpoint = endpoint.strip()
               if not all([endpoint, bucket, key_id, secret_key]):
-                  print(f"Skipping {name}: missing credentials/config.")
+                  print("Skipping Cloudflare R2: missing credentials/config.")
                   return
-              parsed = urlparse(endpoint)
-              host = parsed.hostname or ""
-              scheme = parsed.scheme or "http"
-              is_cos = "myqcloud.com" in host
-              region = "auto"
-
-              if is_cos:
-                  parts = host.split(".")
-                  # Handle <bucket-appid>.cos.<region>.myqcloud.com
-                  if len(parts) >= 5 and parts[1] == "cos":
-                      endpoint_bucket = parts[0]
-                      if bucket == endpoint_bucket or endpoint_bucket.startswith(f"{bucket}-"):
-                          bucket = endpoint_bucket
-                      region = parts[2] if parts[2] != "accelerate" else "ap-shanghai"
-                      new_host = ".".join(parts[1:])
-                      netloc = new_host if parsed.port is None else f"{new_host}:{parsed.port}"
-                      endpoint = urlunparse(parsed._replace(netloc=netloc))
-                  elif len(parts) >= 4 and parts[0] == "cos":
-                      region = parts[1] if parts[1] != "accelerate" else "ap-shanghai"
-
               client = boto3.client(
                   "s3",
                   endpoint_url=endpoint,
                   aws_access_key_id=key_id,
                   aws_secret_access_key=secret_key,
-                  region_name=region,
-                  config=Config(s3={"addressing_style": "virtual"} if is_cos else {}),
+                  region_name="auto",
               )
               clean_prefix = prefix.strip("/")
               for filename, content_type, cache_control in FILES:
@@ -128,20 +107,58 @@ jobs:
                   if cache_control:
                       extra["CacheControl"] = cache_control
                   path = Path("release_assets") / filename
-                  print(f"[{name}] Uploading {path} -> s3://{bucket}/{key}")
+                  print(f"[Cloudflare R2] Uploading {path} -> s3://{bucket}/{key}")
                   client.upload_file(str(path), bucket, key, ExtraArgs=extra)
-              print(f"[{name}] Upload completed.")
+              print("[Cloudflare R2] Upload completed.")
 
-          upload_target(
-              "Cloudflare R2",
+          def upload_cos(endpoint, bucket, secret_id, secret_key, prefix):
+              endpoint = endpoint.strip()
+              if not all([endpoint, bucket, secret_id, secret_key]):
+                  print("Skipping Tencent Cloud COS: missing credentials/config.")
+                  return
+              parsed = urlparse(endpoint)
+              scheme = parsed.scheme or "http"
+              host = parsed.netloc or endpoint
+              parts = host.split(".")
+              region = "ap-shanghai"
+              for i, part in enumerate(parts):
+                  if part == "cos" and i + 1 < len(parts) and parts[i + 1] != "accelerate":
+                      region = parts[i + 1]
+                      break
+
+              domain = None if host.startswith("cos.") else host
+              config = CosConfig(
+                  Region=region,
+                  SecretId=secret_id,
+                  SecretKey=secret_key,
+                  Scheme=scheme,
+                  Domain=domain,
+              )
+              client = CosS3Client(config)
+              clean_prefix = prefix.strip("/")
+              for filename, content_type, cache_control in FILES:
+                  key = f"{clean_prefix}/{filename}" if clean_prefix else filename
+                  kwargs = {"ContentType": content_type}
+                  if cache_control:
+                      kwargs["CacheControl"] = cache_control
+                  path = Path("release_assets") / filename
+                  print(f"[Tencent Cloud COS] Uploading {path} -> {key}")
+                  client.upload_file(
+                      Bucket=bucket,
+                      LocalFilePath=str(path),
+                      Key=key,
+                      **kwargs,
+                  )
+              print("[Tencent Cloud COS] Upload completed.")
+
+          upload_r2(
               os.environ.get("R2_ENDPOINT", ""),
               os.environ.get("R2_BUCKET", ""),
               os.environ.get("R2_ACCESS_KEY_ID", ""),
               os.environ.get("R2_SECRET_ACCESS_KEY", ""),
               os.environ.get("R2_PREFIX", ""),
           )
-          upload_target(
-              "Tencent Cloud COS",
+          upload_cos(
               os.environ.get("COS_ENDPOINT", ""),
               os.environ.get("COS_BUCKET", ""),
               os.environ.get("COS_SECRET_ID", ""),
