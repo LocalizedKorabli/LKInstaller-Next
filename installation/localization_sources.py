@@ -15,7 +15,7 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Dict, Optional, List
 
-from core.localizer import _
+from core.localizer import tr
 
 # ── 各语言的 mods 下载 URL ──
 MODS_URLS = {
@@ -249,11 +249,11 @@ LKI_UPDATE_ROUTES = {
 
 def get_route_id_to_name():
     return {
-        'gitee': _('lki.i18n.route.gitee'),
-        'gitlab': _('lki.i18n.route.gitlab'),
-        'github': _('lki.i18n.route.github'),
-        'cloudflare': _('lki.i18n.route.cloudflare'),
-        'tencent': _('lki.i18n.route.tencent')
+        'gitee': tr('lki.i18n.route.gitee'),
+        'gitlab': tr('lki.i18n.route.gitlab'),
+        'github': tr('lki.i18n.route.github'),
+        'cloudflare': tr('lki.i18n.route.cloudflare'),
+        'tencent': tr('lki.i18n.route.tencent')
     }
 
 class LocalizationSource:
@@ -341,7 +341,7 @@ class SourceManager:
         id_to_name = {}
         name_to_id = {}
         for source_id, source_data in self.sources.items():
-            display_name = _(source_data.name_key)
+            display_name = tr(source_data.name_key)
             id_to_name[source_id] = display_name
             name_to_id[display_name] = source_id
         return id_to_name, name_to_id

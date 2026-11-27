@@ -26,7 +26,7 @@ from core import dirs
 from core import utils
 from core.scheduler import SchedulerBackend, DAYS_OF_WEEK_SHORT, build_autoexec_args
 from installation.localization_sources import get_route_id_to_name
-from core.localizer import _
+from core.localizer import tr
 
 TRIGGER_TYPES = [
     ('once', 'lki.autoupdate.schedule.once'),
@@ -332,8 +332,8 @@ class CustomAskStringDialog(BaseDialog):  # <-- 继承 BaseDialog
         button_frame = ttk.Frame(main_frame, padding=(0, 10, 0, 0))
         button_frame.pack(fill='x', expand=True, side='bottom')
 
-        ttk.Button(button_frame, text=_('lki.btn.save'), command=self._on_save).pack(side='right')
-        ttk.Button(button_frame, text=_('lki.btn.cancel'), command=self._on_cancel).pack(side='right', padx=5)
+        ttk.Button(button_frame, text=tr('lki.btn.save'), command=self._on_save).pack(side='right')
+        ttk.Button(button_frame, text=tr('lki.btn.cancel'), command=self._on_cancel).pack(side='right', padx=5)
 
         self.entry.bind("<Return>", self._on_save)
         self.bind("<Escape>", self._on_cancel)
@@ -361,7 +361,7 @@ class TriggerConfigDialog(BaseDialog):
     def __init__(self, parent, mgr, scheduler, instance_id: str, preset_id: str,
                  initial_task_name: str = ""):
         super().__init__(parent)
-        self.title(_('lki.autoupdate.schedule.btn.create'))
+        self.title(tr('lki.autoupdate.schedule.btn.create'))
         self.resizable(False, False)
         self._mgr = mgr
         self._scheduler = scheduler
@@ -399,7 +399,7 @@ class TriggerConfigDialog(BaseDialog):
 
         row = 0
         # 实例
-        ttk.Label(main, text=_('lki.autoupdate.instance_label')).grid(
+        ttk.Label(main, text=tr('lki.autoupdate.instance_label')).grid(
             row=row, column=0, sticky='e', padx=(0, 10), pady=3)
         inst_combo = ttk.Combobox(main, textvariable=self._instance_var,
                                    values=instance_names, state='readonly', width=40)
@@ -408,7 +408,7 @@ class TriggerConfigDialog(BaseDialog):
         row += 1
 
         # 预设
-        ttk.Label(main, text=_('lki.autoupdate.preset_label')).grid(
+        ttk.Label(main, text=tr('lki.autoupdate.preset_label')).grid(
             row=row, column=0, sticky='e', padx=(0, 10), pady=3)
         self._preset_combo = ttk.Combobox(main, textvariable=self._preset_var,
                                            state='readonly', width=40)
@@ -418,16 +418,16 @@ class TriggerConfigDialog(BaseDialog):
         row += 1
 
         # 任务名称
-        ttk.Label(main, text=_('lki.autoupdate.schedule.task_name')).grid(
+        ttk.Label(main, text=tr('lki.autoupdate.schedule.task_name')).grid(
             row=row, column=0, sticky='e', padx=(0, 10), pady=3)
         name_frame = ttk.Frame(main)
         name_frame.grid(row=row, column=1, sticky='we', pady=3)
         name_frame.columnconfigure(0, weight=1)
-        self._prefix_var = tk.StringVar(value=_('lki.autoupdate.schedule.default_name'))
+        self._prefix_var = tk.StringVar(value=tr('lki.autoupdate.schedule.default_name'))
         prefix_entry = ttk.Entry(name_frame, textvariable=self._prefix_var, width=40)
         prefix_entry.grid(row=0, column=0, sticky='we')
         prefix_entry.bind('<Key>', lambda e: setattr(self, '_user_edited_name', True))
-        default_btn = ttk.Button(name_frame, text=_('lki.autoupdate.schedule.btn.default'),
+        default_btn = ttk.Button(name_frame, text=tr('lki.autoupdate.schedule.btn.default'),
                                  command=self._reset_to_default_name, width=6)
         default_btn.grid(row=0, column=1, padx=(5, 0))
         # 显示完整任务名预览
@@ -437,7 +437,7 @@ class TriggerConfigDialog(BaseDialog):
         row += 1
 
         # 是否启动游戏
-        ttk.Checkbutton(main, text=_('lki.autoupdate.run_client'),
+        ttk.Checkbutton(main, text=tr('lki.autoupdate.run_client'),
                         variable=self._run_client_var).grid(
             row=row, column=0, columnspan=2, sticky='w', pady=(3, 8))
         row += 1
@@ -448,15 +448,15 @@ class TriggerConfigDialog(BaseDialog):
         row += 1
 
         # 触发类型 + 参数（同一行）
-        ttk.Label(main, text=_('lki.autoupdate.schedule.trigger_type')).grid(
+        ttk.Label(main, text=tr('lki.autoupdate.schedule.trigger_type')).grid(
             row=row, column=0, sticky='e', padx=(0, 10), pady=5)
         trigger_row = ttk.Frame(main)
         trigger_row.grid(row=row, column=1, sticky='w', pady=5)
 
         trigger_combo = ttk.Combobox(trigger_row, state='readonly', width=20)
-        trigger_names = [_(key) for _code, key in TRIGGER_TYPES]
+        trigger_names = [tr(key) for _code, key in TRIGGER_TYPES]
         trigger_combo.config(values=trigger_names)
-        trigger_combo.set(_('lki.autoupdate.schedule.daily'))
+        trigger_combo.set(tr('lki.autoupdate.schedule.daily'))
         trigger_combo.pack(side='left')
         trigger_combo.bind('<<ComboboxSelected>>', self._on_trigger_type_changed)
         self._trigger_combo = trigger_combo
@@ -470,8 +470,8 @@ class TriggerConfigDialog(BaseDialog):
         # 按钮
         btn_frame = ttk.Frame(main)
         btn_frame.grid(row=row, column=0, columnspan=2, sticky='e', pady=(10, 0))
-        ttk.Button(btn_frame, text=_('lki.btn.cancel'), command=self.destroy).pack(side='right', padx=(5, 0))
-        ttk.Button(btn_frame, text=_('lki.autoupdate.schedule.btn.create'),
+        ttk.Button(btn_frame, text=tr('lki.btn.cancel'), command=self.destroy).pack(side='right', padx=(5, 0))
+        ttk.Button(btn_frame, text=tr('lki.autoupdate.schedule.btn.create'),
                    command=self._on_ok).pack(side='right')
 
         self.minsize(width=460, height=200)
@@ -499,7 +499,7 @@ class TriggerConfigDialog(BaseDialog):
         self._preset_name_to_id = {}
         for pid, pdata in presets.items():
             if pdata.get('is_default'):
-                display = _(pdata.get('name_key', 'lki.preset.default.name'))
+                display = tr(pdata.get('name_key', 'lki.preset.default.name'))
             else:
                 display = pdata.get('name', pid)
             self._preset_name_to_id[display] = pid
@@ -517,20 +517,20 @@ class TriggerConfigDialog(BaseDialog):
         if trigger_type == 'once':
             date_row = ttk.Frame(self._trigger_params_frame)
             date_row.pack(fill='x')
-            ttk.Label(date_row, text=_('lki.autoupdate.schedule.date')).pack(side='left', padx=(0, 5))
+            ttk.Label(date_row, text=tr('lki.autoupdate.schedule.date')).pack(side='left', padx=(0, 5))
             self._date_picker = DatePicker(date_row, on_change=self._update_full_name_label)
             self._date_picker.pack(side='left')
             time_row = ttk.Frame(self._trigger_params_frame)
             time_row.pack(fill='x', pady=(3, 0))
-            ttk.Label(time_row, text=_('lki.autoupdate.schedule.time')).pack(side='left', padx=(0, 5))
+            ttk.Label(time_row, text=tr('lki.autoupdate.schedule.time')).pack(side='left', padx=(0, 5))
             self._time_picker = TimePicker(time_row, initial='08:00', on_change=self._update_full_name_label)
             self._time_picker.pack(side='left')
         elif trigger_type == 'daily':
-            ttk.Label(self._trigger_params_frame, text=_('lki.autoupdate.schedule.time')).pack(side='left', padx=(0, 5))
+            ttk.Label(self._trigger_params_frame, text=tr('lki.autoupdate.schedule.time')).pack(side='left', padx=(0, 5))
             self._time_picker = TimePicker(self._trigger_params_frame, initial='08:00', on_change=self._update_full_name_label)
             self._time_picker.pack(side='left')
         elif trigger_type == 'weekly':
-            ttk.Label(self._trigger_params_frame, text=_('lki.autoupdate.schedule.days')).pack(side='left', padx=(0, 5))
+            ttk.Label(self._trigger_params_frame, text=tr('lki.autoupdate.schedule.days')).pack(side='left', padx=(0, 5))
             day_frame = ttk.Frame(self._trigger_params_frame)
             day_frame.pack(side='left')
             self._trigger_days_vars.clear()
@@ -538,13 +538,13 @@ class TriggerConfigDialog(BaseDialog):
                 var = tk.BooleanVar(value=(code in ('mon', 'tue', 'wed', 'thu', 'fri')))
                 self._trigger_days_vars[code] = var
                 var.trace_add('write', lambda *_: self._update_full_name_label())
-                cb = ttk.Checkbutton(day_frame, text=_(WEEKDAY_LABELS[code]), variable=var)
+                cb = ttk.Checkbutton(day_frame, text=tr(WEEKDAY_LABELS[code]), variable=var)
                 cb.pack(side='left', padx=2)
-            ttk.Label(self._trigger_params_frame, text='  ' + _('lki.autoupdate.schedule.time')).pack(side='left', padx=(5, 5))
+            ttk.Label(self._trigger_params_frame, text='  ' + tr('lki.autoupdate.schedule.time')).pack(side='left', padx=(5, 5))
             self._time_picker = TimePicker(self._trigger_params_frame, initial='08:00', on_change=self._update_full_name_label)
             self._time_picker.pack(side='left')
         elif trigger_type == 'on_idle':
-            ttk.Label(self._trigger_params_frame, text=_('lki.autoupdate.schedule.idle_minutes')).pack(side='left', padx=(0, 5))
+            ttk.Label(self._trigger_params_frame, text=tr('lki.autoupdate.schedule.idle_minutes')).pack(side='left', padx=(0, 5))
             ttk.Spinbox(self._trigger_params_frame, from_=1, to=120,
                         textvariable=self._trigger_idle_var, width=5).pack(side='left')
             self._trigger_idle_var.trace_add('write', lambda *_: self._update_full_name_label())
@@ -558,8 +558,8 @@ class TriggerConfigDialog(BaseDialog):
             h, m = t.split(":")
             h = int(h)
             m = int(m)
-            tn = _('lki.autoupdate.schedule.trigger_desc.hour_prefix')
-            tn2 = _('lki.autoupdate.schedule.trigger_desc.min_suffix')
+            tn = tr('lki.autoupdate.schedule.trigger_desc.hour_prefix')
+            tn2 = tr('lki.autoupdate.schedule.trigger_desc.min_suffix')
             if m == 0:
                 return f"{h}{tn}"
             return f"{h}{tn}{m}{tn2}"
@@ -567,31 +567,31 @@ class TriggerConfigDialog(BaseDialog):
         if tt == 'once':
             d = self._date_picker.get() if self._date_picker else ""
             t = self._time_picker.get() if self._time_picker else "00:00"
-            trigger_part = f"{_('lki.autoupdate.schedule.trigger_desc.once')}-{d}-{_fmt_time(t)}"
+            trigger_part = f"{tr('lki.autoupdate.schedule.trigger_desc.once')}-{d}-{_fmt_time(t)}"
         elif tt == 'daily':
             t = self._time_picker.get() if self._time_picker else "00:00"
-            trigger_part = f"{_('lki.autoupdate.schedule.trigger_desc.daily')}-{_fmt_time(t)}"
+            trigger_part = f"{tr('lki.autoupdate.schedule.trigger_desc.daily')}-{_fmt_time(t)}"
         elif tt == 'weekly':
             t = self._time_picker.get() if self._time_picker else "00:00"
             days = [code for code, var in self._trigger_days_vars.items() if var.get()]
-            day_names = {'mon': _('lki.autoupdate.schedule.mon'), 'tue': _('lki.autoupdate.schedule.tue'),
-                        'wed': _('lki.autoupdate.schedule.wed'), 'thu': _('lki.autoupdate.schedule.thu'),
-                        'fri': _('lki.autoupdate.schedule.fri'), 'sat': _('lki.autoupdate.schedule.sat'),
-                        'sun': _('lki.autoupdate.schedule.sun')}
-            ds = "-".join(day_names.get(d, d) for d in days) if days else _('lki.autoupdate.schedule.all')
+            day_names = {'mon': tr('lki.autoupdate.schedule.mon'), 'tue': tr('lki.autoupdate.schedule.tue'),
+                        'wed': tr('lki.autoupdate.schedule.wed'), 'thu': tr('lki.autoupdate.schedule.thu'),
+                        'fri': tr('lki.autoupdate.schedule.fri'), 'sat': tr('lki.autoupdate.schedule.sat'),
+                        'sun': tr('lki.autoupdate.schedule.sun')}
+            ds = "-".join(day_names.get(d, d) for d in days) if days else tr('lki.autoupdate.schedule.all')
             # 选中全部7天时显示"全部"
             if days and len(days) == 7:
-                ds = _('lki.autoupdate.schedule.all')
-            trigger_part = f"{_('lki.autoupdate.schedule.trigger_desc.weekly')}-{ds}-{_fmt_time(t)}"
+                ds = tr('lki.autoupdate.schedule.all')
+            trigger_part = f"{tr('lki.autoupdate.schedule.trigger_desc.weekly')}-{ds}-{_fmt_time(t)}"
         elif tt == 'at_logon':
-            trigger_part = _('lki.autoupdate.schedule.trigger_desc.at_logon')
+            trigger_part = tr('lki.autoupdate.schedule.trigger_desc.at_logon')
         elif tt == 'at_startup':
-            trigger_part = _('lki.autoupdate.schedule.trigger_desc.at_startup')
+            trigger_part = tr('lki.autoupdate.schedule.trigger_desc.at_startup')
         elif tt == 'on_idle':
             n = self._trigger_idle_var.get()
-            trigger_part = f"{_('lki.autoupdate.schedule.trigger_desc.on_idle')}{n}{_('lki.autoupdate.schedule.trigger_desc.min')}"
+            trigger_part = f"{tr('lki.autoupdate.schedule.trigger_desc.on_idle')}{n}{tr('lki.autoupdate.schedule.trigger_desc.min')}"
         else:
-            trigger_part = _('lki.autoupdate.schedule.trigger_desc.daily')
+            trigger_part = tr('lki.autoupdate.schedule.trigger_desc.daily')
         suffix = f"{inst}-{preset}-{trigger_part}"
         full = sanitize_task_name(f"{prefix}-{suffix}")
         return suffix, full
@@ -611,12 +611,12 @@ class TriggerConfigDialog(BaseDialog):
     def _reset_to_default_name(self):
         """恢复默认前缀。"""
         self._user_edited_name = False
-        self._prefix_var.set(_('lki.autoupdate.schedule.default_name'))
+        self._prefix_var.set(tr('lki.autoupdate.schedule.default_name'))
         self._update_full_name_label()
 
     def _on_trigger_type_changed(self, event=None):
         display = self._trigger_combo.get()
-        type_map = {_(key): t for t, key in TRIGGER_TYPES}
+        type_map = {tr(key): t for t, key in TRIGGER_TYPES}
         trigger_type = type_map.get(display, 'daily')
         self._trigger_type_var.set(trigger_type)
         self._build_trigger_params(trigger_type)
@@ -637,12 +637,12 @@ class TriggerConfigDialog(BaseDialog):
 
         # 校验
         if trigger_type == 'weekly' and not days:
-            messagebox.showwarning(self.title(), _('lki.autoupdate.schedule.error.no_days'), parent=self)
+            messagebox.showwarning(self.title(), tr('lki.autoupdate.schedule.error.no_days'), parent=self)
             return
 
         # 交给父窗口创建任务
         # 构建任务名：前缀+自动后缀
-        prefix = self._prefix_var.get().strip() or _('lki.autoupdate.schedule.default_name')
+        prefix = self._prefix_var.get().strip() or tr('lki.autoupdate.schedule.default_name')
         _suffix, task_name = self._build_full_task_name(prefix, instance_name, preset_name)
         self.master._on_create_schedule(
             instance_id, preset_id, run_client,
@@ -661,7 +661,7 @@ class RoutePriorityWindow(BaseDialog):  # <-- 继承 BaseDialog
                  on_save_callback: Callable):
 
         super().__init__(parent)
-        self.title(_('lki.routes.title'))
+        self.title(tr('lki.routes.title'))
         self.resizable(False, False)
 
         self.icons = icons
@@ -700,17 +700,17 @@ class RoutePriorityWindow(BaseDialog):  # <-- 继承 BaseDialog
                                          command=self._move_route_down, state='disabled')
         self.btn_route_down.pack(pady=2)
 
-        ToolTip(self.btn_route_up, _('lki.tooltip.route_up'))
-        ToolTip(self.btn_route_down, _('lki.tooltip.route_down'))
+        ToolTip(self.btn_route_up, tr('lki.tooltip.route_up'))
+        ToolTip(self.btn_route_down, tr('lki.tooltip.route_down'))
 
-        ttk.Label(route_frame, text=_('lki.routes.hint'), style="Hint.TLabel", wraplength=utils.scale_dpi(self, 220)) \
+        ttk.Label(route_frame, text=tr('lki.routes.hint'), style="Hint.TLabel", wraplength=utils.scale_dpi(self, 220)) \
             .grid(row=1, column=0, columnspan=3, sticky='w', padx=5, pady=(5, 0))
 
         # --- (按钮) ---
         button_frame = ttk.Frame(main_frame, padding=(0, 10, 0, 0))
         button_frame.grid(row=1, column=0, columnspan=2, sticky='e')
-        ttk.Button(button_frame, text=_('lki.btn.save'), command=self._on_save).pack(side='right')
-        ttk.Button(button_frame, text=_('lki.btn.cancel'), command=self.destroy).pack(side='right', padx=5)
+        ttk.Button(button_frame, text=tr('lki.btn.save'), command=self._on_save).pack(side='right')
+        ttk.Button(button_frame, text=tr('lki.btn.cancel'), command=self.destroy).pack(side='right', padx=5)
 
         self._populate_route_listbox(current_routes_ids, all_routes_masterlist)
 
@@ -790,7 +790,7 @@ class RoutePriorityWindow(BaseDialog):  # <-- 继承 BaseDialog
 class AutoUpdateConfigDialog(BaseDialog):
     def __init__(self, parent, mgr, instance_id: str, instance_name: str, preset_id: str, preset_name: str):
         super().__init__(parent)
-        self.title(_('lki.autoupdate.title'))
+        self.title(tr('lki.autoupdate.title'))
         self.resizable(True, True)
         self.minsize(width=520, height=420)
 
@@ -834,11 +834,11 @@ class AutoUpdateConfigDialog(BaseDialog):
         self.notebook.grid(row=0, column=0, sticky='nsew')
 
         self._shortcut_frame = ttk.Frame(self.notebook, padding=10)
-        self.notebook.add(self._shortcut_frame, text=_('lki.autoupdate.shortcut.tab'))
+        self.notebook.add(self._shortcut_frame, text=tr('lki.autoupdate.shortcut.tab'))
         self._build_shortcut_tab()
 
         self._schedule_frame = ttk.Frame(self.notebook, padding=10)
-        self.notebook.add(self._schedule_frame, text=_('lki.autoupdate.schedule.tab'))
+        self.notebook.add(self._schedule_frame, text=tr('lki.autoupdate.schedule.tab'))
         self._build_schedule_tab()
 
     # ────────────────────────────────
@@ -851,7 +851,7 @@ class AutoUpdateConfigDialog(BaseDialog):
         row = 0
 
         # Row 0: 实例选择
-        ttk.Label(f, text=_('lki.autoupdate.instance_label')).grid(
+        ttk.Label(f, text=tr('lki.autoupdate.instance_label')).grid(
             row=row, column=0, sticky='e', padx=(0, 10), pady=3)
         self._instance_var = tk.StringVar(value=self._dialog_instance_name)
         self._instance_combo = ttk.Combobox(
@@ -862,7 +862,7 @@ class AutoUpdateConfigDialog(BaseDialog):
         row += 1
 
         # Row 1: 预设选择
-        ttk.Label(f, text=_('lki.autoupdate.preset_label')).grid(
+        ttk.Label(f, text=tr('lki.autoupdate.preset_label')).grid(
             row=row, column=0, sticky='e', padx=(0, 10), pady=3)
         self._preset_var = tk.StringVar()
         self._preset_combo = ttk.Combobox(
@@ -873,7 +873,7 @@ class AutoUpdateConfigDialog(BaseDialog):
         row += 1
 
         # Row 2: 共享复选框
-        cb_run_client = ttk.Checkbutton(f, text=_('lki.autoupdate.run_client'),
+        cb_run_client = ttk.Checkbutton(f, text=tr('lki.autoupdate.run_client'),
                                         variable=self._run_client_var)
         cb_run_client.grid(row=row, column=0, columnspan=2, sticky='w', pady=(3, 0))
         row += 1
@@ -884,7 +884,7 @@ class AutoUpdateConfigDialog(BaseDialog):
         row += 1
 
         # Row 4: 保存位置
-        ttk.Label(f, text=_('lki.autoupdate.save_location')).grid(
+        ttk.Label(f, text=tr('lki.autoupdate.save_location')).grid(
             row=row, column=0, sticky='e', padx=(0, 10), pady=5)
         path_frame = ttk.Frame(f)
         path_frame.grid(row=row, column=1, sticky='we', pady=5)
@@ -892,14 +892,14 @@ class AutoUpdateConfigDialog(BaseDialog):
 
         self._shortcut_path_entry = ttk.Entry(path_frame, textvariable=self.shortcut_path_var, width=50)
         self._shortcut_path_entry.grid(row=0, column=0, sticky='we')
-        browse_btn = ttk.Button(path_frame, text=_('lki.autoupdate.btn.browse'), command=self._on_browse)
+        browse_btn = ttk.Button(path_frame, text=tr('lki.autoupdate.btn.browse'), command=self._on_browse)
         browse_btn.grid(row=0, column=1, sticky='w', padx=(5, 0))
         row += 1
 
         # Row 5: 生成快捷方式 按钮
         is_pywin32_ok = self._has_win32com
         self._btn_create_shortcut = ttk.Button(
-            f, text=_('lki.autoupdate.shortcut.btn_create'),
+            f, text=tr('lki.autoupdate.shortcut.btn_create'),
             command=self._on_create_shortcut,
             state='normal' if is_pywin32_ok else 'disabled'
         )
@@ -908,14 +908,14 @@ class AutoUpdateConfigDialog(BaseDialog):
 
         # 描述文字
         desc_label = ttk.Label(
-            f, text=_('lki.autoupdate.shortcut.description'),
+            f, text=tr('lki.autoupdate.shortcut.description'),
             wraplength=460, foreground='gray', justify='left')
         desc_label.grid(row=row, column=0, columnspan=2, sticky='w', pady=(0, 5))
 
         if not is_pywin32_ok:
             self._shortcut_path_entry.config(state='disabled')
             browse_btn.config(state='disabled')
-            ttk.Label(f, text=_('lki.autoupdate.shortcut.pywin32_missing'),
+            ttk.Label(f, text=tr('lki.autoupdate.shortcut.pywin32_missing'),
                       foreground='red').grid(row=row + 1, column=0, columnspan=2, sticky='w', pady=2)
 
     # ────────────────────────────────
@@ -928,7 +928,7 @@ class AutoUpdateConfigDialog(BaseDialog):
         row = 0
 
         # --- Existing Tasks section ---
-        ttk.Label(f, text=_('lki.autoupdate.schedule.existing_tasks')).grid(
+        ttk.Label(f, text=tr('lki.autoupdate.schedule.existing_tasks')).grid(
             row=row, column=0, columnspan=2, sticky='w', pady=(0, 5))
         row += 1
 
@@ -950,16 +950,16 @@ class AutoUpdateConfigDialog(BaseDialog):
         # Task 操作按钮
         task_btn_frame = ttk.Frame(f)
         task_btn_frame.grid(row=row, column=0, columnspan=2, sticky='we', pady=(5, 0))
-        self._btn_task_create = ttk.Button(task_btn_frame, text=_('lki.autoupdate.schedule.btn.create'),
+        self._btn_task_create = ttk.Button(task_btn_frame, text=tr('lki.autoupdate.schedule.btn.create'),
                                            command=self._on_open_create_dialog)
         self._btn_task_create.pack(side='left', padx=(0, 5))
-        self._btn_task_run = ttk.Button(task_btn_frame, text=_('lki.autoupdate.schedule.btn.run_now'),
+        self._btn_task_run = ttk.Button(task_btn_frame, text=tr('lki.autoupdate.schedule.btn.run_now'),
                                         command=self._on_run_task_now, state='disabled')
         self._btn_task_run.pack(side='left', padx=(0, 5))
-        self._btn_task_toggle = ttk.Button(task_btn_frame, text=_('lki.autoupdate.schedule.btn.disable'),
+        self._btn_task_toggle = ttk.Button(task_btn_frame, text=tr('lki.autoupdate.schedule.btn.disable'),
                                            command=self._on_toggle_task, state='disabled')
         self._btn_task_toggle.pack(side='left', padx=5)
-        self._btn_task_delete = ttk.Button(task_btn_frame, text=_('lki.autoupdate.schedule.btn.delete'),
+        self._btn_task_delete = ttk.Button(task_btn_frame, text=tr('lki.autoupdate.schedule.btn.delete'),
                                            command=self._on_delete_task, state='disabled',
                                            style="danger.TButton")
         self._btn_task_delete.pack(side='left', padx=5)
@@ -967,7 +967,7 @@ class AutoUpdateConfigDialog(BaseDialog):
 
         # 描述文字
         desc_label = ttk.Label(
-            f, text=_('lki.autoupdate.schedule.description'),
+            f, text=tr('lki.autoupdate.schedule.description'),
             wraplength=480, foreground='gray', justify='left')
         desc_label.grid(row=row, column=0, columnspan=2, sticky='w', pady=(5, 0))
 
@@ -989,7 +989,7 @@ class AutoUpdateConfigDialog(BaseDialog):
                             time_str=None, date_str=None, days=None, idle_min=None,
                             task_name=None):
         """创建计划任务的核心逻辑，接收显式参数。"""
-        description = _('lki.autoupdate.shortcut_description') % instance_name
+        description = tr('lki.autoupdate.shortcut_description') % instance_name
         run_str = " Run" if run_client else ""
         description += f" ({preset_name}/{trigger_type}{run_str})"
 
@@ -1000,35 +1000,35 @@ class AutoUpdateConfigDialog(BaseDialog):
         try:
             # 始终从触发参数构建后缀
             if trigger_type == 'once':
-                trigger_part = f"{_('lki.autoupdate.schedule.trigger_desc.once')}-{date_str}-{_fmt_time(time_str)}"
+                trigger_part = f"{tr('lki.autoupdate.schedule.trigger_desc.once')}-{date_str}-{_fmt_time(time_str)}"
             elif trigger_type == 'daily':
-                trigger_part = f"{_('lki.autoupdate.schedule.trigger_desc.daily')}-{_fmt_time(time_str)}"
+                trigger_part = f"{tr('lki.autoupdate.schedule.trigger_desc.daily')}-{_fmt_time(time_str)}"
             elif trigger_type == 'weekly':
                 if not days:
-                    messagebox.showwarning(_('lki.autoupdate.title'),
-                                           _('lki.autoupdate.schedule.error.no_days'), parent=self)
+                    messagebox.showwarning(tr('lki.autoupdate.title'),
+                                           tr('lki.autoupdate.schedule.error.no_days'), parent=self)
                     return
-                day_names = {'mon': _('lki.autoupdate.schedule.mon'), 'tue': _('lki.autoupdate.schedule.tue'),
-                            'wed': _('lki.autoupdate.schedule.wed'), 'thu': _('lki.autoupdate.schedule.thu'),
-                            'fri': _('lki.autoupdate.schedule.fri'), 'sat': _('lki.autoupdate.schedule.sat'),
-                            'sun': _('lki.autoupdate.schedule.sun')}
+                day_names = {'mon': tr('lki.autoupdate.schedule.mon'), 'tue': tr('lki.autoupdate.schedule.tue'),
+                            'wed': tr('lki.autoupdate.schedule.wed'), 'thu': tr('lki.autoupdate.schedule.thu'),
+                            'fri': tr('lki.autoupdate.schedule.fri'), 'sat': tr('lki.autoupdate.schedule.sat'),
+                            'sun': tr('lki.autoupdate.schedule.sun')}
                 ds = "-".join(day_names.get(d, d) for d in days)
                 if len(days) == 7:
-                    ds = _('lki.autoupdate.schedule.all')
-                trigger_part = f"{_('lki.autoupdate.schedule.trigger_desc.weekly')}-{ds}-{_fmt_time(time_str)}"
+                    ds = tr('lki.autoupdate.schedule.all')
+                trigger_part = f"{tr('lki.autoupdate.schedule.trigger_desc.weekly')}-{ds}-{_fmt_time(time_str)}"
             elif trigger_type == 'at_logon':
-                trigger_part = _('lki.autoupdate.schedule.trigger_desc.at_logon')
+                trigger_part = tr('lki.autoupdate.schedule.trigger_desc.at_logon')
             elif trigger_type == 'at_startup':
-                trigger_part = _('lki.autoupdate.schedule.trigger_desc.at_startup')
+                trigger_part = tr('lki.autoupdate.schedule.trigger_desc.at_startup')
             elif trigger_type == 'on_idle':
-                trigger_part = f"{_('lki.autoupdate.schedule.trigger_desc.on_idle')}{idle_min}{_('lki.autoupdate.schedule.trigger_desc.min')}"
+                trigger_part = f"{tr('lki.autoupdate.schedule.trigger_desc.on_idle')}{idle_min}{tr('lki.autoupdate.schedule.trigger_desc.min')}"
             else:
                 return
 
             suffix = f"{instance_name}-{preset_name}-{trigger_part}"
 
             # 提取用户前缀
-            prefix = _('lki.autoupdate.schedule.default_name')
+            prefix = tr('lki.autoupdate.schedule.default_name')
             if task_name and task_name.strip() and instance_name in task_name:
                 idx = task_name.index(instance_name)
                 extracted = task_name[:idx].rstrip('-').strip()
@@ -1058,22 +1058,22 @@ class AutoUpdateConfigDialog(BaseDialog):
                 return
 
             messagebox.showinfo(
-                _('lki.autoupdate.title'),
-                _('lki.autoupdate.schedule.created') % path,
+                tr('lki.autoupdate.title'),
+                tr('lki.autoupdate.schedule.created') % path,
                 parent=self
             )
             self._refresh_task_list()
 
         except ValueError as ve:
             messagebox.showwarning(
-                _('lki.autoupdate.title'),
-                _('lki.autoupdate.schedule.error.invalid_time') % str(ve),
+                tr('lki.autoupdate.title'),
+                tr('lki.autoupdate.schedule.error.invalid_time') % str(ve),
                 parent=self
             )
         except Exception as e:
             messagebox.showerror(
-                _('lki.autoupdate.title'),
-                _('lki.autoupdate.schedule.error.create_failed') % e,
+                tr('lki.autoupdate.title'),
+                tr('lki.autoupdate.schedule.error.create_failed') % e,
                 parent=self
             )
 
@@ -1083,7 +1083,7 @@ class AutoUpdateConfigDialog(BaseDialog):
         try:
             tasks = self._scheduler.list_tasks()
             if not tasks:
-                self._task_listbox.insert('end', _('lki.autoupdate.schedule.no_tasks'))
+                self._task_listbox.insert('end', tr('lki.autoupdate.schedule.no_tasks'))
             for task in tasks:
                 display = self._format_task_display(task)
                 self._task_listbox.insert('end', display)
@@ -1097,7 +1097,7 @@ class AutoUpdateConfigDialog(BaseDialog):
         base = task.get('name', '?')
         trigger = task.get('trigger', {})
         ttype = trigger.get('type', 'unknown')
-        status = _('lki.autoupdate.schedule.status_enabled') if task.get('enabled') else _('lki.autoupdate.schedule.status_disabled')
+        status = tr('lki.autoupdate.schedule.status_enabled') if task.get('enabled') else tr('lki.autoupdate.schedule.status_disabled')
 
         detail = ""
         if ttype == 'once':
@@ -1144,7 +1144,7 @@ class AutoUpdateConfigDialog(BaseDialog):
         self._btn_task_run.config(state='normal')
         self._btn_task_toggle.config(
             state='normal',
-            text=_('lki.autoupdate.schedule.btn.disable') if task.get('enabled') else _('lki.autoupdate.schedule.btn.enable')
+            text=tr('lki.autoupdate.schedule.btn.disable') if task.get('enabled') else tr('lki.autoupdate.schedule.btn.enable')
         )
         self._btn_task_delete.config(state='normal')
         self._btn_task_create.config(state='normal')
@@ -1160,8 +1160,8 @@ class AutoUpdateConfigDialog(BaseDialog):
         task = self._get_selected_task()
         if not task:
             return
-        if messagebox.askyesno(_('lki.autoupdate.title'),
-                               _('lki.autoupdate.schedule.run_now_confirm') % task.get('name', ''),
+        if messagebox.askyesno(tr('lki.autoupdate.title'),
+                               tr('lki.autoupdate.schedule.run_now_confirm') % task.get('name', ''),
                                parent=self):
             self._scheduler.run_task_now(task['name'])
 
@@ -1179,8 +1179,8 @@ class AutoUpdateConfigDialog(BaseDialog):
         task = self._get_selected_task()
         if not task:
             return
-        if messagebox.askyesno(_('lki.autoupdate.title'),
-                               _('lki.autoupdate.schedule.delete_confirm') % task.get('name', ''),
+        if messagebox.askyesno(tr('lki.autoupdate.title'),
+                               tr('lki.autoupdate.schedule.delete_confirm') % task.get('name', ''),
                                parent=self):
             self._scheduler.delete_task(task['name'])
             self._refresh_task_list()
@@ -1189,9 +1189,9 @@ class AutoUpdateConfigDialog(BaseDialog):
 
     @staticmethod
     def _make_shortcut_name(instance_name: str, preset_name: str) -> str:
-        from core.localizer import _
+        from core.localizer import tr
         safe_base = utils.sanitize_task_name(f"{instance_name}-{preset_name}")
-        return f"{_('lki.autoupdate.shortcut_default_title') % safe_base}.lnk"
+        return f"{tr('lki.autoupdate.shortcut_default_title') % safe_base}.lnk"
 
     def _populate_presets(self, instance_id: str, default_preset_id: str):
         instance_data = self._mgr.get_instance(instance_id)
@@ -1200,7 +1200,7 @@ class AutoUpdateConfigDialog(BaseDialog):
         self._preset_name_to_id: dict = {}
         for pid, pdata in presets.items():
             if pdata.get('is_default'):
-                display = _(pdata['name_key'])
+                display = tr(pdata['name_key'])
             else:
                 display = pdata.get('name', pid)
             self._preset_name_to_id[display] = pid
@@ -1243,11 +1243,11 @@ class AutoUpdateConfigDialog(BaseDialog):
         initial_file = Path(self.shortcut_path_var.get()).name
         save_path = filedialog.asksaveasfilename(
             parent=self,
-            title=_('lki.autoupdate.file_dialog_title'),
+            title=tr('lki.autoupdate.file_dialog_title'),
             initialdir=initial_dir,
             initialfile=initial_file,
             defaultextension=".lnk",
-            filetypes=[(_('lki.autoupdate.file_type_name'), "*.lnk"), ("All files", "*.*")]
+            filetypes=[(tr('lki.autoupdate.file_type_name'), "*.lnk"), ("All files", "*.*")]
         )
         if save_path:
             self.shortcut_path_var.set(os.path.normpath(save_path))
@@ -1255,11 +1255,11 @@ class AutoUpdateConfigDialog(BaseDialog):
     def _on_create_shortcut(self):
         save_path = self.shortcut_path_var.get()
         if not save_path:
-            messagebox.showwarning(_('lki.autoupdate.title'), _('lki.autoupdate.error.no_path'), parent=self)
+            messagebox.showwarning(tr('lki.autoupdate.title'), tr('lki.autoupdate.error.no_path'), parent=self)
             return
 
         if not self._has_win32com:
-            messagebox.showerror(_('lki.autoupdate.title'), "pywin32 library is missing.", parent=self)
+            messagebox.showerror(tr('lki.autoupdate.title'), "pywin32 library is missing.", parent=self)
             return
 
         try:
@@ -1290,12 +1290,12 @@ class AutoUpdateConfigDialog(BaseDialog):
             shortcut.Arguments = full_args
             shortcut.WorkingDirectory = target_dir
             shortcut.IconLocation = icon_location
-            shortcut.Description = _('lki.autoupdate.shortcut_description') % instance_name
+            shortcut.Description = tr('lki.autoupdate.shortcut_description') % instance_name
             shortcut.Save()
 
             messagebox.showinfo(
-                _('lki.autoupdate.success.title'),
-                _('lki.autoupdate.success.message') % save_path,
+                tr('lki.autoupdate.success.title'),
+                tr('lki.autoupdate.success.message') % save_path,
                 parent=self
             )
             self.destroy()
@@ -1304,7 +1304,7 @@ class AutoUpdateConfigDialog(BaseDialog):
             import traceback
             traceback.print_exc()
             messagebox.showerror(
-                _('lki.autoupdate.title'),
-                _('lki.autoupdate.error.create_failed') % e,
+                tr('lki.autoupdate.title'),
+                tr('lki.autoupdate.error.create_failed') % e,
                 parent=self
             )

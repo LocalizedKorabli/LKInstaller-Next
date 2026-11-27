@@ -25,7 +25,7 @@ from core import utils
 from instance import instance_manager
 from instance.game_instance import GameInstance
 from installation.localization_sources import global_source_manager, get_route_id_to_name, FONT_IDS, FONT_DISPLAY_KEYS
-from core.localizer import _
+from core.localizer import tr
 from core.logger import log
 from ui.dialogs import CustomAskStringDialog, BaseDialog, AutoUpdateConfigDialog  # (已修改)
 from ui.tabs.tab_base import BaseTab
@@ -51,7 +51,7 @@ class AdvancedTab(BaseTab):
 
         self.l10n_id_to_name, self.l10n_name_to_id = global_source_manager.get_display_maps()
 
-        self.advanced_tab_placeholder = self._create_placeholder_label(_('lki.advanced.please_select'))
+        self.advanced_tab_placeholder = self._create_placeholder_label(tr('lki.advanced.please_select'))
         self.advanced_tab_placeholder.pack(pady=20, padx=20)
 
         # 实际内容的框架
@@ -116,7 +116,7 @@ class AdvancedTab(BaseTab):
 
         for preset_id, data in presets_dict.items():
             if data.get('is_default'):
-                display_name = _(data["name_key"])
+                display_name = tr(data["name_key"])
             else:
                 display_name = data.get("name", f"Preset {preset_id}")
 
@@ -132,32 +132,32 @@ class AdvancedTab(BaseTab):
 
         # --- (1. 实例信息框) ---
         instance_details_frame = ttk.LabelFrame(self.advanced_tab_frame,
-                                                text=_('lki.advanced.instance_details'),
+                                                text=tr('lki.advanced.instance_details'),
                                                 padding=(10, 5))
         instance_details_frame.pack(fill='x', expand=True)
 
-        name_text = f"{_('lki.game.name_label')} {self.current_instance.name}"
+        name_text = f"{tr('lki.game.name_label')} {self.current_instance.name}"
         name_label = ttk.Label(instance_details_frame, text=name_text, style="Client.TLabel")
         name_label.pack(anchor='w', pady=(0, 5))
 
         type_key = f"lki.game.client_type.{self.current_instance.type}"
-        type_text = f"{_('lki.game.type_label')} {_(type_key)}"
+        type_text = f"{tr('lki.game.type_label')} {tr(type_key)}"
         type_label = ttk.Label(instance_details_frame, text=type_text, style="Path.TLabel")
         type_label.pack(anchor='w')
 
-        path_text = f"{_('lki.game.path_label')} {self.current_instance.path}"
+        path_text = f"{tr('lki.game.path_label')} {self.current_instance.path}"
         path_label = ttk.Label(instance_details_frame, text=path_text, style="Path.TLabel",
                                wraplength=utils.scale_dpi(self, 500))
         path_label.pack(anchor='w')
 
-        version_main_label = ttk.Label(instance_details_frame, text=f"{_('lki.game.version_label')}",
+        version_main_label = ttk.Label(instance_details_frame, text=f"{tr('lki.game.version_label')}",
                                        style="Path.TLabel")
         version_main_label.pack(anchor='w', pady=(5, 0))
 
         versions_to_display = self.current_instance.versions[:2]
 
         if not versions_to_display:
-            status_text = _('lki.game.version_not_found')
+            status_text = tr('lki.game.version_not_found')
             status_label = ttk.Label(instance_details_frame, text=status_text, style="Path.TLabel")
             status_label.pack(anchor='w', padx=(10, 0))
         else:
@@ -172,7 +172,7 @@ class AdvancedTab(BaseTab):
             for game_version in versions_to_display:
                 # 重新加载 installation_info.json 以反映最近安装的变化
                 game_version.load_details()
-                ver_str = game_version.exe_version or _('lki.game.version_unknown')
+                ver_str = game_version.exe_version or tr('lki.game.version_unknown')
                 version_text = f"{ver_str}: "
 
                 # --- (修改：高级选项卡的详细状态) ---
@@ -180,7 +180,7 @@ class AdvancedTab(BaseTab):
                     l10n_ver_full = game_version.l10n_info.version
 
                     if l10n_ver_full == "INACTIVE":
-                        l10n_text = f"{_('lki.game.i18n_status.inactive')}"
+                        l10n_text = f"{tr('lki.game.i18n_status.inactive')}"
                     else:
                         # (已修改：现在包含所有 3 个组件)
                         statuses = game_version.get_component_statuses()
@@ -204,14 +204,14 @@ class AdvancedTab(BaseTab):
                             sub_ver = l10n_sub_ver if (l10n_sub_ver and statuses["i18n"] == "ok") else ""
                             ver_str = f" {sub_ver}" if statuses["i18n"] == "ok" else ""
                             status_lines.append(
-                                f"{_('lki.component.i18n')}: {status_map.get(statuses['i18n'])}{lang_str}{ver_str}")
+                                f"{tr('lki.component.i18n')}: {status_map.get(statuses['i18n'])}{lang_str}{ver_str}")
 
                         # 2. 体验增强包 (检查预设)
                         if "ee" in statuses:
                             ee_status = statuses['ee']
                             if not preset_use_ee and ee_status == "not_installed":
                                 ee_status = "not_required"  # (覆盖)
-                            status_lines.append(f"{_('lki.component.ee')}: {status_map.get(ee_status)}")
+                            status_lines.append(f"{tr('lki.component.ee')}: {status_map.get(ee_status)}")
 
                         # 3. 字体优化包 (检查预设)
                         if "font" in statuses:
@@ -227,16 +227,16 @@ class AdvancedTab(BaseTab):
                             font_detail = ""
                             if font_status == "ok" and statuses.get('font_id'):
                                 font_display_key = FONT_DISPLAY_KEYS.get(statuses['font_id'])
-                                font_name = _(font_display_key) if font_display_key else statuses['font_id']
+                                font_name = tr(font_display_key) if font_display_key else statuses['font_id']
                                 fv = statuses.get('font_version', '')
                                 font_detail = f" {font_name}" + (f" v{fv}" if fv else "")
-                            status_lines.append(f"{_('lki.component.font')}: {status_map.get(font_status)}{font_detail}")
+                            status_lines.append(f"{tr('lki.component.font')}: {status_map.get(font_status)}{font_detail}")
 
                         if "mods" in statuses:
                             mods_status = statuses['mods']
                             if not preset_use_mods and mods_status == "not_installed":
                                 mods_status = "not_required"  # (覆盖)
-                            status_lines.append(f"{_('lki.component.mods')}: {status_map.get(mods_status)}")
+                            status_lines.append(f"{tr('lki.component.mods')}: {status_map.get(mods_status)}")
 
                         l10n_text = "\n" + "\n".join(status_lines)
                 else:
@@ -246,19 +246,19 @@ class AdvancedTab(BaseTab):
                     status_map_alt = {"not_installed": "❌", "not_required": "⭕"}
 
                     # 1. 本地化包
-                    status_lines = [f"{_('lki.component.i18n')}: {status_map_alt.get('not_installed')}"]
+                    status_lines = [f"{tr('lki.component.i18n')}: {status_map_alt.get('not_installed')}"]
 
                     # 2. 体验增强包 (根据预设决定显示 ❌ 还是 ⭕)
                     ee_status_key = "not_installed" if preset_use_ee else "not_required"
-                    status_lines.append(f"{_('lki.component.ee')}: {status_map_alt.get(ee_status_key)}")
+                    status_lines.append(f"{tr('lki.component.ee')}: {status_map_alt.get(ee_status_key)}")
 
                     # 3. 字体优化包 (根据预设决定显示 ❌ 还是 ⭕)
                     font_status_key = "not_installed" if preset_use_fonts else "not_required"
-                    status_lines.append(f"{_('lki.component.font')}: {status_map_alt.get(font_status_key)}")
+                    status_lines.append(f"{tr('lki.component.font')}: {status_map_alt.get(font_status_key)}")
 
                     # 4. 本地化修改包 (根据预设决定显示 ❌ 还是 ⭕)
                     mods_status_key = "not_installed" if preset_use_mods else "not_required"
-                    status_lines.append(f"{_('lki.component.mods')}: {status_map_alt.get(mods_status_key)}")
+                    status_lines.append(f"{tr('lki.component.mods')}: {status_map_alt.get(mods_status_key)}")
 
                     l10n_text += "\n".join(status_lines)
                     # --- (修改结束) ---
@@ -271,13 +271,13 @@ class AdvancedTab(BaseTab):
 
         # --- (2. 预设配置框) ---
         preset_config_frame = ttk.LabelFrame(self.advanced_tab_frame,
-                                             text=_('lki.advanced.preset_details'),
+                                             text=tr('lki.advanced.preset_details'),
                                              padding=(10, 5))
         preset_config_frame.pack(fill='x', expand=True, pady=(5, 0))
         preset_config_frame.columnconfigure(1, weight=1)
 
         # --- (2a. 预设选择行) ---
-        preset_label = ttk.Label(preset_config_frame, text=_('lki.advanced.preset_label'))
+        preset_label = ttk.Label(preset_config_frame, text=tr('lki.advanced.preset_label'))
         preset_label.grid(row=0, column=0, sticky='e', padx=(0, 10), pady=(0, 10))
 
         self.preset_combobox = ttk.Combobox(preset_config_frame, values=list(self.preset_id_to_display_name.values()),
@@ -322,7 +322,7 @@ class AdvancedTab(BaseTab):
 
         instance = self.instance_manager.get_instance(self.current_instance.instance_id)
         current_preset_id = instance.get('active_preset_id', 'default')
-        current_preset_name = self.preset_id_to_display_name.get(current_preset_id, _('lki.preset.default.name'))
+        current_preset_name = self.preset_id_to_display_name.get(current_preset_id, tr('lki.preset.default.name'))
         self.preset_combobox.set(current_preset_name)
 
     def _on_preset_select(self, event=None):
@@ -357,25 +357,25 @@ class AdvancedTab(BaseTab):
 
         lang_code = preset_data.get('lang_code', 'en')
         lang_name = self.l10n_id_to_name.get(lang_code, lang_code)
-        self.preset_lang_label.config(text=f"{_('lki.preset.manager.language')} {lang_name}")
+        self.preset_lang_label.config(text=f"{tr('lki.preset.manager.language')} {lang_name}")
 
         # (已修改：从 global_settings 获取路由)
         route_ids = settings.global_settings.get('download_routes_priority', [])
         route_names = [get_route_id_to_name().get(rid, rid) for rid in route_ids]
         route_str = ", ".join(route_names)
-        self.preset_route_label.config(text=f"{_('lki.preset.manager.route')} {route_str}")
+        self.preset_route_label.config(text=f"{tr('lki.preset.manager.route')} {route_str}")
 
         use_ee = preset_data.get('use_ee', False)
-        ee_text = _('lki.generic.yes') if use_ee else _('lki.generic.no')
-        self.preset_ee_label.config(text=f"{_('lki.preset.manager.use_ee')}: {ee_text}")
+        ee_text = tr('lki.generic.yes') if use_ee else tr('lki.generic.no')
+        self.preset_ee_label.config(text=f"{tr('lki.preset.manager.use_ee')}: {ee_text}")
 
         use_mods = preset_data.get('use_mods', False)
-        mods_text = _('lki.generic.yes') if use_mods else _('lki.generic.no')
-        self.preset_mods_label.config(text=f"{_('lki.preset.manager.use_mods')}: {mods_text}")
+        mods_text = tr('lki.generic.yes') if use_mods else tr('lki.generic.no')
+        self.preset_mods_label.config(text=f"{tr('lki.preset.manager.use_mods')}: {mods_text}")
 
         use_fonts = preset_data.get('use_fonts', False)
-        fonts_text = _('lki.generic.yes') if use_fonts else _('lki.generic.no')
-        self.preset_fonts_label.config(text=f"{_('lki.preset.manager.use_fonts')}: {fonts_text}")
+        fonts_text = tr('lki.generic.yes') if use_fonts else tr('lki.generic.no')
+        self.preset_fonts_label.config(text=f"{tr('lki.preset.manager.use_fonts')}: {fonts_text}")
 
     def _open_preset_manager(self):
         """打开预设管理器窗口"""
@@ -411,7 +411,7 @@ class PresetManagerWindow(BaseDialog):
 
         self.icons = self.parent_app.icons
 
-        self.title(_('lki.preset.manager.title'))
+        self.title(tr('lki.preset.manager.title'))
 
         self.instance_manager = instance_manager.global_instance_manager
         self.instance_data = self.instance_manager.get_instance(self.instance_id)
@@ -444,7 +444,7 @@ class PresetManagerWindow(BaseDialog):
         self.details_frame.grid(row=0, column=1, sticky='nsew')
         self.details_frame.columnconfigure(1, weight=1)
 
-        ttk.Label(self.details_frame, text=_('lki.preset.manager.language')).grid(row=0, column=0, sticky='e',
+        ttk.Label(self.details_frame, text=tr('lki.preset.manager.language')).grid(row=0, column=0, sticky='e',
                                                                                   padx=(0, 10), pady=5)
         self.lang_combobox = ttk.Combobox(self.details_frame, values=list(self.l10n_id_to_name.values()),
                                           state='readonly', width=22)
@@ -461,33 +461,33 @@ class PresetManagerWindow(BaseDialog):
         #   5. 安装体验增强包
 
         # Row 2: ⚠独立安装目录
-        lk_label = ttk.Label(self.details_frame, text=_('lki.preset.manager.use_lk_mods'))
+        lk_label = ttk.Label(self.details_frame, text=tr('lki.preset.manager.use_lk_mods'))
         lk_label.grid(row=2, column=0, sticky='e', padx=(0, 10), pady=3)
-        ToolTip(lk_label, _('lki.settings.tooltip_use_lk_mods'))
+        ToolTip(lk_label, tr('lki.settings.tooltip_use_lk_mods'))
         self._lk_mods_combo = ttk.Combobox(self.details_frame, state='readonly')
         self._lk_mods_combo.grid(row=2, column=1, sticky='we', pady=3)
         self._lk_mods_combo.lk_mods_values = [
-            (_('lki.generic.yes'), True),
-            (_('lki.generic.no'), False),
-            (_('lki.generic.follow_global'), None),
+            (tr('lki.generic.yes'), True),
+            (tr('lki.generic.no'), False),
+            (tr('lki.generic.follow_global'), None),
         ]
         self._lk_mods_combo['values'] = [v[0] for v in self._lk_mods_combo.lk_mods_values]
 
         # Row 3: 字体优化包
-        ttk.Label(self.details_frame, text=_('lki.preset.manager.use_fonts')).grid(
+        ttk.Label(self.details_frame, text=tr('lki.preset.manager.use_fonts')).grid(
             row=3, column=0, sticky='e', padx=(0, 10), pady=3)
         self._font_combo = ttk.Combobox(self.details_frame, state='readonly')
         self._font_combo.grid(row=3, column=1, sticky='we', pady=3)
         # 初始选项（在 update_content 中会根据语言动态重建）
-        self._font_id_map = {"": _('lki.preset.manager.font_opt.none')}
-        self._font_combo['values'] = [_('lki.preset.manager.font_opt.none')]
-        self._display_to_font_id = {_('lki.preset.manager.font_opt.none'): ""}
+        self._font_id_map = {"": tr('lki.preset.manager.font_opt.none')}
+        self._font_combo['values'] = [tr('lki.preset.manager.font_opt.none')]
+        self._display_to_font_id = {tr('lki.preset.manager.font_opt.none'): ""}
 
         # Row 4: 加载本地化修改包
         mods_frame = ttk.Frame(self.details_frame)
         mods_frame.grid(row=4, column=1, sticky='w', pady=3)
 
-        self.cb_use_mods = ttk.Checkbutton(mods_frame, text=_('lki.preset.manager.use_mods'),
+        self.cb_use_mods = ttk.Checkbutton(mods_frame, text=tr('lki.preset.manager.use_mods'),
                                            variable=self.use_mods_var)
         self.cb_use_mods.pack(side='left')
 
@@ -501,12 +501,12 @@ class PresetManagerWindow(BaseDialog):
 
         self.mods_dir_tooltip = None
 
-        self.mods_dir_tooltip = _('lki.preset.manager.tooltip_open_mods_dir')
+        self.mods_dir_tooltip = tr('lki.preset.manager.tooltip_open_mods_dir')
         ToolTip(self.btn_open_mods_dir, lambda: self.mods_dir_tooltip)
-        ToolTip(self.btn_download_mods, _('lki.preset.manager.tooltip_download_mods'))
+        ToolTip(self.btn_download_mods, tr('lki.preset.manager.tooltip_download_mods'))
 
         # Row 5: 安装体验增强包
-        self.cb_use_ee = ttk.Checkbutton(self.details_frame, text=_('lki.preset.manager.use_ee'),
+        self.cb_use_ee = ttk.Checkbutton(self.details_frame, text=tr('lki.preset.manager.use_ee'),
                                          variable=self.use_ee_var)
         self.cb_use_ee.grid(row=5, column=1, sticky='w', pady=(5, 0))
 
@@ -516,19 +516,19 @@ class PresetManagerWindow(BaseDialog):
         for i in range(5):
             btn_grid.columnconfigure(i, weight=1)
 
-        self.btn_new = ttk.Button(btn_grid, text=_('lki.btn.new'), command=self._new_preset)
+        self.btn_new = ttk.Button(btn_grid, text=tr('lki.btn.new'), command=self._new_preset)
         self.btn_new.grid(row=0, column=0, sticky='ew', padx=(0, 2))
 
-        self.btn_save_as = ttk.Button(btn_grid, text=_('lki.btn.save_as'), command=self._save_as_preset)
+        self.btn_save_as = ttk.Button(btn_grid, text=tr('lki.btn.save_as'), command=self._save_as_preset)
         self.btn_save_as.grid(row=0, column=1, sticky='ew', padx=2)
 
-        self.btn_rename = ttk.Button(btn_grid, text=_('lki.btn.rename'), command=self._rename_preset)
+        self.btn_rename = ttk.Button(btn_grid, text=tr('lki.btn.rename'), command=self._rename_preset)
         self.btn_rename.grid(row=0, column=2, sticky='ew', padx=2)
 
-        self.btn_delete = ttk.Button(btn_grid, text=_('lki.btn.delete'), command=self._delete_preset)
+        self.btn_delete = ttk.Button(btn_grid, text=tr('lki.btn.delete'), command=self._delete_preset)
         self.btn_delete.grid(row=0, column=3, sticky='ew', padx=2)
 
-        self.btn_save = ttk.Button(btn_grid, text=_('lki.btn.save_changes'), command=self._save_preset)
+        self.btn_save = ttk.Button(btn_grid, text=tr('lki.btn.save_changes'), command=self._save_preset)
         self.btn_save.grid(row=0, column=4, sticky='ew', padx=(2, 0))
 
         # 第二行：操作按钮（2 列等宽）
@@ -536,11 +536,11 @@ class PresetManagerWindow(BaseDialog):
         action_grid.grid(row=2, column=0, columnspan=2, sticky='ew', pady=(6, 0))
         action_grid.columnconfigure((0, 1), weight=1)
 
-        self.btn_create_shortcut = ttk.Button(action_grid, text=_('lki.preset.btn.configure_autoupdate'),
+        self.btn_create_shortcut = ttk.Button(action_grid, text=tr('lki.preset.btn.configure_autoupdate'),
                                               command=self._open_auto_update_config)
         self.btn_create_shortcut.grid(row=0, column=0, sticky='ew', padx=(0, 3))
 
-        self.btn_select = ttk.Button(action_grid, text=_('lki.preset.btn.save_select'), command=self._select_and_close)
+        self.btn_select = ttk.Button(action_grid, text=tr('lki.preset.btn.save_select'), command=self._select_and_close)
         self.btn_select.grid(row=0, column=1, sticky='ew', padx=(3, 0))
         # --- (修改结束) ---
 
@@ -554,7 +554,7 @@ class PresetManagerWindow(BaseDialog):
 
         for preset_id, data in self.presets.items():
             if data.get('is_default'):
-                display_name = _(data["name_key"])
+                display_name = tr(data["name_key"])
             else:
                 display_name = data.get("name", f"Preset {preset_id}")
 
@@ -612,8 +612,8 @@ class PresetManagerWindow(BaseDialog):
             self.lang_combobox.set('')
             # 在 values 中临时插入占位文本
             all_langs = list(self.l10n_id_to_name.values())
-            self.lang_combobox['values'] = [_('lki.preset.manager.select_language')] + all_langs
-            self.lang_combobox.set(_('lki.preset.manager.select_language'))
+            self.lang_combobox['values'] = [tr('lki.preset.manager.select_language')] + all_langs
+            self.lang_combobox.set(tr('lki.preset.manager.select_language'))
             self.lang_combobox.configure(foreground='red')
 
         self.lang_combobox.config(state='readonly')
@@ -632,19 +632,19 @@ class PresetManagerWindow(BaseDialog):
             self.use_fonts_var.set(True)
             lang_code = 'en'  # fallback for font list construction
         recommended_font = global_source_manager.get_default_font_id(lang_code)
-        font_options = [_('lki.preset.manager.font_opt.none')]
-        font_id_map = {"": _('lki.preset.manager.font_opt.none')}
+        font_options = [tr('lki.preset.manager.font_opt.none')]
+        font_id_map = {"": tr('lki.preset.manager.font_opt.none')}
         if recommended_font:
             rec_display_key = FONT_DISPLAY_KEYS.get(recommended_font)
-            rec_text = _(rec_display_key) if rec_display_key else recommended_font
+            rec_text = tr(rec_display_key) if rec_display_key else recommended_font
         else:
-            rec_text = _('lki.preset.manager.font_opt.none')
-        recommended_label = _('lki.preset.manager.font_opt.recommended_prefix') + rec_text
+            rec_text = tr('lki.preset.manager.font_opt.none')
+        recommended_label = tr('lki.preset.manager.font_opt.recommended_prefix') + rec_text
         font_options.append(recommended_label)
         font_id_map[True] = recommended_label  # True 哨兵 → 推荐显示文本
         for fid in FONT_IDS:
             display_key = FONT_DISPLAY_KEYS.get(fid, fid)
-            display_text = _(display_key)
+            display_text = tr(display_key)
             font_options.append(display_text)
             font_id_map[fid] = display_text
         self._font_combo['values'] = font_options
@@ -656,11 +656,11 @@ class PresetManagerWindow(BaseDialog):
         # 动态重建 Combo（跟随全局文本中包含当前全局状态）
         from core import settings as core_settings
         global_val = core_settings.global_settings.get('use_lk_mods', False)
-        global_label = _('lki.generic.yes') if global_val else _('lki.generic.no')
-        follow_text = _('lki.generic.follow_global') + global_label
+        global_label = tr('lki.generic.yes') if global_val else tr('lki.generic.no')
+        follow_text = tr('lki.generic.follow_global') + global_label
         self._lk_mods_combo.lk_mods_values = [
-            (_('lki.generic.yes'), True),
-            (_('lki.generic.no'), False),
+            (tr('lki.generic.yes'), True),
+            (tr('lki.generic.no'), False),
             (follow_text, None),
         ]
         self._lk_mods_combo['values'] = [v[0] for v in self._lk_mods_combo.lk_mods_values]
@@ -683,8 +683,8 @@ class PresetManagerWindow(BaseDialog):
 
         if self.mods_dir_tooltip:
             lang_name = self.l10n_id_to_name.get(lang_code, lang_code)
-            tooltip_text = _('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name
-            self.mods_dir_tooltip = _('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name
+            tooltip_text = tr('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name
+            self.mods_dir_tooltip = tr('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name
 
     def _on_lang_select_changed(self, event=None):
         """当语言下拉框更改时，动态更新下载线路下拉框和推荐字体。"""
@@ -694,19 +694,19 @@ class PresetManagerWindow(BaseDialog):
             self.lang_combobox.configure(foreground='')
         self._update_download_mods_btn_state(lang_code)
         if lang_name in self.l10n_name_to_id:
-            self.mods_dir_tooltip = _('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name
+            self.mods_dir_tooltip = tr('lki.preset.manager.tooltip_open_mods_dir_lang') % lang_name
         else:
-            self.mods_dir_tooltip = _('lki.preset.manager.tooltip_open_mods_dir')
+            self.mods_dir_tooltip = tr('lki.preset.manager.tooltip_open_mods_dir')
         # 若当前字体选了"推荐"，刷新推荐标签以匹配新语言
         if self._get_font_value() is True:
             rec_font = global_source_manager.get_default_font_id(lang_code) if lang_code else ""
-            rec_text = _(FONT_DISPLAY_KEYS.get(rec_font)) if rec_font else _('lki.preset.manager.font_opt.none')
-            new_label = _('lki.preset.manager.font_opt.recommended_prefix') + rec_text
+            rec_text = tr(FONT_DISPLAY_KEYS.get(rec_font)) if rec_font else tr('lki.preset.manager.font_opt.none')
+            new_label = tr('lki.preset.manager.font_opt.recommended_prefix') + rec_text
             self._font_id_map[True] = new_label
             self._display_to_font_id[new_label] = True
             vals = list(self._font_combo['values'])
             for i, v in enumerate(vals):
-                if v.startswith(_('lki.preset.manager.font_opt.recommended_prefix')):
+                if v.startswith(tr('lki.preset.manager.font_opt.recommended_prefix')):
                     vals[i] = new_label
                     break
             self._font_combo['values'] = vals
@@ -736,7 +736,7 @@ class PresetManagerWindow(BaseDialog):
             self.btn_download_mods.config(state='disabled')
 
     def _new_preset(self):
-        dialog = CustomAskStringDialog(self, _('lki.btn.new'), _('lki.preset.manager.enter_name'))
+        dialog = CustomAskStringDialog(self, tr('lki.btn.new'), tr('lki.preset.manager.enter_name'))
         new_name = dialog.get_result()
 
         if not new_name or not new_name.strip():
@@ -744,7 +744,7 @@ class PresetManagerWindow(BaseDialog):
 
         new_name = new_name.strip()
         if new_name in self.name_to_id:
-            messagebox.showwarning(_('lki.btn.new'), _('lki.preset.error.name_exists'), parent=self)
+            messagebox.showwarning(tr('lki.btn.new'), tr('lki.preset.error.name_exists'), parent=self)
             return
 
         # 新建预设：语言为空（未选择），字体跟随推荐
@@ -754,7 +754,7 @@ class PresetManagerWindow(BaseDialog):
         self._populate_listbox_and_select()
 
     def _save_as_preset(self):
-        dialog = CustomAskStringDialog(self, _('lki.btn.save_as'), _('lki.preset.manager.enter_name'))
+        dialog = CustomAskStringDialog(self, tr('lki.btn.save_as'), tr('lki.preset.manager.enter_name'))
         new_name = dialog.get_result()
 
         if not new_name or not new_name.strip():
@@ -762,7 +762,7 @@ class PresetManagerWindow(BaseDialog):
 
         new_name = new_name.strip()
         if new_name in self.name_to_id:
-            messagebox.showwarning(_('lki.btn.save_as'), _('lki.preset.error.name_exists'), parent=self)
+            messagebox.showwarning(tr('lki.btn.save_as'), tr('lki.preset.error.name_exists'), parent=self)
             return
 
         current_lang_name = self.lang_combobox.get()
@@ -794,8 +794,8 @@ class PresetManagerWindow(BaseDialog):
         new_lang_name = self.lang_combobox.get()
         new_lang_code = self.l10n_name_to_id.get(new_lang_name)
         if not new_lang_code:
-            messagebox.showwarning(_('lki.btn.save_changes'),
-                                   _('lki.preset.manager.error.no_language'), parent=self)
+            messagebox.showwarning(tr('lki.btn.save_changes'),
+                                   tr('lki.preset.manager.error.no_language'), parent=self)
             return False
         new_use_ee = self.use_ee_var.get()
         new_use_mods = self.use_mods_var.get()
@@ -816,7 +816,7 @@ class PresetManagerWindow(BaseDialog):
         if hasattr(self.parent_app, 'on_preset_saved') and self.parent_app.on_preset_saved:
             self.parent_app.on_preset_saved()
         if show_popup:
-            messagebox.showinfo(_('lki.btn.save_changes'), _('lki.preset.manager.saved'), parent=self)
+            messagebox.showinfo(tr('lki.btn.save_changes'), tr('lki.preset.manager.saved'), parent=self)
             self.parent_app.update_content(self.parent_app.current_instance)
         return True
 
@@ -827,8 +827,8 @@ class PresetManagerWindow(BaseDialog):
 
         current_name = self.id_to_name[preset_id]
         dialog = CustomAskStringDialog(self,
-                                       _('lki.btn.rename'),
-                                       _('lki.preset.manager.enter_name'),
+                                       tr('lki.btn.rename'),
+                                       tr('lki.preset.manager.enter_name'),
                                        initialvalue=current_name)
         new_name = dialog.get_result()
 
@@ -837,7 +837,7 @@ class PresetManagerWindow(BaseDialog):
 
         new_name = new_name.strip()
         if new_name != current_name and new_name in self.name_to_id:
-            messagebox.showwarning(_('lki.btn.rename'), _('lki.preset.error.name_exists'), parent=self)
+            messagebox.showwarning(tr('lki.btn.rename'), tr('lki.preset.error.name_exists'), parent=self)
             return
 
         self.instance_manager.rename_preset(self.instance_id, preset_id, new_name)
@@ -849,7 +849,7 @@ class PresetManagerWindow(BaseDialog):
             return
 
         name = self.id_to_name[preset_id]
-        if messagebox.askyesno(_('lki.btn.delete'), _('lki.preset.manager.confirm_delete') + f"\n\n{name}",
+        if messagebox.askyesno(tr('lki.btn.delete'), tr('lki.preset.manager.confirm_delete') + f"\n\n{name}",
                                parent=self):
             self.instance_manager.delete_preset(self.instance_id, preset_id)
 
@@ -917,7 +917,7 @@ class PresetManagerWindow(BaseDialog):
             import win32com.client
         except ImportError:
             messagebox.showerror(
-                _('lki.autoupdate.title'),
+                tr('lki.autoupdate.title'),
                 "创建快捷方式需要 'pywin32' 库。请运行 'pip install pywin32' 并重启本程序。",
                 parent=self
             )

@@ -61,12 +61,12 @@ class InstallationTask:
     """代表一个要安装到单个实例的完整任务。"""
 
     def __init__(self, instance: GameInstance, preset_data: dict, root_tk: tk.Tk):
-        from core.localizer import _  # (新增局部导入)
+        from core.localizer import tr  # (新增局部导入)
         self.instance = instance
         self.preset = preset_data
         self.root_tk = root_tk  # (新增)
         # (已修改：使用本地化键回退)
-        self.task_name = f"{instance.name} ({preset_data.get('name', _('lki.preset.default.name'))})"
+        self.task_name = f"{instance.name} ({preset_data.get('name', tr('lki.preset.default.name'))})"
 
         self.lang_code: str = preset_data.get('lang_code', 'en')
         self.use_ee: bool = preset_data.get('use_ee', False)
@@ -119,11 +119,11 @@ class InstallationManager:
         self._all_finished_notified = False
 
     def start_installation(self, tasks: List[InstallationTask], on_complete_callback: Optional[Callable] = None):
-        from core.localizer import _  # (为 Messagebox 导入)
+        from core.localizer import tr  # (为 Messagebox 导入)
 
         # (检查是否有任务已在进行)
         if self.window and self.window.winfo_exists():
-            messagebox.showwarning(_('lki.install.title'), _('lki.install.error.already_running'))
+            messagebox.showwarning(tr('lki.install.title'), tr('lki.install.error.already_running'))
             self.window.focus_force()
             return
 
@@ -138,19 +138,19 @@ class InstallationManager:
         tasks_data = {t.task_name : t.instance for t in self.tasks}
         # (已修改：传入 title 和 strings)
         self.window = ActionProgressWindow(self.root_tk, tasks_data, self.cancel_installation,
-                                           title=_('lki.install.title'),
-                                           starting_text=_('lki.install.status.starting'),
-                                           pending_text=_('lki.install.status.pending'))
+                                           title=tr('lki.install.title'),
+                                           starting_text=tr('lki.install.status.starting'),
+                                           pending_text=tr('lki.install.status.pending'))
 
         self._assign_task_ui_callbacks()
 
         threading.Thread(target=self._control_thread, daemon=True).start()
 
     def cancel_installation(self):
-        from core.localizer import _  # (为日志导入)
+        from core.localizer import tr  # (为日志导入)
         # (已修改：根据状态使用不同的字符串)
         cancel_key = 'lki.uninstall.status.cancelling' if self.is_uninstalling else 'lki.install.status.cancelling'
-        _log_overall(self, _(cancel_key))
+        _log_overall(self, tr(cancel_key))
         self._cancel_event.set()
         while not self.download_queue.empty():
             try:
@@ -160,10 +160,10 @@ class InstallationManager:
                 break
 
     def start_uninstallation(self, tasks: List[InstallationTask], on_complete_callback: Optional[Callable] = None):
-        from core.localizer import _
+        from core.localizer import tr
 
         if self.window and self.window.winfo_exists():
-            messagebox.showwarning(_('lki.uninstall.title'), _('lki.install.error.already_running'))
+            messagebox.showwarning(tr('lki.uninstall.title'), tr('lki.install.error.already_running'))
             self.window.focus_force()
             return
 
@@ -176,9 +176,9 @@ class InstallationManager:
         tasks_data = {t.task_name : None for t in self.tasks}
         # (新增：使用卸载标题)
         self.window = ActionProgressWindow(self.root_tk, tasks_data, self.cancel_installation,
-                                           title=_('lki.uninstall.title'),
-                                           starting_text=_('lki.uninstall.status.starting'),
-                                           pending_text=_('lki.uninstall.status.pending'))
+                                           title=tr('lki.uninstall.title'),
+                                           starting_text=tr('lki.uninstall.status.starting'),
+                                           pending_text=tr('lki.uninstall.status.pending'))
 
         self._assign_task_ui_callbacks()
 
@@ -203,8 +203,8 @@ class InstallationManager:
 
     # (新增：卸载控制线程)
     def _uninstall_control_thread(self):
-        from core.localizer import _
-        _log_overall(self, _('lki.uninstall.status.starting'))
+        from core.localizer import tr
+        _log_overall(self, tr('lki.uninstall.status.starting'))
 
         for task in self.tasks:
             if self._cancel_event.is_set(): return
@@ -212,13 +212,13 @@ class InstallationManager:
             threading.Thread(target=self._uninstall_worker, args=(task,), daemon=True).start()
 
     def _control_thread(self):
-        from core.localizer import _
+        from core.localizer import tr
 
-        _log_overall(self, _('lki.install.status.preparing_files'))
+        _log_overall(self, tr('lki.install.status.preparing_files'))
         utils.clear_temp_dir()
         self.download_jobs = {}
 
-        _log_overall(self, _('lki.install.status.getting_versions'))
+        _log_overall(self, tr('lki.install.status.getting_versions'))
 
         self._pending_version_count = len(self.tasks)
         self._version_all_done = threading.Event()
@@ -249,24 +249,24 @@ class InstallationManager:
 
         queued_job_count = self.download_queue.qsize()
         num_workers = min(6, queued_job_count)
-        _log_overall(self, _('lki.install.status.downloading_files') % queued_job_count)
+        _log_overall(self, tr('lki.install.status.downloading_files') % queued_job_count)
 
         for _i in range(num_workers):
             threading.Thread(target=self._download_worker, daemon=True).start()
 
         if queued_job_count == 0:
-            _log_overall(self, _('lki.install.status.install_phase'))
+            _log_overall(self, tr('lki.install.status.install_phase'))
             self._install_phase_started = True
             self.root_tk.after(0, self._on_download_complete, None, True)
 
     def _resolve_task_version(self, task: InstallationTask):
-        from core.localizer import _
+        from core.localizer import tr
 
         if self._cancel_event.is_set(): return
 
         source = global_source_manager.get_source(task.lang_code)
         if not source:
-            self._mark_task_failed(task, _('lki.install.error.no_source') % task.lang_code)
+            self._mark_task_failed(task, tr('lki.install.error.no_source') % task.lang_code)
             return
 
         available_route_ids = source.get_available_route_ids()
@@ -280,7 +280,7 @@ class InstallationManager:
                 break
 
         if not has_valid_config:
-            self._mark_task_failed(task, _('lki.install.error.no_version_url') % task.lang_code)
+            self._mark_task_failed(task, tr('lki.install.error.no_version_url') % task.lang_code)
             return
 
         # 远程仓库只发布一个大版本，各下载线路只是该元数据的镜像。
@@ -294,7 +294,7 @@ class InstallationManager:
                 continue
 
             _log_task(task,
-                      _('lki.install.status.getting_version_from') % get_route_id_to_name().get(route_id, route_id))
+                      tr('lki.install.status.getting_version_from') % get_route_id_to_name().get(route_id, route_id))
 
             try:
                 proxies, proxy_auth = root_utils.get_configured_proxies()
@@ -305,10 +305,10 @@ class InstallationManager:
                     remote_version_info = (lines[1].strip(), lines[0].strip())
                     break
             except requests.exceptions.RequestException as e:
-                _log_task(task, f"{_('lki.install.status.failed')}: {route_id} ({e})")
+                _log_task(task, f"{tr('lki.install.status.failed')}: {route_id} ({e})")
 
         if not remote_version_info:
-            self._mark_task_failed(task, _('lki.install.status.no_compatible_version'))
+            self._mark_task_failed(task, tr('lki.install.status.no_compatible_version'))
             return
 
         remote_major, remote_sub_version = remote_version_info
@@ -325,9 +325,9 @@ class InstallationManager:
 
             sub_version = remote_sub_version if remote_major == major_version else None
             if sub_version:
-                _log_task(task, _('lki.install.status.version_match_found') % sub_version)
+                _log_task(task, tr('lki.install.status.version_match_found') % sub_version)
             else:
-                _log_task(task, _('lki.install.status.version_mismatch') % (remote_major, major_version))
+                _log_task(task, tr('lki.install.status.version_mismatch') % (remote_major, major_version))
 
             if sub_version:
                 mo_job_id = f"{task.lang_code}_{major_version}_{sub_version}"
@@ -362,10 +362,10 @@ class InstallationManager:
                 return
 
         # Compatible version not found
-        self._mark_task_failed(task, _('lki.install.status.no_compatible_version'))
+        self._mark_task_failed(task, tr('lki.install.status.no_compatible_version'))
 
     def _download_worker(self):
-        from core.localizer import _
+        from core.localizer import tr
 
         while not self._cancel_event.is_set():
             try:
@@ -385,7 +385,7 @@ class InstallationManager:
                     continue
 
                 for task in list(job.dependent_tasks):
-                    _log_task(task, _('lki.install.status.downloading_file') % job.job_id)
+                    _log_task(task, tr('lki.install.status.downloading_file') % job.job_id)
 
                 try:
                     success, result_path = self._perform_download(job, representative_task)
@@ -415,7 +415,7 @@ class InstallationManager:
                 self.download_queue.task_done()
 
     def _perform_download(self, job: DownloadJob, task: InstallationTask) -> Tuple[bool, Optional[Path]]:
-        from core.localizer import _
+        from core.localizer import tr
 
         source = global_source_manager.get_source(job.lang_code)
 
@@ -429,7 +429,7 @@ class InstallationManager:
         return False, None
 
     def _download_mo(self, job: DownloadJob, task: InstallationTask, source) -> Tuple[bool, Optional[Path]]:
-        from core.localizer import _
+        from core.localizer import tr
 
         cache_path = L10N_CACHE / job.lang_code / job.version_info['main'] / job.version_info['sub']
         mo_path = cache_path / "global.mo"
@@ -443,10 +443,10 @@ class InstallationManager:
                 actual_hash = utils.get_sha256(mo_path)
 
                 if expected_hash and actual_hash == expected_hash:
-                    log(_('lki.install.debug.cache_hit') % job.job_id)
+                    log(tr('lki.install.debug.cache_hit') % job.job_id)
                     return True, mo_path
             except Exception as e:
-                log(_('lki.install.debug.cache_check_failed') % e)
+                log(tr('lki.install.debug.cache_check_failed') % e)
 
         utils.mkdir(cache_path)
 
@@ -468,7 +468,7 @@ class InstallationManager:
         return False, None
 
     def _download_ee(self, job: DownloadJob, task: InstallationTask, source) -> Tuple[bool, Optional[Path]]:
-        from core.localizer import _
+        from core.localizer import tr
 
         cache_path = EE_CACHE / job.lang_code / task.instance.type
         ee_zip_path = cache_path / "ee.zip"
@@ -494,7 +494,7 @@ class InstallationManager:
     def _download_ee_from_url(self, url: str, dest: Path, info_path: Path,
                               log_prefix: str, timeout: int) -> bool:
         """Download EE conditionally and reuse a verified cache on HTTP 304."""
-        from core.localizer import _
+        from core.localizer import tr
 
         cached_etag = None
         cache_is_valid = False
@@ -508,13 +508,13 @@ class InstallationManager:
                 if cache_is_valid:
                     cached_etag = info_data.get('etags', {}).get(url)
             except Exception as e:
-                log(_('lki.install.debug.cache_check_failed') % e)
+                log(tr('lki.install.debug.cache_check_failed') % e)
 
         headers = {'If-None-Match': cached_etag} if cached_etag else None
         temp_path = dest.with_name(f"{dest.name}.download")
 
         try:
-            _log_overall(self, f"{log_prefix}: {_('lki.install.status.connecting') % url}")
+            _log_overall(self, f"{log_prefix}: {tr('lki.install.status.connecting') % url}")
             proxies, proxy_auth = root_utils.get_configured_proxies()
             response = requests.get(
                 url, stream=True, headers=headers, proxies=proxies,
@@ -523,16 +523,16 @@ class InstallationManager:
 
             if response.status_code == 304:
                 if cache_is_valid:
-                    log(_('lki.install.debug.cache_hit') % log_prefix)
+                    log(tr('lki.install.debug.cache_hit') % log_prefix)
                     return True
-                _log_overall(self, f"{log_prefix}: {_('lki.install.status.failed')} (HTTP 304 without valid cache)")
+                _log_overall(self, f"{log_prefix}: {tr('lki.install.status.failed')} (HTTP 304 without valid cache)")
                 return False
 
             response.raise_for_status()
             with open(temp_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if self._cancel_event.is_set():
-                        _log_overall(self, f"{log_prefix}: {_('lki.install.status.cancelled')}")
+                        _log_overall(self, f"{log_prefix}: {tr('lki.install.status.cancelled')}")
                         return False
                     if chunk:
                         f.write(chunk)
@@ -548,10 +548,10 @@ class InstallationManager:
             with open(info_path, 'w', encoding='utf-8') as f:
                 json.dump({'file_sha256': file_hash, 'etags': etags}, f)
 
-            _log_overall(self, f"{log_prefix}: {_('lki.install.status.success')}")
+            _log_overall(self, f"{log_prefix}: {tr('lki.install.status.success')}")
             return True
         except (requests.exceptions.RequestException, OSError, ValueError) as e:
-            _log_overall(self, f"{log_prefix}: {_('lki.install.status.failed')} ({e})")
+            _log_overall(self, f"{log_prefix}: {tr('lki.install.status.failed')} ({e})")
             return False
         finally:
             if temp_path.exists():
@@ -561,7 +561,7 @@ class InstallationManager:
                     pass
 
     def _download_fonts(self, job: DownloadJob, task: InstallationTask) -> Tuple[bool, Optional[Path]]:
-        from core.localizer import _
+        from core.localizer import tr
 
         font_id = job.job_id  # 例如 "SrcWagon-MainlandCN"
         cache_dir = utils.FONTS_CACHE / font_id
@@ -586,7 +586,7 @@ class InstallationManager:
             remote_sha256 = None
 
             try:
-                _log_task(task, _('lki.install.status.fonts_route') % get_route_id_to_name().get(route_id, route_id))
+                _log_task(task, tr('lki.install.status.fonts_route') % get_route_id_to_name().get(route_id, route_id))
                 resp = requests.get(METADATA_URL, timeout=10, proxies=proxies, auth=proxy_auth)
                 resp.raise_for_status()
                 metadata = resp.json()
@@ -596,11 +596,11 @@ class InstallationManager:
                     remote_version = font_info.get('version')
                     remote_sha256 = font_info.get('sha256')
             except Exception as e:
-                _log_task(task, _('lki.install.error.fonts_version_check') % f"{route_id}: {e}")
+                _log_task(task, tr('lki.install.error.fonts_version_check') % f"{route_id}: {e}")
                 continue
 
             if not remote_version:
-                _log_task(task, _('lki.install.error.fonts_version_invalid') + f" ({route_id})")
+                _log_task(task, tr('lki.install.error.fonts_version_invalid') + f" ({route_id})")
                 continue
 
             # 缓存命中检查
@@ -612,18 +612,18 @@ class InstallationManager:
                         actual_hash = utils.get_sha256(mkmod_path)
                         expected_hash = local_info.get('file_sha256')
                         if actual_hash == expected_hash:
-                            log(_('lki.install.debug.cache_hit') % job.job_id)
+                            log(tr('lki.install.debug.cache_hit') % job.job_id)
                             return True, mkmod_path
                 except Exception as e:
-                    log(_('lki.install.debug.cache_check_failed') % e)
+                    log(tr('lki.install.debug.cache_check_failed') % e)
 
             # 下载 7z
-            _log_task(task, _('lki.install.status.packing_fonts'))
+            _log_task(task, tr('lki.install.status.packing_fonts'))
             temp_7z_path = utils.TEMP_DIR / f"{font_id}.7z"
 
             def _report_font_progress(downloaded, total):
                 pct = min(int(downloaded * 40 / total), 40) if total > 0 else 0
-                _log_task(task, _('lki.install.status.downloading_file') % font_id, 50 + pct)
+                _log_task(task, tr('lki.install.status.downloading_file') % font_id, 50 + pct)
 
             if not self._download_file_with_retry(DOWNLOAD_URL, temp_7z_path, f"Fonts ({font_id}) - {route_id}", 30,
                                                   on_progress=_report_font_progress):
@@ -664,16 +664,16 @@ class InstallationManager:
                 _log_task(task, f"Fonts packing failed for {route_id}, retrying next: {e}")
                 continue
 
-        _log_task(task, _('lki.install.error.fonts_no_url'))
+        _log_task(task, tr('lki.install.error.fonts_no_url'))
         return False, None
 
     def _download_file_with_retry(self, url: str, dest: Path, log_prefix: str, timeout: int,
                                   on_progress: Optional[Callable[[int, int], None]] = None) -> bool:
         """使用 requests 下载文件。支持可选的进度回调 (已下载字节, 总字节)。"""
-        from core.localizer import _  # <-- (修复 UnboundLocalError)
+        from core.localizer import tr  # <-- (修复 UnboundLocalError)
         try:
             # (已修改：修复 %s 格式化)
-            _log_overall(self, f"{log_prefix}: {_('lki.install.status.connecting') % url}")
+            _log_overall(self, f"{log_prefix}: {tr('lki.install.status.connecting') % url}")
             proxies, proxy_auth = root_utils.get_configured_proxies()
 
             response = requests.get(url, stream=True, proxies=proxies, auth=proxy_auth, timeout=(timeout, 60))
@@ -685,23 +685,23 @@ class InstallationManager:
             with open(dest, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if self._cancel_event.is_set():
-                        _log_overall(self, f"{log_prefix}: {_('lki.install.status.cancelled')}")
+                        _log_overall(self, f"{log_prefix}: {tr('lki.install.status.cancelled')}")
                         return False
                     f.write(chunk)
                     downloaded += len(chunk)
                     if on_progress and total > 0:
                         on_progress(downloaded, total)
 
-            _log_overall(self, f"{log_prefix}: {_('lki.install.status.success')}")
+            _log_overall(self, f"{log_prefix}: {tr('lki.install.status.success')}")
             return True
 
         except requests.exceptions.RequestException as e:
-            _log_overall(self, f"{log_prefix}: {_('lki.install.status.failed')} ({e})")
+            _log_overall(self, f"{log_prefix}: {tr('lki.install.status.failed')} ({e})")
             return False
 
     def _on_download_complete(self, job: Optional[DownloadJob], success: bool):
         """(在主线程中) 在下载完成后更新任务状态。"""
-        from core.localizer import _  # <-- (修复 UnboundLocalError)
+        from core.localizer import tr  # <-- (修复 UnboundLocalError)
 
         if self._cancel_event.is_set(): return
 
@@ -729,13 +729,13 @@ class InstallationManager:
                     if not task.fo_ready and task.use_fonts and task.fo_job_id:
                         pending_ids.append(task.fo_job_id)
                     if pending_ids:
-                        _log_task(task, _('lki.install.status.downloading_file') % pending_ids[0])
+                        _log_task(task, tr('lki.install.status.downloading_file') % pending_ids[0])
         elif job:  # 下载失败
-            from core.localizer import _  # (为日志导入)
+            from core.localizer import tr  # (为日志导入)
             for task in job.dependent_tasks:
                 if job.file_type == 'mo':
                     # _mark_task_failed 自身会加锁，不能在持有同一非重入锁时调用。
-                    self._mark_task_failed(task, _('lki.install.status.download_failed') % job.job_id)
+                    self._mark_task_failed(task, tr('lki.install.status.download_failed') % job.job_id)
                 else:
                     with self._lock:
                         if job.file_type == 'ee':
@@ -745,10 +745,10 @@ class InstallationManager:
                             # 字体不是关键任务，解除阻塞以继续安装。
                             task.fo_ready = True  # <-- 设为 True 以便安装可以开始
                     if job.file_type == 'ee':
-                        _log_task(task, _('lki.install.status.ee_failed_skip') % job.job_id)
+                        _log_task(task, tr('lki.install.status.ee_failed_skip') % job.job_id)
                         tasks_to_check.append(task)
                     elif job.file_type == 'fonts':
-                        _log_task(task, _('lki.install.status.fonts_failed_skip') % job.job_id)
+                        _log_task(task, tr('lki.install.status.fonts_failed_skip') % job.job_id)
                         tasks_to_check.append(task)
         elif not job and success:
             tasks_to_check = self.tasks
@@ -758,7 +758,7 @@ class InstallationManager:
         for task in tasks_to_check:
             if task.is_ready_for_install():
                 task.status = "installing"
-                _log_task(task, _('lki.install.status.starting_install'), 0)
+                _log_task(task, tr('lki.install.status.starting_install'), 0)
                 threading.Thread(target=self._install_worker, args=(task,), daemon=True).start()
                 did_start_install = True
 
@@ -767,12 +767,12 @@ class InstallationManager:
             with self._lock:
                 if not self._install_phase_started:  # (双重检查)
                     self._install_phase_started = True
-                    _log_overall(self, _('lki.install.status.install_phase'))
+                    _log_overall(self, tr('lki.install.status.install_phase'))
 
         self._check_if_all_finished()
 
     def _install_worker(self, task: InstallationTask):
-        from core.localizer import _
+        from core.localizer import tr
 
         non_critical_errors: List[str] = []
 
@@ -780,7 +780,7 @@ class InstallationManager:
             if self._cancel_event.is_set():
                 return
 
-            _log_task(task, _('lki.install.status.preparing_files'), 10)
+            _log_task(task, tr('lki.install.status.preparing_files'), 10)
 
             mo_job = self.download_jobs[task.mo_job_id]
             mo_file_path = mo_job.result_path
@@ -790,7 +790,7 @@ class InstallationManager:
             mods_mo_mkmod_path, mods_json_mkmod_path = self._process_mods(task, mo_file_path, non_critical_errors)
 
             if not mo_file_path or not mo_file_path.is_file():
-                raise Exception(_('lki.install.error.mo_file_not_found') % mo_file_path)
+                raise Exception(tr('lki.install.error.mo_file_not_found') % mo_file_path)
 
             locale_config_path = utils.write_locale_config_to_temp(task.lang_code, bool(task.use_fonts))
 
@@ -816,10 +816,10 @@ class InstallationManager:
 
             if non_critical_errors:
                 error_summary = ", ".join(list(set(non_critical_errors)))
-                _log_task(task, _('lki.install.status.warn_done') % error_summary, 100)
+                _log_task(task, tr('lki.install.status.warn_done') % error_summary, 100)
                 self._mark_task_finished(task, success=True, status_key='lki.install.status.warn_done_short')
             else:
-                _log_task(task, _('lki.install.status.done'), 100)
+                _log_task(task, tr('lki.install.status.done'), 100)
                 self._mark_task_finished(task, success=True, status_key='lki.install.status.done')
 
         except Exception as e:
@@ -829,7 +829,7 @@ class InstallationManager:
             self._mark_task_failed(task, str(e))
 
     def _validate_optional_path(self, task, component_key, job_id, errors):
-        from core.localizer import _
+        from core.localizer import tr
         if not job_id:
             return None
         job = self.download_jobs.get(job_id)
@@ -839,31 +839,31 @@ class InstallationManager:
         if not path or not path.is_file():
             key_map = {'ee': 'lki.component.ee', 'fonts': 'lki.component.font'}
             skip_key_map = {'ee': 'lki.install.status.ee_failed_skip', 'fonts': 'lki.install.status.fonts_failed_skip'}
-            _log_task(task, _(skip_key_map.get(component_key, '')) % job_id)
-            errors.append(_(key_map.get(component_key, '')))
+            _log_task(task, tr(skip_key_map.get(component_key, '')) % job_id)
+            errors.append(tr(key_map.get(component_key, '')))
             return None
         return path
 
     def _process_mods(self, task, mo_file_path, errors):
-        from core.localizer import _
+        from core.localizer import tr
         mods_mo_path = None
         mods_json_path = None
         if not task.use_mods:
             return mods_mo_path, mods_json_path
-        _log_task(task, _('lki.install.status.packing_mods'), 20)
+        _log_task(task, tr('lki.install.status.packing_mods'), 20)
         try:
             mods_mo_path, mods_json_path = utils.process_mods_for_installation(
                 task.instance.instance_id, task.instance.path, mo_file_path, task.lang_code
             )
         except Exception as e:
-            _log_task(task, _('lki.install.status.mods_failed_skip') % e)
-            errors.append(_('lki.component.mods'))
+            _log_task(task, tr('lki.install.status.mods_failed_skip') % e)
+            errors.append(tr('lki.component.mods'))
         return mods_mo_path, mods_json_path
 
     def _build_core_mkmod(self, task, mo_file_path, locale_config_path):
-        from core.localizer import _
-        _log_task(task, _('lki.install.status.writing_config'), 25)
-        _log_task(task, _('lki.install.status.packing_core'), 40)
+        from core.localizer import tr
+        _log_task(task, tr('lki.install.status.writing_config'), 25)
+        _log_task(task, tr('lki.install.status.packing_core'), 40)
         core_mod_files = {"texts/ru/LC_MESSAGES/global.mo": mo_file_path}
         if locale_config_path:
             core_mod_files["locale_config.xml"] = locale_config_path
@@ -872,8 +872,8 @@ class InstallationManager:
         return core_mkmod_path
 
     def _build_ee_mkmod(self, task, ee_zip_path, errors):
-        from core.localizer import _
-        _log_task(task, _('lki.install.status.packing_ee'), 60)
+        from core.localizer import tr
+        _log_task(task, tr('lki.install.status.packing_ee'), 60)
         if not ee_zip_path:
             return None
         try:
@@ -881,8 +881,8 @@ class InstallationManager:
             if utils.repack_zip_to_mkmod(ee_zip_path, ee_mkmod_path):
                 return ee_mkmod_path
         except Exception as e:
-            _log_task(task, _('lki.install.error.ee_pack_failed') % e)
-            errors.append(_('lki.component.ee'))
+            _log_task(task, tr('lki.install.error.ee_pack_failed') % e)
+            errors.append(tr('lki.component.ee'))
         return None
 
     def _version_matches_mo(self, version_folder, mo_job):
@@ -891,8 +891,8 @@ class InstallationManager:
         return major_version == mo_job.version_info['main']
 
     def _cleanup_version(self, task, version_folder):
-        from core.localizer import _
-        _log_task(task, _('lki.uninstall.status.removing_files_for') % version_folder.bin_folder_name, 5)
+        from core.localizer import tr
+        _log_task(task, tr('lki.uninstall.status.removing_files_for') % version_folder.bin_folder_name, 5)
         bin_folder = version_folder.bin_folder_path
         files_to_delete: Set[Path] = get_files_may_overwrite(bin_folder)
         info_file = version_folder.game_root_path / "lki" / "info" / version_folder.bin_folder_name / "installation_info.json"
@@ -906,27 +906,27 @@ class InstallationManager:
                         absolute_path = (bin_folder / relative_path).absolute()
                         files_to_delete.add(absolute_path)
             except Exception as e:
-                _log_task(task, _('lki.install.warn.cleanup_read_failed') % (info_file.name, e))
+                _log_task(task, tr('lki.install.warn.cleanup_read_failed') % (info_file.name, e))
         for file_path in files_to_delete:
             try:
                 if file_path.is_file():
                     os.remove(file_path)
                     log(f'Deleting {str(file_path)}...')
             except OSError as e:
-                _log_task(task, _('lki.install.warn.cleanup_remove_failed') % (file_path.name, e))
+                _log_task(task, tr('lki.install.warn.cleanup_remove_failed') % (file_path.name, e))
         if info_file.is_file():
             try:
                 os.remove(info_file)
             except OSError as e:
-                _log_task(task, _('lki.install.warn.cleanup_remove_failed') % (info_file.name, e))
+                _log_task(task, tr('lki.install.warn.cleanup_remove_failed') % (info_file.name, e))
 
     def _install_components_to_version(self, task, version_folder, mo_job, core_mkmod_path,
                                         ee_mkmod_path, fo_mkmod_path,
                                         mods_mo_mkmod_path, mods_json_mkmod_path,
                                         errors):
-        from core.localizer import _
+        from core.localizer import tr
 
-        _log_task(task, _('lki.install.status.installing_to') % version_folder.bin_folder_name, 92)
+        _log_task(task, tr('lki.install.status.installing_to') % version_folder.bin_folder_name, 92)
 
         mods_dir_name = "lk_mods" if task.use_lk_mods else "mods"
         mods_dir = version_folder.bin_folder_path / mods_dir_name
@@ -963,10 +963,10 @@ class InstallationManager:
                     log(f"Pre-install cleanup warning: could not remove {candidate_file}: {e}")
 
         try:
-            _log_task(task, _('lki.install.status.patching_paths_xml'), 93)
+            _log_task(task, tr('lki.install.status.patching_paths_xml'), 93)
             utils.fix_paths_xml(version_folder.bin_folder_path)
         except Exception as e:
-            _log_task(task, _('lki.install.error.paths_xml_failed') % e)
+            _log_task(task, tr('lki.install.error.paths_xml_failed') % e)
             log(f"Warning: Failed to fix paths.xml for {version_folder.bin_folder_path}: {e}")
 
         root_utils.copy_with_log(core_mkmod_path, dest_core_mod_path)
@@ -1003,8 +1003,8 @@ class InstallationManager:
             }, f, indent=2)
 
     def _mark_version_inactive(self, task, version_folder):
-        from core.localizer import _
-        _log_task(task, _('lki.install.status.inactive_skip') % version_folder.bin_folder_name, 94)
+        from core.localizer import tr
+        _log_task(task, tr('lki.install.status.inactive_skip') % version_folder.bin_folder_name, 94)
         mods_dir_name = "lk_mods" if task.use_lk_mods else "mods"
         mods_dir = version_folder.bin_folder_path / mods_dir_name
         info_json_path = task.instance.path / "lki" / "info" / version_folder.bin_folder_name
@@ -1023,18 +1023,18 @@ class InstallationManager:
             with open(info_file, 'w', encoding='utf-8') as f:
                 json.dump({"version": "INACTIVE", "l10n_sub_version": None, "files": {}}, f, indent=2)
         except OSError as e:
-            _log_task(task, _('lki.install.warn.inactive_cleanup_failed') % (version_folder.bin_folder_name, e))
+            _log_task(task, tr('lki.install.warn.inactive_cleanup_failed') % (version_folder.bin_folder_name, e))
 
     def _uninstall_worker(self, task: InstallationTask):
         """(在线程中) 为单个实例执行文件删除。"""
-        from core.localizer import _
+        from core.localizer import tr
         import os
         import json
 
         try:
             instance = task.instance
             if not instance.versions:
-                _log_task(task, _('lki.install.error.no_version_for_instance') % instance.name, 100)
+                _log_task(task, tr('lki.install.error.no_version_for_instance') % instance.name, 100)
                 self._mark_task_finished(task, success=True, status_key='lki.uninstall.status.done')
                 return
 
@@ -1043,12 +1043,12 @@ class InstallationManager:
                 if self._cancel_event.is_set(): return
 
                 progress = (i / total_versions) * 100
-                _log_task(task, _('lki.uninstall.status.removing_files_for') % game_version.bin_folder_name, progress)
+                _log_task(task, tr('lki.uninstall.status.removing_files_for') % game_version.bin_folder_name, progress)
 
                 info_file = game_version.game_root_path / "lki" / "info" / game_version.bin_folder_name / "installation_info.json"
 
                 if not info_file.is_file():
-                    _log_task(task, _('lki.uninstall.status.no_info_skip') % game_version.bin_folder_name, progress)
+                    _log_task(task, tr('lki.uninstall.status.no_info_skip') % game_version.bin_folder_name, progress)
                     continue
 
                 bin_folder = game_version.bin_folder_path
@@ -1065,7 +1065,7 @@ class InstallationManager:
                             files_to_delete.add(absolute_path)
 
                 except Exception as e:
-                    _log_task(task, _('lki.uninstall.error.read_info_failed') % (info_file.name, e))
+                    _log_task(task, tr('lki.uninstall.error.read_info_failed') % (info_file.name, e))
 
                 # 2. 删除所有引用的文件
                 for file_path in files_to_delete:
@@ -1075,21 +1075,21 @@ class InstallationManager:
                             log(self, f'Deleting {str(file_path)}...')  # Consider making this localized
                     except OSError as e:
                         # (已修改：本地化)
-                        _log_task(task, _('lki.uninstall.warn.remove_failed') % (file_path.name, e))
-                        raise Exception(_('lki.uninstall.warn.remove_failed') % (file_path.name, e))
+                        _log_task(task, tr('lki.uninstall.warn.remove_failed') % (file_path.name, e))
+                        raise Exception(tr('lki.uninstall.warn.remove_failed') % (file_path.name, e))
 
                 # 3. (最后) 删除 info.json 文件本身
                 try:
                     os.remove(info_file)
                 except OSError as e:
                     # (已修改：本地化)
-                    _log_task(task, _('lki.uninstall.error.remove_info_failed') % (info_file.name, e))
+                    _log_task(task, tr('lki.uninstall.error.remove_info_failed') % (info_file.name, e))
                     # (已修改：本地化)
-                    raise Exception(_('lki.uninstall.error.remove_info_failed_critical') % info_file.name)
+                    raise Exception(tr('lki.uninstall.error.remove_info_failed_critical') % info_file.name)
 
 
             # (所有版本循环完毕)
-            _log_task(task, _('lki.uninstall.status.done'), 100)
+            _log_task(task, tr('lki.uninstall.status.done'), 100)
             self._mark_task_finished(task, success=True, status_key='lki.uninstall.status.done')
 
         except Exception as e:
@@ -1099,29 +1099,29 @@ class InstallationManager:
             self._mark_task_failed(task, str(e))
 
     def _mark_task_failed(self, task: InstallationTask, reason: str = ""):
-        from core.localizer import _
+        from core.localizer import tr
         with self._lock:
             task.status = "failed"
             status_key = 'lki.uninstall.status.failed' if self.is_uninstalling else 'lki.install.status.failed'
             if reason:
-                status_text = f"{_(status_key)}: {reason}"
+                status_text = f"{tr(status_key)}: {reason}"
             else:
-                status_text = _(status_key)
+                status_text = tr(status_key)
         _log_task(task, status_text, 100)
         if self.window:
             self.root_tk.after(0, self.window.mark_task_complete, task.task_name, False, status_text)
         self._check_if_all_finished()
 
     def _mark_task_finished(self, task: InstallationTask, success: bool, status_key: str = 'lki.install.status.done'):
-        from core.localizer import _
+        from core.localizer import tr
         with self._lock:
             task.status = "done"  # (如果 success=True，我们总是设置 "done")
-            status_text = _(status_key)  # (获取 "完成" 或 "完成（有警告）")
+            status_text = tr(status_key)  # (获取 "完成" 或 "完成（有警告）")
             self.root_tk.after(0, self.window.mark_task_complete, task.task_name, success, status_text)
         self._check_if_all_finished()
 
     def _check_if_all_finished(self):
-        from core.localizer import _
+        from core.localizer import tr
         with self._lock:
             all_done = all(t.status in ["done", "failed"] for t in self.tasks)
             if not all_done or self._all_finished_notified:
@@ -1129,7 +1129,7 @@ class InstallationManager:
             self._all_finished_notified = True
 
         all_done_key = 'lki.uninstall.status.all_done' if self.is_uninstalling else 'lki.action.status.all_done'
-        _log_overall(self, _(all_done_key))
+        _log_overall(self, tr(all_done_key))
         if self.window:
             self.root_tk.after(0, self.window.all_tasks_finished)
         if self.on_complete_callback:
@@ -1142,15 +1142,15 @@ def _copy_and_hash_component(copy_func, src_path, dest_path, component_name, tas
                              mods_dir_name="mods"):
     if not src_path or not src_path.is_file():
         return
-    from core.localizer import _
+    from core.localizer import tr
     from core.logger import log as _log
     try:
         copy_func(src_path, dest_path)
         rel_path = f"{mods_dir_name}/{dest_path.name}"
         files_info[component_name][rel_path] = utils.get_sha256(dest_path)
     except Exception as e:
-        _log(_('lki.install.debug.hash_failed') % (f"{task.task_name} ({component_name})", e))
-        key = _('lki.component.' + component_name)
+        _log(tr('lki.install.debug.hash_failed') % (f"{task.task_name} ({component_name})", e))
+        key = tr('lki.component.' + component_name)
         if key not in errors:
             errors.append(key)
 
@@ -1159,9 +1159,9 @@ def _copy_and_hash_component(copy_func, src_path, dest_path, component_name, tas
 
 def _log_overall(manager: InstallationManager, message: str):
     """安全地记录到主 UI。"""
-    from core.localizer import _  # (新增局部导入)
+    from core.localizer import tr  # (新增局部导入)
     # (已修改：本地化)
-    log(f"[{_('lki.log.overall')}] {message}")
+    log(f"[{tr('lki.log.overall')}] {message}")
     if manager.window:
         manager.root_tk.after(0, manager.window.update_overall_status, message)
 

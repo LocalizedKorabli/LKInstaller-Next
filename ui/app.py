@@ -22,7 +22,7 @@ from core import settings
 from core import utils
 from instance import instance_manager
 from instance.game_instance import GameInstance
-from core.localizer import _, global_translator, select_best_font
+from core.localizer import tr, global_translator, select_best_font
 from core.logger import log
 from ui.tabs.tab_about import AboutTab
 from ui.tabs.tab_advanced import AdvancedTab
@@ -39,7 +39,7 @@ class LocalizationInstallerApp:
         # (修改) 步骤 4: 缩放窗口大小
         base_width = 350
         try:
-            base_height = int(_('lki.app.data.height'))
+            base_height = int(tr('lki.app.data.height'))
         except ValueError:
             base_height = 497
         # (修改) 使用新的 scale_dpi 函数
@@ -48,14 +48,14 @@ class LocalizationInstallerApp:
         # master.geometry(f'{scaled_width}x{scaled_height}')
         master.geometry(f'{max(int(base_width * 1.5), scaled_width)}x{max(int(base_height * 1.5), scaled_height)}')
 
-        master.title(_('lki.app.title'))
+        master.title(tr('lki.app.title'))
 
         self.icons = get_icon_manager()
         self.icons.set_active_theme(initial_theme)
 
         self.instance_type_keys = ['production', 'pts']
         self.type_id_to_name: Dict[str, str] = {
-            code: _(f"lki.game.client_type.{code}") for code in self.instance_type_keys
+            code: tr(f"lki.game.client_type.{code}") for code in self.instance_type_keys
         }
 
         self._setup_styles(initial_theme == 'dark', font_family)
@@ -73,10 +73,10 @@ class LocalizationInstallerApp:
 
         self.tab_about = AboutTab(self.notebook)
 
-        self.notebook.add(self.tab_game, text=_('lki.tab.game'))
-        self.notebook.add(self.tab_advanced, text=_('lki.tab.advanced'))
-        self.notebook.add(self.tab_settings, text=_('lki.tab.settings'))
-        self.notebook.add(self.tab_about, text=_('lki.tab.about'))
+        self.notebook.add(self.tab_game, text=tr('lki.tab.game'))
+        self.notebook.add(self.tab_advanced, text=tr('lki.tab.advanced'))
+        self.notebook.add(self.tab_settings, text=tr('lki.tab.settings'))
+        self.notebook.add(self.tab_about, text=tr('lki.tab.about'))
 
         self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
 
@@ -139,8 +139,8 @@ class LocalizationInstallerApp:
     def _on_language_select(self):
         """由 SettingsTab 调用的回调。"""
         messagebox.showinfo(
-            _('lki.app.title'),
-            _('lki.settings.language.reload_required')
+            tr('lki.app.title'),
+            tr('lki.settings.language.reload_required')
         )
 
     def _on_theme_select(self, selected_theme: str):
@@ -173,7 +173,7 @@ class LocalizationInstallerApp:
             self.tab_advanced.update_content(current_instance)
 
     def reload_app(self):
-        log(_('lki.reload.status.reloading_ui'))
+        log(tr('lki.reload.status.reloading_ui'))
 
         try:
             settings.global_settings.save()
@@ -204,6 +204,6 @@ class LocalizationInstallerApp:
         except Exception as e:
             import traceback
             traceback.print_exc()
-            error_message = _('lki.reload.error.failed_to_reload') % e
-            messagebox.showerror(_('lki.reload.title'), error_message)
+            error_message = tr('lki.reload.error.failed_to_reload') % e
+            messagebox.showerror(tr('lki.reload.title'), error_message)
             sys.exit(1)

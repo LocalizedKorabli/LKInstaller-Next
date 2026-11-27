@@ -22,7 +22,7 @@ from tkinter import ttk, messagebox
 from typing import Callable, Dict, Any, Optional
 
 from core import utils
-from core.localizer import _
+from core.localizer import tr
 from core.logger import log
 from ui.dialogs import BaseDialog
 from instance.game_instance import GameInstance
@@ -129,7 +129,7 @@ class ActionProgressWindow(BaseDialog):
             self.widgets[name] = widget
 
         # 关闭按钮
-        self.close_btn = ttk.Button(main_frame, text=_('lki.btn.cancel'), command=self._on_close,
+        self.close_btn = ttk.Button(main_frame, text=tr('lki.btn.cancel'), command=self._on_close,
                                     style="danger.TButton")
         self.close_btn.pack(side='right', pady=(10, 0))
 
@@ -189,9 +189,9 @@ class ActionProgressWindow(BaseDialog):
         self.cancel_callback = None
 
         try:
-            self.overall_status_label.config(text=_('lki.action.status.all_done'))
+            self.overall_status_label.config(text=tr('lki.action.status.all_done'))
             if self.close_btn and self.close_btn.winfo_exists():
-                self.close_btn.config(text=_('lki.btn.close'), style="success.TButton", command=self.destroy,
+                self.close_btn.config(text=tr('lki.btn.close'), style="success.TButton", command=self.destroy,
                                       state='normal')
         except tk.TclError:
             pass  # 窗口已销毁
@@ -229,7 +229,7 @@ class ActionProgressWindow(BaseDialog):
 
         if not success:
             messagebox.showwarning(
-                _('lki.app.title'),
-                _('lki.game.error.play_failed') % ("lgc_api.exe", "Korabli.exe"),
+                tr('lki.app.title'),
+                tr('lki.game.error.play_failed') % ("lgc_api.exe", "Korabli.exe"),
                 parent=self  # (已修改) 将此窗口设为父窗口
             )
