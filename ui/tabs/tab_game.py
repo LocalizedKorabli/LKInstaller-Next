@@ -31,7 +31,7 @@ from ui.tabs.tab_base import BaseTab
 from tktooltip import ToolTip
 
 from instance import instance_manager
-from core.localizer import _
+from core.localizer import tr
 from instance.game_instance import GameInstance
 from ui.dialogs import BaseDialog, AutoUpdateConfigDialog
 from instance.instance_detector import find_instances_for_auto_import, get_instance_type_from_path
@@ -92,7 +92,7 @@ class GameTab(BaseTab):
         top_buttons_frame.pack(side='right', anchor='e')
         self.check_all_btn = ttk.Checkbutton(top_frame, variable=self.select_all_var, command=self._on_select_all)
         self.check_all_btn.pack(side='left', padx=(0, 10), anchor='center')
-        title_label = ttk.Label(top_frame, text=_('lki.game.detected_clients'), style="Client.TLabel")
+        title_label = ttk.Label(top_frame, text=tr('lki.game.detected_clients'), style="Client.TLabel")
         title_label.pack(side='left', anchor='w')
 
         self.btn_import = ttk.Button(top_buttons_frame, image=self.icons.import_icon, style="Toolbutton",
@@ -112,7 +112,7 @@ class GameTab(BaseTab):
         self.btn_auto_import.pack(side='left', padx=(2, 0))
 
         # (已修改：使用基类方法创建)
-        self.hint_label = self._create_placeholder_label(_('lki.game.actions_hint'))
+        self.hint_label = self._create_placeholder_label(tr('lki.game.actions_hint'))
         self.hint_label.config(style="Hint.TLabel", anchor='center')  # (设置特定样式)
         self.hint_label.pack(fill='x', side='bottom', pady=(5, 0))
 
@@ -121,13 +121,13 @@ class GameTab(BaseTab):
         bottom_frame.pack(fill='x', side='bottom', pady=(10, 0))
         bottom_frame.columnconfigure((0, 1), weight=1)  # (新增)
 
-        self.btn_install_selected = ttk.Button(bottom_frame, text=_('lki.game.btn.install_selected'),
+        self.btn_install_selected = ttk.Button(bottom_frame, text=tr('lki.game.btn.install_selected'),
                                                command=self._on_install_clicked)
         # (修改：使用 grid)
         self.btn_install_selected.grid(row=0, column=0, sticky='ew', padx=(0, 5))
 
         # (新增：卸载按钮)
-        self.btn_uninstall_selected = ttk.Button(bottom_frame, text=_('lki.game.btn.uninstall'),
+        self.btn_uninstall_selected = ttk.Button(bottom_frame, text=tr('lki.game.btn.uninstall'),
                                                  command=self._on_uninstall_clicked,
                                                  style="danger.TButton")
         self.btn_uninstall_selected.grid(row=0, column=1, sticky='ew', padx=(5, 0))
@@ -181,7 +181,7 @@ class GameTab(BaseTab):
         self.empty_state_frame = ttk.Frame(list_container)
         self.empty_hint_label = ttk.Label(
             self.empty_state_frame,
-            text=_('lki.game.empty_list_hint'),
+            text=tr('lki.game.empty_list_hint'),
             style="Hint.TLabel",
             justify='center',
             anchor='center',
@@ -191,23 +191,23 @@ class GameTab(BaseTab):
 
         self.btn_empty_auto_import = ttk.Button(
             self.empty_state_frame,
-            text="  " + _('lki.tooltip.detect_instances'),
+            text="  " + tr('lki.tooltip.detect_instances'),
             image=self.icons.auto_import_icon,
             compound='left',
             command=self._on_auto_import,
         )
         self.btn_empty_auto_import.pack()
 
-        ToolTip(self.btn_import, _('lki.tooltip.add_instance'))
-        ToolTip(self.btn_rename, _('lki.tooltip.edit_instance'))
-        ToolTip(self.btn_remove, _('lki.tooltip.remove_instance'))
-        ToolTip(self.btn_auto_import, _('lki.tooltip.detect_instances'))
-        ToolTip(self.btn_move_up, _('lki.tooltip.move_up'))
-        ToolTip(self.btn_move_down, _('lki.tooltip.move_down'))
-        ToolTip(self.btn_open_folder, _('lki.tooltip.open_folder'))
-        ToolTip(self.btn_refresh, _('lki.tooltip.refresh_list'))
-        ToolTip(self.btn_play, _('lki.tooltip.play_instance'))
-        ToolTip(self.btn_auto_update_shortcut, _('lki.tooltip.auto_update_shortcut'))
+        ToolTip(self.btn_import, tr('lki.tooltip.add_instance'))
+        ToolTip(self.btn_rename, tr('lki.tooltip.edit_instance'))
+        ToolTip(self.btn_remove, tr('lki.tooltip.remove_instance'))
+        ToolTip(self.btn_auto_import, tr('lki.tooltip.detect_instances'))
+        ToolTip(self.btn_move_up, tr('lki.tooltip.move_up'))
+        ToolTip(self.btn_move_down, tr('lki.tooltip.move_down'))
+        ToolTip(self.btn_open_folder, tr('lki.tooltip.open_folder'))
+        ToolTip(self.btn_refresh, tr('lki.tooltip.refresh_list'))
+        ToolTip(self.btn_play, tr('lki.tooltip.play_instance'))
+        ToolTip(self.btn_auto_update_shortcut, tr('lki.tooltip.auto_update_shortcut'))
 
     def _load_and_display_instances(self):
         """从管理器加载实例数据。"""
@@ -299,17 +299,17 @@ class GameTab(BaseTab):
         def on_click(event, frame=item_frame, id=instance.instance_id):
             self._on_client_select(frame, id)
 
-        name_label_text = f"{_('lki.game.name_label')} {instance.name}"
+        name_label_text = f"{tr('lki.game.name_label')} {instance.name}"
         name_label = ttk.Label(text_frame, text=name_label_text, style="Client.TLabel", cursor="hand2")
         name_label.pack(anchor='w', fill='x')
 
-        path_label_text = f"{_('lki.game.path_label')} {str(instance.path)}"
+        path_label_text = f"{tr('lki.game.path_label')} {str(instance.path)}"
         path_label = ttk.Label(text_frame, text=path_label_text, style="Path.TLabel", wraplength=400, cursor="hand2")
         path_label.pack(anchor='w', fill='x')
 
         non_ascii_warning_label = None
         if instance.path_has_non_ascii:
-            warning_text = _('lki.game.warning.non_ascii_path')
+            warning_text = tr('lki.game.warning.non_ascii_path')
             non_ascii_warning_label = ttk.Label(text_frame, text=warning_text,
                                                 foreground='#c09853', cursor='hand2', justify='left',
                                                 wraplength=400)
@@ -318,8 +318,8 @@ class GameTab(BaseTab):
             self._bind_mousewheel(non_ascii_warning_label)
 
         type_key = f"lki.game.client_type.{instance.type}"
-        type_text = _(type_key)
-        type_info_text = f"{_('lki.game.type_label')} {type_text}"
+        type_text = tr(type_key)
+        type_info_text = f"{tr('lki.game.type_label')} {type_text}"
         type_info_label = ttk.Label(text_frame, text=type_info_text, style="Path.TLabel", cursor="hand2")
         type_info_label.pack(anchor='w', fill='x')
 
@@ -327,10 +327,10 @@ class GameTab(BaseTab):
         active_preset_id = instance_data.get('active_preset_id', 'default') if instance_data else 'default'
         preset_data = (instance_data.get('presets', {}).get(active_preset_id, {}) if instance_data else {})
         if preset_data.get('is_default'):
-            preset_display_name = _(preset_data['name_key'])
+            preset_display_name = tr(preset_data['name_key'])
         else:
             preset_display_name = preset_data.get('name', active_preset_id)
-        preset_info_text = f"{_('lki.game.preset_label')} {preset_display_name}"
+        preset_info_text = f"{tr('lki.game.preset_label')} {preset_display_name}"
         preset_info_label = ttk.Label(text_frame, text=preset_info_text, style="Path.TLabel", cursor="hand2")
         preset_info_label.pack(anchor='w', fill='x')
 
@@ -352,7 +352,7 @@ class GameTab(BaseTab):
 
         status_labels = []
         if not versions_to_display:
-            status_text = _('lki.game.version_not_found')
+            status_text = tr('lki.game.version_not_found')
             status_label = ttk.Label(text_frame, text=status_text, style='Path.TLabel', cursor='hand2', justify='left')
             status_label.pack(anchor='w', fill='x')
             status_label.bind('<Button-1>', on_click)
@@ -383,13 +383,13 @@ class GameTab(BaseTab):
         return item_frame
 
     def _build_version_display_text(self, instance, game_version, preset_data):
-        ver_str = game_version.exe_version or _('lki.game.version_unknown')
-        status_text = f"{_('lki.game.version_label')} {ver_str}"
+        ver_str = game_version.exe_version or tr('lki.game.version_unknown')
+        status_text = f"{tr('lki.game.version_label')} {ver_str}"
 
         if game_version.l10n_info:
             l10n_ver_full = game_version.l10n_info.version
             if l10n_ver_full == "INACTIVE":
-                l10n_details = f"{_('lki.game.i18n_status.inactive')}"
+                l10n_details = f"{tr('lki.game.i18n_status.inactive')}"
             else:
                 statuses = game_version.get_component_statuses()
                 l10n_sub_ver = game_version.l10n_info.l10n_sub_version
@@ -431,10 +431,10 @@ class GameTab(BaseTab):
                             break
                 display_ver = l10n_sub_ver if l10n_sub_ver else l10n_ver_full
                 status_key = 'lki.game.i18n_status.ok' if is_ok else 'lki.game.i18n_status.corrupted'
-                l10n_details = f"{lang_str}{display_ver} - {_(status_key)}"
+                l10n_details = f"{lang_str}{display_ver} - {tr(status_key)}"
             status_text += f" | {l10n_details}"
         else:
-            status_text += f" | {_('lki.game.i18n_status.not_installed')}"
+            status_text += f" | {tr('lki.game.i18n_status.not_installed')}"
         return status_text
 
     def _on_client_select(self, selected_frame, selected_id):
@@ -586,8 +586,8 @@ class GameTab(BaseTab):
 
             if not found_instances and not is_initial_run:
                 self.app_master.after(0, messagebox.showinfo,
-                                      _('lki.game.detected_clients'),
-                                      _('lki.detect.none_found'))
+                                      tr('lki.game.detected_clients'),
+                                      tr('lki.detect.none_found'))
                 self.app_master.after(0, self._set_auto_import_buttons_state, 'normal')
                 return
 
@@ -640,7 +640,7 @@ class GameTab(BaseTab):
             log(f"Error during instance detection thread: {e}")
             if not is_initial_run:
                 self.app_master.after(0, messagebox.showerror,
-                                      _('lki.game.detected_clients'),
+                                      tr('lki.game.detected_clients'),
                                       f"An error occurred: {e}")
             self.app_master.after(0, self._set_auto_import_buttons_state, 'normal')
 
@@ -651,23 +651,23 @@ class GameTab(BaseTab):
         if not is_initial_run:
             if new_count > 0:
                 messagebox.showinfo(
-                    _('lki.game.detected_clients'),
-                    _('lki.detect.found_new') % new_count
+                    tr('lki.game.detected_clients'),
+                    tr('lki.detect.found_new') % new_count
                 )
             else:
                 messagebox.showinfo(
-                    _('lki.game.detected_clients'),
-                    _('lki.detect.no_new')
+                    tr('lki.game.detected_clients'),
+                    tr('lki.detect.no_new')
                 )
 
         if non_ascii_paths:
-            lines = [_('lki.game.warning.non_ascii_detected_header')]
+            lines = [tr('lki.game.warning.non_ascii_detected_header')]
             for p in non_ascii_paths:
                 lines.append(f"  - {p}")
             lines.append('')
-            lines.append(_('lki.game.warning.non_ascii_detected_footer'))
+            lines.append(tr('lki.game.warning.non_ascii_detected_footer'))
             messagebox.showwarning(
-                _('lki.game.warning.non_ascii_detected_title'),
+                tr('lki.game.warning.non_ascii_detected_title'),
                 '\n'.join(lines),
                 parent=self.app_master
             )
@@ -706,7 +706,7 @@ class GameTab(BaseTab):
         checked_instance_ids = self._get_checked_instance_ids()  # (已修改：复用此逻辑)
 
         if not checked_instance_ids:
-            messagebox.showwarning(_('lki.install.title'), _('lki.install.error.no_instances_selected'))
+            messagebox.showwarning(tr('lki.install.title'), tr('lki.install.error.no_instances_selected'))
             return
 
         unacknowledged = []
@@ -717,13 +717,13 @@ class GameTab(BaseTab):
                     unacknowledged.append((instance_id, instance))
 
         if unacknowledged:
-            lines = [_('lki.game.warning.non_ascii_install_header')]
+            lines = [tr('lki.game.warning.non_ascii_install_header')]
             for iid, inst in unacknowledged:
                 lines.append(f"  - {inst.name} ({inst.path})")
             lines.append('')
-            lines.append(_('lki.game.warning.non_ascii_install_footer'))
+            lines.append(tr('lki.game.warning.non_ascii_install_footer'))
             msg = '\n'.join(lines)
-            if not messagebox.askyesno(_('lki.install.title'), msg, parent=self.app_master):
+            if not messagebox.askyesno(tr('lki.install.title'), msg, parent=self.app_master):
                 return
             for iid, _inst in unacknowledged:
                 self.instance_manager.acknowledge_non_ascii_path(iid)
@@ -738,8 +738,8 @@ class GameTab(BaseTab):
                 continue
 
             if not instance.versions:
-                messagebox.showwarning(_('lki.game.btn.install_selected'),
-                                       _('lki.install.error.no_version_for_instance') % instance.name)
+                messagebox.showwarning(tr('lki.game.btn.install_selected'),
+                                       tr('lki.install.error.no_version_for_instance') % instance.name)
                 continue
 
             active_preset_id = instance_data.get('active_preset_id', 'default')
@@ -750,7 +750,7 @@ class GameTab(BaseTab):
                 continue
 
             # (为预设添加一个可显示的名称)
-            preset_data['name'] = _(preset_data.get('name_key')) if preset_data.get('is_default') else preset_data.get(
+            preset_data['name'] = tr(preset_data.get('name_key')) if preset_data.get('is_default') else preset_data.get(
                 'name')
 
             tasks_to_run.append(InstallationTask(instance, preset_data, self.app_master))
@@ -784,7 +784,7 @@ class GameTab(BaseTab):
         def oclick(event):
             self._on_client_select(widgets.frame, instance_id)
         if not versions_to_display:
-            label = ttk.Label(text_frame, text=_("lki.game.version_not_found"),
+            label = ttk.Label(text_frame, text=tr("lki.game.version_not_found"),
                               style="Path.TLabel", cursor="hand2", justify="left")
             label.pack(anchor="w", fill="x")
             label.bind("<Button-1>", oclick)
@@ -807,12 +807,12 @@ class GameTab(BaseTab):
         checked_instance_ids = self._get_checked_instance_ids()
 
         if not checked_instance_ids:
-            messagebox.showwarning(_('lki.uninstall.title'), _('lki.uninstall.error.no_instances_selected'))
+            messagebox.showwarning(tr('lki.uninstall.title'), tr('lki.uninstall.error.no_instances_selected'))
             return
 
         # 2. 显示确认对话框
-        confirm_msg = _('lki.uninstall.confirm.message') % len(checked_instance_ids)
-        if not messagebox.askyesno(_('lki.uninstall.confirm.title'), confirm_msg, parent=self.app_master):
+        confirm_msg = tr('lki.uninstall.confirm.message') % len(checked_instance_ids)
+        if not messagebox.askyesno(tr('lki.uninstall.confirm.title'), confirm_msg, parent=self.app_master):
             return
 
         # 3. 为每个实例创建“虚拟”任务
@@ -825,7 +825,7 @@ class GameTab(BaseTab):
 
             # 卸载不需要预设数据，但 InstallationTask 结构很方便
             # 我们传入一个虚拟的 preset_data 来显示任务名称
-            dummy_preset_data = {"name": _('lki.game.btn.uninstall')}
+            dummy_preset_data = {"name": tr('lki.game.btn.uninstall')}
             tasks_to_run.append(InstallationTask(instance, dummy_preset_data, self.app_master))
 
         # 4. 启动管理器
@@ -845,17 +845,17 @@ class GameTab(BaseTab):
         current_ui_lang = settings.global_settings.language
 
         if not all(ord(c) < 128 for c in path):
-            msg = (_('lki.game.warning.non_ascii_detected_header') + '\n\n'
+            msg = (tr('lki.game.warning.non_ascii_detected_header') + '\n\n'
                    + f"  {path}\n\n"
-                   + _('lki.game.warning.non_ascii_detected_footer'))
-            if not messagebox.askyesno(_('lki.add_instance.title'), msg, parent=self.app_master):
+                   + tr('lki.game.warning.non_ascii_detected_footer'))
+            if not messagebox.askyesno(tr('lki.add_instance.title'), msg, parent=self.app_master):
                 return
 
         new_id = self.instance_manager.add_instance(name, path, type_code, current_ui_lang)
 
         messagebox.showinfo(
-            _('lki.add_instance.title'),
-            _('lki.add_instance.success') % name,
+            tr('lki.add_instance.title'),
+            tr('lki.add_instance.success') % name,
             parent=self.app_master
         )
         self._clear_selection_and_refresh(default_checked_ids={new_id})
@@ -877,7 +877,7 @@ class GameTab(BaseTab):
         preset_id_to_display_name = {}
         for preset_id, data in presets_dict.items():
             if data.get('is_default'):
-                display_name = _(data["name_key"])
+                display_name = tr(data["name_key"])
             else:
                 display_name = data.get("name", f"Preset {preset_id}")
             preset_id_to_display_name[preset_id] = display_name
@@ -925,8 +925,8 @@ class GameTab(BaseTab):
         self.instance_manager.delete_instance(instance_id)
 
         messagebox.showinfo(
-            _('lki.delete_instance.title'),
-            _('lki.delete_instance.success') % instance_name,
+            tr('lki.delete_instance.title'),
+            tr('lki.delete_instance.success') % instance_name,
             parent=self.app_master
         )
         self._clear_selection_and_refresh()
@@ -989,8 +989,8 @@ class GameTab(BaseTab):
 
         if not success:
             messagebox.showwarning(
-                _('lki.app.title'),
-                _('lki.game.error.play_failed') % ("lgc_api.exe", "Korabli.exe"),
+                tr('lki.app.title'),
+                tr('lki.game.error.play_failed') % ("lgc_api.exe", "Korabli.exe"),
                 parent=self.app_master
             )
 
@@ -1013,7 +1013,7 @@ class GameTab(BaseTab):
         presets = instance_data.get('presets', {})
         preset_data = presets.get(active_preset_id, {})
         if preset_data.get('is_default'):
-            preset_name = _(preset_data['name_key'])
+            preset_name = tr(preset_data['name_key'])
         else:
             preset_name = preset_data.get('name', active_preset_id)
 
@@ -1034,7 +1034,7 @@ class ImportInstanceWindow(BaseDialog):
 
     def __init__(self, parent, type_map, on_save_callback):
         super().__init__(parent)
-        self.title(_('lki.add_instance.title'))
+        self.title(tr('lki.add_instance.title'))
         self.resizable(False, False)
 
         self.type_map = type_map
@@ -1050,23 +1050,23 @@ class ImportInstanceWindow(BaseDialog):
         main_frame.columnconfigure(1, weight=1)
 
         # 1. 名称
-        ttk.Label(main_frame, text=_('lki.add_instance.name')).grid(row=0, column=0, sticky='e', padx=(0, 10), pady=5)
+        ttk.Label(main_frame, text=tr('lki.add_instance.name')).grid(row=0, column=0, sticky='e', padx=(0, 10), pady=5)
         name_entry = ttk.Entry(main_frame, textvariable=self.name_var)
         name_entry.grid(row=0, column=1, sticky='we', pady=5)
         name_entry.focus_set()
 
         # 2. 路径
-        ttk.Label(main_frame, text=_('lki.add_instance.path')).grid(row=1, column=0, sticky='e', padx=(0, 10), pady=5)
+        ttk.Label(main_frame, text=tr('lki.add_instance.path')).grid(row=1, column=0, sticky='e', padx=(0, 10), pady=5)
         path_frame = ttk.Frame(main_frame)
         path_frame.grid(row=1, column=1, sticky='we', pady=5)
         path_frame.columnconfigure(0, weight=1)
         path_entry = ttk.Entry(path_frame, textvariable=self.path_var)
         path_entry.grid(row=0, column=0, sticky='we')
-        browse_btn = ttk.Button(path_frame, text=_('lki.add_instance.btn.browse'), command=self._on_browse)
+        browse_btn = ttk.Button(path_frame, text=tr('lki.add_instance.btn.browse'), command=self._on_browse)
         browse_btn.grid(row=0, column=1, sticky='w', padx=(5, 0))
 
         # 3. 类型
-        ttk.Label(main_frame, text=_('lki.add_instance.type')).grid(row=2, column=0, sticky='e', padx=(0, 10), pady=5)
+        ttk.Label(main_frame, text=tr('lki.add_instance.type')).grid(row=2, column=0, sticky='e', padx=(0, 10), pady=5)
         self.type_combo = ttk.Combobox(main_frame, textvariable=self.type_var, values=list(self.type_map.values()),
                                        state='disabled')
         self.type_combo.grid(row=2, column=1, sticky='we', pady=5)
@@ -1078,9 +1078,9 @@ class ImportInstanceWindow(BaseDialog):
         # 5. 按钮
         button_frame = ttk.Frame(main_frame, padding=(0, 10, 0, 0))
         button_frame.grid(row=4, column=0, columnspan=2, sticky='e')
-        self.save_btn = ttk.Button(button_frame, text=_('lki.btn.save'), command=self._on_save, state='disabled')
+        self.save_btn = ttk.Button(button_frame, text=tr('lki.btn.save'), command=self._on_save, state='disabled')
         self.save_btn.pack(side='right')
-        ttk.Button(button_frame, text=_('lki.btn.cancel'), command=self.destroy).pack(side='right', padx=5)
+        ttk.Button(button_frame, text=tr('lki.btn.cancel'), command=self.destroy).pack(side='right', padx=5)
 
         # 6. 绑定
         self.name_var.trace_add('write', self._check_button_state)
@@ -1102,7 +1102,7 @@ class ImportInstanceWindow(BaseDialog):
             self._check_button_state()
             return
 
-        self.status_label.config(text=_('lki.add_instance.status.checking'), foreground='gray')
+        self.status_label.config(text=tr('lki.add_instance.status.checking'), foreground='gray')
         self.master.update_idletasks()
 
         p = Path(path_str)
@@ -1112,11 +1112,11 @@ class ImportInstanceWindow(BaseDialog):
         if type_code:
             type_name = self.type_map.get(type_code)
             self.type_var.set(type_name)
-            self.status_label.config(text=_('lki.add_instance.status.detected') % type_name, foreground='green')
+            self.status_label.config(text=tr('lki.add_instance.status.detected') % type_name, foreground='green')
             self.type_combo.config(state='disabled')
         else:
             self.type_var.set("")
-            self.status_label.config(text=_('lki.add_instance.error.invalid_path'), foreground='red')
+            self.status_label.config(text=tr('lki.add_instance.error.invalid_path'), foreground='red')
             self.type_combo.config(state='disabled')
 
         self._check_button_state()
@@ -1138,7 +1138,7 @@ class ImportInstanceWindow(BaseDialog):
 
         instance_id = instance_manager.global_instance_manager._generate_id(path_str)
         if instance_id in instance_manager.global_instance_manager.instances:
-            messagebox.showerror(_('lki.add_instance.title'), _('lki.add_instance.error.path_exists'), parent=self)
+            messagebox.showerror(tr('lki.add_instance.title'), tr('lki.add_instance.error.path_exists'), parent=self)
             return
 
         type_code = self.type_name_to_id.get(type_name)
@@ -1153,7 +1153,7 @@ class EditInstanceWindow(BaseDialog):
     def __init__(self, parent, instance_id, current_name, current_type, current_preset_id,
                  type_map, preset_map, on_save_callback):
         super().__init__(parent)
-        self.title(_('lki.edit_instance.title'))
+        self.title(tr('lki.edit_instance.title'))
         self.resizable(False, False)
 
         self.instance_id = instance_id
@@ -1173,20 +1173,20 @@ class EditInstanceWindow(BaseDialog):
         main_frame.columnconfigure(1, weight=1)
 
         # 1. 名称
-        ttk.Label(main_frame, text=_('lki.edit_instance.name')).grid(row=0, column=0, sticky='e', padx=(0, 10), pady=5)
+        ttk.Label(main_frame, text=tr('lki.edit_instance.name')).grid(row=0, column=0, sticky='e', padx=(0, 10), pady=5)
         name_entry = ttk.Entry(main_frame, textvariable=self.name_var)
         name_entry.grid(row=0, column=1, sticky='we', pady=5)
         name_entry.focus_set()
 
         # 2. 实例类型
-        ttk.Label(main_frame, text=_('lki.add_instance.type')).grid(row=1, column=0, sticky='e', padx=(0, 10), pady=5)
+        ttk.Label(main_frame, text=tr('lki.add_instance.type')).grid(row=1, column=0, sticky='e', padx=(0, 10), pady=5)
         type_combo = ttk.Combobox(main_frame, textvariable=self.type_var,
                                   values=list(self.type_map.values()), state='readonly')
         type_combo.grid(row=1, column=1, sticky='we', pady=5)
         type_combo.bind("<<ComboboxSelected>>", self._on_type_changed)
 
         # 3. 活动预设
-        ttk.Label(main_frame, text=_('lki.edit_instance.active_preset')).grid(row=2, column=0, sticky='e', padx=(0, 10),
+        ttk.Label(main_frame, text=tr('lki.edit_instance.active_preset')).grid(row=2, column=0, sticky='e', padx=(0, 10),
                                                                               pady=5)
         preset_combo = ttk.Combobox(main_frame, textvariable=self.preset_var,
                                     values=list(self.preset_id_to_name.values()), state='readonly')
@@ -1199,8 +1199,8 @@ class EditInstanceWindow(BaseDialog):
         # 4. 按钮
         button_frame = ttk.Frame(main_frame, padding=(0, 10, 0, 0))
         button_frame.grid(row=3, column=0, columnspan=2, sticky='e')
-        ttk.Button(button_frame, text=_('lki.btn.save'), command=self._on_save).pack(side='right')
-        ttk.Button(button_frame, text=_('lki.btn.cancel'), command=self.destroy).pack(side='right', padx=5)
+        ttk.Button(button_frame, text=tr('lki.btn.save'), command=self._on_save).pack(side='right')
+        ttk.Button(button_frame, text=tr('lki.btn.cancel'), command=self.destroy).pack(side='right', padx=5)
 
     def _on_type_changed(self, event=None):
         """当实例类型下拉框被更改时调用。"""
@@ -1210,8 +1210,8 @@ class EditInstanceWindow(BaseDialog):
         if not new_type_code or new_type_code == self.current_type_code:
             return
 
-        confirm_text = _('lki.advanced.confirm_type_change') % new_type_name
-        if messagebox.askyesno(_('lki.app.title'), confirm_text, parent=self):
+        confirm_text = tr('lki.advanced.confirm_type_change') % new_type_name
+        if messagebox.askyesno(tr('lki.app.title'), confirm_text, parent=self):
             self.current_type_code = new_type_code
         else:
             current_type_name = self.type_map.get(self.current_type_code)
@@ -1240,7 +1240,7 @@ class DeleteInstanceWindow(BaseDialog):
 
     def __init__(self, parent, instance_id, instance_name, icons, on_delete_callback):
         super().__init__(parent)
-        self.title(_('lki.delete_instance.title'))
+        self.title(tr('lki.delete_instance.title'))
         self.resizable(False, False)
 
         self.instance_id = instance_id
@@ -1254,7 +1254,7 @@ class DeleteInstanceWindow(BaseDialog):
         main_frame.pack(fill='both', expand=True)
         main_frame.columnconfigure(0, weight=1)
 
-        prompt_label = ttk.Label(main_frame, text=_('lki.delete_instance.prompt'),
+        prompt_label = ttk.Label(main_frame, text=tr('lki.delete_instance.prompt'),
                                  wraplength=utils.scale_dpi(self, 350))
         prompt_label.grid(row=0, column=0, sticky='w', pady=(0, 10))
 
@@ -1270,7 +1270,7 @@ class DeleteInstanceWindow(BaseDialog):
         self.copy_feedback_label = ttk.Label(name_frame, text="", style="Hint.TLabel", foreground='green')
         self.copy_feedback_label.pack(side='left', padx=5)
 
-        confirm_label = ttk.Label(main_frame, text=_('lki.delete_instance.confirm_label'))
+        confirm_label = ttk.Label(main_frame, text=tr('lki.delete_instance.confirm_label'))
         confirm_label.grid(row=2, column=0, sticky='w', pady=(10, 5))
 
         self.confirm_entry = ttk.Entry(main_frame, textvariable=self.confirm_var)
@@ -1281,10 +1281,10 @@ class DeleteInstanceWindow(BaseDialog):
         button_frame = ttk.Frame(main_frame, padding=(0, 10, 0, 0))
         button_frame.grid(row=4, column=0, sticky='e', pady=(10, 0))
 
-        self.delete_btn = ttk.Button(button_frame, text=_('lki.btn.remove_instance'), command=self._on_delete,
+        self.delete_btn = ttk.Button(button_frame, text=tr('lki.btn.remove_instance'), command=self._on_delete,
                                      style="danger.TButton")
         self.delete_btn.pack(side='right')
-        ttk.Button(button_frame, text=_('lki.btn.cancel'), command=self.destroy).pack(side='right', padx=5)
+        ttk.Button(button_frame, text=tr('lki.btn.cancel'), command=self.destroy).pack(side='right', padx=5)
 
         self.delete_btn.config(state='disabled')
         self.confirm_var.trace_add('write', self._validate_name)
@@ -1301,11 +1301,11 @@ class DeleteInstanceWindow(BaseDialog):
         try:
             self.clipboard_clear()
             self.clipboard_append(self.instance_name)
-            self.copy_feedback_label.config(text=_('lki.generic.copied'), foreground='green')
+            self.copy_feedback_label.config(text=tr('lki.generic.copied'), foreground='green')
             self.after(2000, lambda: self.copy_feedback_label.config(text=""))
         except Exception as e:
             log(f"Clipboard error: {e}")
-            self.copy_feedback_label.config(text=f"{_('lki.install.status.failed')}", foreground='red')
+            self.copy_feedback_label.config(text=f"{tr('lki.install.status.failed')}", foreground='red')
             self.after(2000, lambda: self.copy_feedback_label.config(text=""))
 
     def _on_delete(self, event=None):
@@ -1317,4 +1317,4 @@ class DeleteInstanceWindow(BaseDialog):
             self.on_delete_callback(self.instance_id, self.instance_name)
             self.destroy()
         else:
-            messagebox.showerror(_('lki.delete_instance.title'), _('lki.delete_instance.error.mismatch'), parent=self)
+            messagebox.showerror(tr('lki.delete_instance.title'), tr('lki.delete_instance.error.mismatch'), parent=self)

@@ -26,7 +26,7 @@ from core import settings
 from core import logger
 from core.dirs import APP_DATA_PATH, CACHE_DIR, LOG_DIR, resolve_real_path
 from installation.localization_sources import global_source_manager, get_route_id_to_name
-from core.localizer import _, get_available_languages
+from core.localizer import tr, get_available_languages
 from core.logger import log
 from ui.dialogs import RoutePriorityWindow, BaseDialog
 from ui.tabs.tab_base import BaseTab
@@ -65,13 +65,13 @@ class SettingsTab(BaseTab):
         self.columnconfigure(0, weight=1)
 
         # --- “外观”设置组 (row=0) ---
-        appearance_frame = ttk.LabelFrame(self, text=_('lki.settings.category.appearance'), padding=10)
+        appearance_frame = ttk.LabelFrame(self, text=tr('lki.settings.category.appearance'), padding=10)
         appearance_frame.grid(row=0, column=0, sticky='we', pady=(0, 5))
         # 允许第1列（输入区）扩展，将右侧的第2列（按钮）推开
         appearance_frame.columnconfigure(1, weight=1)
 
         # 语言设置 (row=0)
-        lang_label = ttk.Label(appearance_frame, text=_('lki.settings.language'))
+        lang_label = ttk.Label(appearance_frame, text=tr('lki.settings.language'))
         lang_label.grid(row=0, column=0, sticky='e', padx=(0, 10), pady=10)
 
         lang_frame = ttk.Frame(appearance_frame)
@@ -88,29 +88,29 @@ class SettingsTab(BaseTab):
         self.lang_reload_label.grid(row=1, column=1, sticky='w', padx=5, pady=(0, 10))
 
         # 主题设置 (row=2)
-        theme_label = ttk.Label(appearance_frame, text=_('lki.settings.theme'))
+        theme_label = ttk.Label(appearance_frame, text=tr('lki.settings.theme'))
         theme_label.grid(row=2, column=0, sticky='e', padx=(0, 10), pady=(10, 0))
 
-        rb_light = ttk.Radiobutton(appearance_frame, text=_('lki.settings.theme.light'), variable=self.theme_var,
+        rb_light = ttk.Radiobutton(appearance_frame, text=tr('lki.settings.theme.light'), variable=self.theme_var,
                                    value='light', command=self._on_theme_select)
         rb_light.grid(row=2, column=1, columnspan=2, sticky='w', pady=(10, 5))
 
-        rb_dark = ttk.Radiobutton(appearance_frame, text=_('lki.settings.theme.dark'), variable=self.theme_var,
+        rb_dark = ttk.Radiobutton(appearance_frame, text=tr('lki.settings.theme.dark'), variable=self.theme_var,
                                   value='dark', command=self._on_theme_select)
         rb_dark.grid(row=3, column=1, sticky='w', pady=(0, 10))
 
         # 重载按钮 (row=3, column=2)
-        self.reload_btn = ttk.Button(appearance_frame, text=_('lki.settings.btn.reload'),
+        self.reload_btn = ttk.Button(appearance_frame, text=tr('lki.settings.btn.reload'),
                                      command=self._on_reload_click, style='Link.TButton')
         self.reload_btn.grid(row=3, column=2, sticky='se', padx=(10, 0), pady=(0, 10))
 
         # --- “下载”设置组 (row=1) ---
-        download_frame = ttk.LabelFrame(self, text=_('lki.settings.category.download'), padding=10)
+        download_frame = ttk.LabelFrame(self, text=tr('lki.settings.category.download'), padding=10)
         download_frame.grid(row=1, column=0, sticky='we', pady=5)
         download_frame.columnconfigure(1, weight=1)
 
         # 代理设置
-        proxy_label = ttk.Label(download_frame, text=_('lki.settings.proxy'))
+        proxy_label = ttk.Label(download_frame, text=tr('lki.settings.proxy'))
         proxy_label.grid(row=0, column=0, sticky='e', padx=(0, 10), pady=10)
 
         proxy_frame = ttk.Frame(download_frame)
@@ -120,11 +120,11 @@ class SettingsTab(BaseTab):
         self.proxy_status_label = ttk.Label(proxy_frame, text=self.proxy_status_text)
         self.proxy_status_label.grid(row=0, column=0, sticky='w', padx=5)
 
-        self.proxy_config_btn = ttk.Button(proxy_frame, text=_('lki.btn.configure'), command=self._open_proxy_window)
+        self.proxy_config_btn = ttk.Button(proxy_frame, text=tr('lki.btn.configure'), command=self._open_proxy_window)
         self.proxy_config_btn.grid(row=0, column=1, sticky='e')
 
         # 下载线路优先级
-        route_label = ttk.Label(download_frame, text=_('lki.settings.download_routes_priority'))
+        route_label = ttk.Label(download_frame, text=tr('lki.settings.download_routes_priority'))
         route_label.grid(row=1, column=0, sticky='e', padx=(0, 10), pady=10)
 
         route_frame = ttk.Frame(download_frame)
@@ -134,33 +134,33 @@ class SettingsTab(BaseTab):
         self.route_priority_display_label = ttk.Label(route_frame, text="")
         self.route_priority_display_label.grid(row=0, column=0, sticky='w', padx=5)
 
-        self.route_config_btn = ttk.Button(route_frame, text=_('lki.btn.configure'),
+        self.route_config_btn = ttk.Button(route_frame, text=tr('lki.btn.configure'),
                                            command=self._open_route_priority_window)
         self.route_config_btn.grid(row=0, column=1, sticky='e')
 
         # --- “安装”设置组 ---
-        install_frame = ttk.LabelFrame(self, text=_('lki.settings.category.install'), padding=10)
+        install_frame = ttk.LabelFrame(self, text=tr('lki.settings.category.install'), padding=10)
         install_frame.grid(row=2, column=0, sticky='we', pady=5)
         install_frame.columnconfigure(1, weight=1)
 
         # ⚠独立安装目录
-        lk_label = ttk.Label(install_frame, text=_('lki.settings.use_lk_mods'))
+        lk_label = ttk.Label(install_frame, text=tr('lki.settings.use_lk_mods'))
         lk_label.grid(row=0, column=0, sticky='e', padx=(0, 10), pady=10)
-        ToolTip(lk_label, _('lki.settings.tooltip_use_lk_mods'))
+        ToolTip(lk_label, tr('lki.settings.tooltip_use_lk_mods'))
         self._lk_global_combo = ttk.Combobox(install_frame, state='readonly', width=10)
         self._lk_global_combo.grid(row=0, column=1, sticky='w', pady=10)
-        self._lk_global_combo['values'] = [_('lki.generic.yes'), _('lki.generic.no')]
+        self._lk_global_combo['values'] = [tr('lki.generic.yes'), tr('lki.generic.no')]
         current_lk = settings.global_settings.get('use_lk_mods', False)
-        self._lk_global_combo.set(_('lki.generic.yes') if current_lk else _('lki.generic.no'))
+        self._lk_global_combo.set(tr('lki.generic.yes') if current_lk else tr('lki.generic.no'))
         self._lk_global_combo.bind('<<ComboboxSelected>>', self._on_lk_global_changed)
         
         # --- “文件”设置组 (row=3) ---
-        files_frame = ttk.LabelFrame(self, text=_('lki.settings.category.files'), padding=10)
+        files_frame = ttk.LabelFrame(self, text=tr('lki.settings.category.files'), padding=10)
         files_frame.grid(row=3, column=0, sticky='we', pady=5)
         files_frame.columnconfigure(1, weight=1)
 
         # 数据路径
-        data_path_label = ttk.Label(files_frame, text=_('lki.settings.paths.data_path'))
+        data_path_label = ttk.Label(files_frame, text=tr('lki.settings.paths.data_path'))
         data_path_label.grid(row=0, column=0, sticky='e', padx=(0, 10), pady=10)
 
         data_path_frame = ttk.Frame(files_frame)
@@ -171,7 +171,7 @@ class SettingsTab(BaseTab):
         self.data_path_display = ttk.Label(data_path_frame, text=self._truncate_path(app_data_path, 30))
         self.data_path_display.grid(row=0, column=0, sticky='w', padx=5)
 
-        data_path_btn = ttk.Button(data_path_frame, text=_('lki.btn.open_dir'),
+        data_path_btn = ttk.Button(data_path_frame, text=tr('lki.btn.open_dir'),
                                    command=lambda: self._open_directory(APP_DATA_PATH))
         data_path_btn.grid(row=0, column=1, sticky='e')
 
@@ -179,11 +179,11 @@ class SettingsTab(BaseTab):
         clear_frame = ttk.Frame(files_frame)
         clear_frame.grid(row=1, column=0, columnspan=2, sticky='e', pady=(10, 5))
 
-        self.clear_logs_btn = ttk.Button(clear_frame, text=_('lki.settings.btn.clear_logs'),
+        self.clear_logs_btn = ttk.Button(clear_frame, text=tr('lki.settings.btn.clear_logs'),
                                          command=self._on_clear_logs)
         self.clear_logs_btn.pack(side='right', padx=(5, 0))
 
-        self.clear_cache_btn = ttk.Button(clear_frame, text=_('lki.settings.btn.clear_cache'),
+        self.clear_cache_btn = ttk.Button(clear_frame, text=tr('lki.settings.btn.clear_cache'),
                                           command=self._on_clear_cache)
         self.clear_cache_btn.pack(side='right')
 
@@ -218,8 +218,8 @@ class SettingsTab(BaseTab):
 
             # 3. 立即询问是否重载
             if messagebox.askyesno(
-                    _('lki.reload.title'),
-                    _('lki.reload.confirm'),
+                    tr('lki.reload.title'),
+                    tr('lki.reload.confirm'),
                     parent=self
             ):
                 # 4a. 如果“是”，则清除标签并执行重载
@@ -227,7 +227,7 @@ class SettingsTab(BaseTab):
                 self.on_reload_callback()
             else:
                 # 4b. 如果“否”，则显示“需要重载”标签
-                self.lang_reload_label.config(text=_('lki.settings.language.reload_required'))
+                self.lang_reload_label.config(text=tr('lki.settings.language.reload_required'))
                 # (我们不再调用 on_language_change_callback，因为它会触发多余的弹窗)
 
     def _on_theme_select(self):
@@ -242,7 +242,7 @@ class SettingsTab(BaseTab):
             'disabled': 'lki.settings.proxy.disabled',
             'manual': 'lki.settings.proxy.manual',
         }
-        return _(key_map.get(proxy_mode, 'lki.settings.proxy.system'))
+        return tr(key_map.get(proxy_mode, 'lki.settings.proxy.system'))
 
     def _open_proxy_window(self):
         window = ProxyConfigWindow(self.master.master, self._on_proxy_config_saved)
@@ -251,7 +251,7 @@ class SettingsTab(BaseTab):
         self.proxy_status_label.config(text=self._get_proxy_status_text())
 
     def _on_lk_global_changed(self, event=None):
-        val = self._lk_global_combo.get() == _('lki.generic.yes')
+        val = self._lk_global_combo.get() == tr('lki.generic.yes')
         settings.global_settings.set('use_lk_mods', val)
 
     def update_icons(self):
@@ -273,7 +273,7 @@ class SettingsTab(BaseTab):
             display_text = ", ".join(display_names)
 
         if not display_text:
-            display_text = _('lki.routes.not_configured')
+            display_text = tr('lki.routes.not_configured')
 
         self.route_priority_display_label.config(text=display_text)
 
@@ -294,12 +294,12 @@ class SettingsTab(BaseTab):
         settings.global_settings.set('download_routes_priority', new_list)
         settings.global_settings.save()
         self._update_route_priority_display()  # <-- (新增)
-        messagebox.showinfo(_('lki.routes.title'), _('lki.routes.saved'), parent=self)
+        messagebox.showinfo(tr('lki.routes.title'), tr('lki.routes.saved'), parent=self)
 
     def _on_reload_click(self):
         if messagebox.askyesno(
-                _('lki.reload.title'),
-                _('lki.reload.confirm'),
+                tr('lki.reload.title'),
+                tr('lki.reload.confirm'),
                 parent=self
         ):
             self.on_reload_callback()
@@ -327,13 +327,13 @@ class SettingsTab(BaseTab):
                 subprocess.Popen(['xdg-open', path_str])
         except Exception as e:
             log(f"Error opening directory: {e}")
-            messagebox.showerror(_('lki.settings.clear.error'), f"Could not open directory: {e}", parent=self)
+            messagebox.showerror(tr('lki.settings.clear.error'), f"Could not open directory: {e}", parent=self)
 
     def _on_clear_logs(self):
         """清除日志文件（保留当前日志）。"""
         if not messagebox.askyesno(
-                _('lki.settings.clear_logs.confirm.title'),
-                _('lki.settings.clear_logs.confirm.message'),
+                tr('lki.settings.clear_logs.confirm.title'),
+                tr('lki.settings.clear_logs.confirm.message'),
                 parent=self
         ):
             return
@@ -345,17 +345,17 @@ class SettingsTab(BaseTab):
                     os.remove(f)
                     cleared_count += 1
             log(f"Cleared {cleared_count} log files.")
-            messagebox.showinfo(_('lki.settings.clear_logs.confirm.title'),
-                                _('lki.settings.clear_logs.success'), parent=self)
+            messagebox.showinfo(tr('lki.settings.clear_logs.confirm.title'),
+                                tr('lki.settings.clear_logs.success'), parent=self)
         except Exception as e:
             log(f"Error clearing logs: {e}")
-            messagebox.showerror(_('lki.settings.clear.error'), f"{e}", parent=self)
+            messagebox.showerror(tr('lki.settings.clear.error'), f"{e}", parent=self)
 
     def _on_clear_cache(self):
         """清除下载缓存。"""
         if not messagebox.askyesno(
-                _('lki.settings.clear_cache.confirm.title'),
-                _('lki.settings.clear_cache.confirm.message'),
+                tr('lki.settings.clear_cache.confirm.title'),
+                tr('lki.settings.clear_cache.confirm.message'),
                 parent=self
         ):
             return
@@ -372,11 +372,11 @@ class SettingsTab(BaseTab):
                     log(f"Could not remove item {item}: {e}")
 
             log("Cache cleared.")
-            messagebox.showinfo(_('lki.settings.clear_cache.confirm.title'),
-                                _('lki.settings.clear_cache.success'), parent=self)
+            messagebox.showinfo(tr('lki.settings.clear_cache.confirm.title'),
+                                tr('lki.settings.clear_cache.success'), parent=self)
         except Exception as e:
             log(f"Error clearing cache: {e}")
-            messagebox.showerror(_('lki.settings.clear.error'), f"{e}", parent=self)
+            messagebox.showerror(tr('lki.settings.clear.error'), f"{e}", parent=self)
 
     # --- (新增结束) ---
 
@@ -388,7 +388,7 @@ class ProxyConfigWindow(BaseDialog):
         super().__init__(parent)
         self.on_save_callback = on_save_callback
 
-        self.title(_('lki.proxy.title'))
+        self.title(tr('lki.proxy.title'))
 
         self.mode_var = tk.StringVar(value=settings.global_settings.get('proxy.mode', 'system'))
         self.host_var = tk.StringVar(value=settings.global_settings.get('proxy.host', ''))
@@ -399,35 +399,35 @@ class ProxyConfigWindow(BaseDialog):
         main_frame = ttk.Frame(self, padding=10)
         main_frame.pack(fill='both', expand=True)
 
-        mode_frame = ttk.LabelFrame(main_frame, text=_('lki.proxy.mode'), padding=10)
+        mode_frame = ttk.LabelFrame(main_frame, text=tr('lki.proxy.mode'), padding=10)
         mode_frame.pack(fill='x', pady=5)
 
         modes = [
-            (_('lki.settings.proxy.system'), 'system'),
-            (_('lki.settings.proxy.disabled'), 'disabled'),
-            (_('lki.settings.proxy.manual'), 'manual')
+            (tr('lki.settings.proxy.system'), 'system'),
+            (tr('lki.settings.proxy.disabled'), 'disabled'),
+            (tr('lki.settings.proxy.manual'), 'manual')
         ]
         for text, value in modes:
             rb = ttk.Radiobutton(mode_frame, text=text, variable=self.mode_var, value=value,
                                  command=self._toggle_manual_fields)
             rb.pack(anchor='w')
 
-        self.manual_frame = ttk.LabelFrame(main_frame, text=_('lki.proxy.manual_settings'), padding=10)
+        self.manual_frame = ttk.LabelFrame(main_frame, text=tr('lki.proxy.manual_settings'), padding=10)
         self.manual_frame.pack(fill='x', pady=5)
 
-        ttk.Label(self.manual_frame, text=_('lki.proxy.host')).grid(row=0, column=0, sticky='w', padx=5, pady=2)
+        ttk.Label(self.manual_frame, text=tr('lki.proxy.host')).grid(row=0, column=0, sticky='w', padx=5, pady=2)
         self.host_entry = ttk.Entry(self.manual_frame, textvariable=self.host_var)
         self.host_entry.grid(row=0, column=1, sticky='we', padx=5, pady=2)
 
-        ttk.Label(self.manual_frame, text=_('lki.proxy.port')).grid(row=1, column=0, sticky='w', padx=5, pady=2)
+        ttk.Label(self.manual_frame, text=tr('lki.proxy.port')).grid(row=1, column=0, sticky='w', padx=5, pady=2)
         self.port_entry = ttk.Entry(self.manual_frame, textvariable=self.port_var, width=10)
         self.port_entry.grid(row=1, column=1, sticky='w', padx=5, pady=2)
 
-        ttk.Label(self.manual_frame, text=_('lki.proxy.username')).grid(row=2, column=0, sticky='w', padx=5, pady=2)
+        ttk.Label(self.manual_frame, text=tr('lki.proxy.username')).grid(row=2, column=0, sticky='w', padx=5, pady=2)
         self.user_entry = ttk.Entry(self.manual_frame, textvariable=self.user_var)
         self.user_entry.grid(row=2, column=1, sticky='we', padx=5, pady=2)
 
-        ttk.Label(self.manual_frame, text=_('lki.proxy.password')).grid(row=3, column=0, sticky='w', padx=5, pady=2)
+        ttk.Label(self.manual_frame, text=tr('lki.proxy.password')).grid(row=3, column=0, sticky='w', padx=5, pady=2)
         self.pass_entry = ttk.Entry(self.manual_frame, textvariable=self.pass_var, show='*')
         self.pass_entry.grid(row=3, column=1, sticky='we', padx=5, pady=2)
 
@@ -436,8 +436,8 @@ class ProxyConfigWindow(BaseDialog):
         button_frame = ttk.Frame(main_frame)
         button_frame.pack(fill='x', pady=(10, 0))
 
-        ttk.Button(button_frame, text=_('lki.btn.save'), command=self._save_settings).pack(side='right')
-        ttk.Button(button_frame, text=_('lki.btn.cancel'), command=self.destroy).pack(side='right', padx=5)
+        ttk.Button(button_frame, text=tr('lki.btn.save'), command=self._save_settings).pack(side='right')
+        ttk.Button(button_frame, text=tr('lki.btn.cancel'), command=self.destroy).pack(side='right', padx=5)
 
         self._toggle_manual_fields()
 
@@ -462,8 +462,8 @@ class ProxyConfigWindow(BaseDialog):
         if mode == 'manual':
             if not host or not port:
                 messagebox.showerror(
-                    _('lki.proxy.title'),
-                    _('lki.proxy.error.host_port_required')
+                    tr('lki.proxy.title'),
+                    tr('lki.proxy.error.host_port_required')
                 )
                 return
 

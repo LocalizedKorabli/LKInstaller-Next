@@ -22,7 +22,7 @@ from tktooltip import ToolTip
 from core import dirs
 from core import constants
 from core import utils
-from core.localizer import _
+from core.localizer import tr
 from core.logger import log
 from ui.tabs.tab_base import BaseTab
 from ui.ui_manager import get_icon_manager  # (新增) 用于获取图标
@@ -63,7 +63,7 @@ class AboutTab(BaseTab):
             logo_label.pack(pady=(30, 10))
 
         # 2. App Name
-        title_text = _('lki.app.title.full')
+        title_text = tr('lki.app.title.full')
         title_label = ttk.Label(content_frame, text=title_text)
         title_label.pack(pady=(0, 15))
 
@@ -103,22 +103,22 @@ class AboutTab(BaseTab):
         self.btn_social_github.pack(side='left', padx=8)
         self.btn_social_qq.pack(side='left', padx=8)
         self.btn_social_discord.pack(side='left', padx=8)
-        ToolTip(self.btn_social_official, msg=_('lki.about.contacts.official'))
-        ToolTip(self.btn_social_github, msg=_('lki.about.contacts.github'))
-        ToolTip(self.btn_social_qq, msg=_('lki.about.contacts.qq'))
-        ToolTip(self.btn_social_discord, msg=_('lki.about.contacts.discord'))
+        ToolTip(self.btn_social_official, msg=tr('lki.about.contacts.official'))
+        ToolTip(self.btn_social_github, msg=tr('lki.about.contacts.github'))
+        ToolTip(self.btn_social_qq, msg=tr('lki.about.contacts.qq'))
+        ToolTip(self.btn_social_discord, msg=tr('lki.about.contacts.discord'))
 
         # 4. Version & Update
         version_center_frame = ttk.Frame(content_frame)
         version_center_frame.pack(pady=(0, 10))
 
         # 4a. 版本显示标签
-        version_display_text = f"{_('lki.version.label')}: {constants.APP_VERSION}"
+        version_display_text = f"{tr('lki.version.label')}: {constants.APP_VERSION}"
         version_label = ttk.Label(version_center_frame, text=version_display_text)
         version_label.pack(side='left', anchor='w')
 
         # 4b. 检查更新按钮
-        check_update_btn = ttk.Button(version_center_frame, text=_('lki.version.check_update'),
+        check_update_btn = ttk.Button(version_center_frame, text=tr('lki.version.check_update'),
                                       command=self._check_for_updates)
         check_update_btn.pack(side='left', padx=(20, 0))
 
@@ -143,7 +143,7 @@ class AboutTab(BaseTab):
             # 绑定点击事件: 左键点击 (<Button-1>) 时，打开指定的 URL
             agpl_label.bind('<Button-1>', lambda e: webbrowser.open('https://www.gnu.org/licenses/agpl-3.0.html'))
             agpl_label.pack(side='bottom', pady=(15, 0))
-            ToolTip(agpl_label, msg=_('lki.about.license.tooltip'))
+            ToolTip(agpl_label, msg=tr('lki.about.license.tooltip'))
         except Exception as e:
             # 记录加载或绑定错误
             log(f"Error loading AGPL image or binding: {e}")
@@ -166,11 +166,11 @@ class AboutTab(BaseTab):
         # (修改) 使用 ActionProgressWindow
         self.update_window = ActionProgressWindow(
             self.app_master,
-            {_('lki.update.title'): None},  # 任务名称即为标题
+            {tr('lki.update.title'): None},  # 任务名称即为标题
             cancel_callback=self._on_update_cancel,  # (修改) 传入回调
-            title=_('lki.update.title'),
-            starting_text=_('lki.update.status.checking'),
-            pending_text=_('lki.update.status.checking')
+            title=tr('lki.update.title'),
+            starting_text=tr('lki.update.status.checking'),
+            pending_text=tr('lki.update.status.checking')
         )
 
         # (修改) 启动工作线程

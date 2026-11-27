@@ -85,7 +85,7 @@ class Localizer:
         return _best_fonts.get(self.current_lang or '', _DEFAULT_FONTS)
 
 global_translator = Localizer(None)
-_ = global_translator.gettext
+tr = global_translator.gettext
 
 
 def get_available_languages():

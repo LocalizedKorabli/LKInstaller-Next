@@ -24,7 +24,7 @@ from core import settings
 from instance import instance_manager
 from installation.installation_manager import InstallationManager, InstallationTask
 from instance.game_instance import GameInstance
-from core.localizer import global_translator, _, select_best_font
+from core.localizer import global_translator, tr, select_best_font
 from core.logger import setup_logger, log
 
 def run_auto_execute(root, arg, run_client):
@@ -63,7 +63,7 @@ def run_auto_execute(root, arg, run_client):
 
     # 为预设添加一个可显示的名称
     if preset_data.get('is_default'):
-        preset_data['name'] = _(preset_data.get('name_key', 'lki.preset.default.name'))
+        preset_data['name'] = tr(preset_data.get('name_key', 'lki.preset.default.name'))
     else:
         preset_data['name'] = preset_data.get('name', preset_id)
 
@@ -135,7 +135,7 @@ def run_auto_execute_all(root, run_client):
 
         # 为预设添加可显示的名称
         if preset_data.get('is_default'):
-            preset_data['name'] = _(preset_data.get('name_key', 'lki.preset.default.name'))
+            preset_data['name'] = tr(preset_data.get('name_key', 'lki.preset.default.name'))
         else:
             preset_data['name'] = preset_data.get('name', preset_id)
 
