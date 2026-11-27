@@ -78,6 +78,7 @@ jobs:
           python - <<'PY'
           import os
           from pathlib import Path
+          from urllib.parse import urlparse, urlunparse
           import boto3
           from botocore.config import Config
 
@@ -88,16 +89,34 @@ jobs:
           ]
 
           def upload_target(name, endpoint, bucket, key_id, secret_key, prefix):
+              endpoint = endpoint.strip()
               if not all([endpoint, bucket, key_id, secret_key]):
                   print(f"Skipping {name}: missing credentials/config.")
                   return
+              parsed = urlparse(endpoint)
+              host = parsed.hostname or ""
+              is_cos = "myqcloud.com" in host
+              if is_cos and host.startswith(f"{bucket}."):
+                  new_host = host[len(bucket) + 1:]
+                  netloc = new_host if parsed.port is None else f"{new_host}:{parsed.port}"
+                  endpoint = urlunparse(parsed._replace(netloc=netloc))
+                  host = new_host
+
+              region = "auto"
+              if is_cos:
+                  parts = host.split(".")
+                  if len(parts) >= 4 and parts[0] == "cos" and parts[1] != "accelerate":
+                      region = parts[1]
+                  else:
+                      region = "ap-shanghai"
+
               client = boto3.client(
                   "s3",
                   endpoint_url=endpoint,
                   aws_access_key_id=key_id,
                   aws_secret_access_key=secret_key,
-                  region_name="auto",
-                  config=Config(s3={"addressing_style": "virtual"} if "myqcloud.com" in endpoint else {}),
+                  region_name=region,
+                  config=Config(s3={"addressing_style": "virtual"} if is_cos else {}),
               )
               clean_prefix = prefix.strip("/")
               for filename, content_type, cache_control in FILES:
