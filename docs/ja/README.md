@@ -16,7 +16,7 @@
 
 <details><summary style="font-size: 14px;">Languages🌐</summary>
 
-**日本語** | [English](/docs/en/README.md) | [简体中文](/README.md) | [繁體中文](/docs/cht/README.md) | [Русский](/docs/ru/README.md)
+**日本語** | [English](/docs/en/README.md) | [简体中文](/README.md) | [繁體中文](/docs/cht/README.md) | [Русский](/docs/ru/README.md) | [Deutsch](/docs/de/README.md) | [Español](/docs/es/README.md)
 
 </details>
 
