@@ -130,6 +130,7 @@
   "lki.game.client_type.production": "Mir Korabley Live",
   "lki.game.client_type.pts": "Mir Korabley PT",
   "lki.game.detected_clients": "Spielinstanzen",
+  "lki.game.empty_list_hint": "Bitte importieren Sie eine Mir Korabley-Spielinstanz.\nEs können nur vollständig installierte Spiele importiert werden.\nKlicken Sie unten auf die Schaltfläche, um Instanzen automatisch zu suchen und zu importieren. Sie finden dieses Symbol später auch oben rechts.",
   "lki.game.error.play_failed": "Instanz konnte nicht gestartet werden.\n\nWeder %s noch %s wurden im Instanzverzeichnis gefunden.",
   "lki.game.i18n_status.corrupted": "Beschädigt",
   "lki.game.i18n_status.inactive": "Inaktiv",

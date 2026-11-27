@@ -130,6 +130,7 @@
   "lki.game.client_type.production": "Mir Korabley正式服",
   "lki.game.client_type.pts": "Mir Korabley測試服",
   "lki.game.detected_clients": "遊戲實例",
+  "lki.game.empty_list_hint": "請導入 Mir Korabley 遊戲實例。\n只有安裝完成的遊戲才可以導入。\n點擊下方按鈕即可自動掃描並導入實例，之後也可以在右上角使用此圖示按鈕。",
   "lki.game.error.play_failed": "無法啟動實例。\n\n在實例目錄中未找到%s或%s。",
   "lki.game.i18n_status.corrupted": "被篡改",
   "lki.game.i18n_status.inactive": "非作用中版本",

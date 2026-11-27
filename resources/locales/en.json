@@ -130,6 +130,7 @@
   "lki.game.client_type.production": "Mir Korabley Live",
   "lki.game.client_type.pts": "Mir Korabley PT",
   "lki.game.detected_clients": "Game Instances",
+  "lki.game.empty_list_hint": "Please import a Mir Korabley game instance.\nOnly fully installed games can be imported.\nClick the button below to automatically scan and import instances. You can also use this icon button in the top-right corner later.",
   "lki.game.error.play_failed": "Could not launch instance.\n\nNeither %s nor %s were found in the instance directory.",
   "lki.game.i18n_status.corrupted": "Tampered",
   "lki.game.i18n_status.inactive": "Inactive",

@@ -130,6 +130,7 @@
   "lki.game.client_type.production": "Mir Korabley Live",
   "lki.game.client_type.pts": "Mir Korabley PT",
   "lki.game.detected_clients": "Instancias de juego",
+  "lki.game.empty_list_hint": "Por favor, importe una instancia del juego Mir Korabley.\nSolo se pueden importar juegos completamente instalados.\nHaga clic en el botón de abajo para escanear e importar instancias automáticamente. También podrá usar este icono en la esquina superior derecha más adelante.",
   "lki.game.error.play_failed": "No se pudo iniciar la instancia.\n\nNo se encontró %s ni %s en el directorio.",
   "lki.game.i18n_status.corrupted": "Dañado",
   "lki.game.i18n_status.inactive": "Inactivo",
