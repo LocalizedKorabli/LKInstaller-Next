@@ -1,0 +1,129 @@
+name: Sync Release to R2 and COS
+
+on:
+  release:
+    types: [released, published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to sync (leave empty for latest official release)"
+        required: false
+        default: ""
+
+jobs:
+  sync-mirrors:
+    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resolve target official release and download assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p release_assets
+
+          if [ -n "$INPUT_TAG" ]; then
+            IS_PRERELEASE=$(gh api "repos/${{ github.repository }}/releases/tags/${INPUT_TAG}" --jq '.prerelease')
+            if [ "$IS_PRERELEASE" = "true" ]; then
+              echo "Refusing to sync prerelease '$INPUT_TAG' to mirrors."
+              exit 1
+            fi
+            TARGET_TAG="$INPUT_TAG"
+          elif [ "${{ github.event_name }}" = "release" ]; then
+            TARGET_TAG="${{ github.event.release.tag_name }}"
+          else
+            TARGET_TAG=$(gh api "repos/${{ github.repository }}/releases/latest" --jq '.tag_name')
+          fi
+
+          echo "Syncing official release: $TARGET_TAG"
+          gh release download "$TARGET_TAG" \
+            --repo "${{ github.repository }}" \
+            --dir release_assets \
+            --pattern "lki_setup.exe" \
+            --pattern "lki_setup.Msix" \
+            --pattern "version_info.json"
+
+          for f in lki_setup.exe lki_setup.Msix version_info.json; do
+            if [ ! -f "release_assets/$f" ]; then
+              echo "Missing required release asset: $f"
+              exit 1
+            fi
+          done
+          ls -lh release_assets
+
+      - name: Set up Python and boto3
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install boto3
+        run: pip install --quiet boto3
+
+      - name: Upload assets to Cloudflare R2 and Tencent Cloud COS
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_KEY }}
+          R2_PREFIX: ${{ vars.LK_NEXT_R2_PREFIX }}
+          COS_ENDPOINT: ${{ secrets.COS_ENDPOINT }}
+          COS_BUCKET: ${{ secrets.COS_BUCKET }}
+          COS_SECRET_ID: ${{ secrets.COS_SECRET_ID }}
+          COS_SECRET_KEY: ${{ secrets.COS_SECRET_KEY }}
+          COS_PREFIX: ${{ vars.LK_NEXT_COS_PREFIX }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import boto3
+          from botocore.config import Config
+
+          FILES = [
+              ("lki_setup.exe", "application/vnd.microsoft.portable-executable", None),
+              ("lki_setup.Msix", "application/msix", None),
+              ("version_info.json", "application/json", "no-cache, max-age=0"),
+          ]
+
+          def upload_target(name, endpoint, bucket, key_id, secret_key, prefix):
+              if not all([endpoint, bucket, key_id, secret_key]):
+                  print(f"Skipping {name}: missing credentials/config.")
+                  return
+              client = boto3.client(
+                  "s3",
+                  endpoint_url=endpoint,
+                  aws_access_key_id=key_id,
+                  aws_secret_access_key=secret_key,
+                  region_name="auto",
+                  config=Config(s3={"addressing_style": "virtual"} if "myqcloud.com" in endpoint else {}),
+              )
+              clean_prefix = prefix.strip("/")
+              for filename, content_type, cache_control in FILES:
+                  key = f"{clean_prefix}/{filename}" if clean_prefix else filename
+                  extra = {"ContentType": content_type}
+                  if cache_control:
+                      extra["CacheControl"] = cache_control
+                  path = Path("release_assets") / filename
+                  print(f"[{name}] Uploading {path} -> s3://{bucket}/{key}")
+                  client.upload_file(str(path), bucket, key, ExtraArgs=extra)
+              print(f"[{name}] Upload completed.")
+
+          upload_target(
+              "Cloudflare R2",
+              os.environ.get("R2_ENDPOINT", ""),
+              os.environ.get("R2_BUCKET", ""),
+              os.environ.get("R2_ACCESS_KEY_ID", ""),
+              os.environ.get("R2_SECRET_ACCESS_KEY", ""),
+              os.environ.get("R2_PREFIX", ""),
+          )
+          upload_target(
+              "Tencent Cloud COS",
+              os.environ.get("COS_ENDPOINT", ""),
+              os.environ.get("COS_BUCKET", ""),
+              os.environ.get("COS_SECRET_ID", ""),
+              os.environ.get("COS_SECRET_KEY", ""),
+              os.environ.get("COS_PREFIX", ""),
+          )
+          PY
