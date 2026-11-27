@@ -472,6 +472,7 @@ class InstallationManager:
 
         cache_path = EE_CACHE / job.lang_code / task.instance.type
         ee_zip_path = cache_path / "ee.zip"
+        info_path = cache_path / "cache_info.json"
 
         utils.mkdir(cache_path)
 
@@ -484,10 +485,80 @@ class InstallationManager:
                 continue
 
             ee_url = urls.get('ee')
-            if self._download_file_with_retry(ee_url, ee_zip_path, f"EE ({job.job_id}) - {route_id}", 5):
+            if self._download_ee_from_url(
+                    ee_url, ee_zip_path, info_path, f"EE ({job.job_id}) - {route_id}", 5):
                 return True, ee_zip_path
 
         return False, None
+
+    def _download_ee_from_url(self, url: str, dest: Path, info_path: Path,
+                              log_prefix: str, timeout: int) -> bool:
+        """Download EE conditionally and reuse a verified cache on HTTP 304."""
+        from core.localizer import _
+
+        cached_etag = None
+        cache_is_valid = False
+        info_data = {}
+        if info_path.is_file() and dest.is_file():
+            try:
+                with open(info_path, 'r', encoding='utf-8') as f:
+                    info_data = json.load(f)
+                expected_hash = info_data.get('file_sha256')
+                cache_is_valid = bool(expected_hash and utils.get_sha256(dest) == expected_hash)
+                if cache_is_valid:
+                    cached_etag = info_data.get('etags', {}).get(url)
+            except Exception as e:
+                log(_('lki.install.debug.cache_check_failed') % e)
+
+        headers = {'If-None-Match': cached_etag} if cached_etag else None
+        temp_path = dest.with_name(f"{dest.name}.download")
+
+        try:
+            _log_overall(self, f"{log_prefix}: {_('lki.install.status.connecting') % url}")
+            proxies, proxy_auth = root_utils.get_configured_proxies()
+            response = requests.get(
+                url, stream=True, headers=headers, proxies=proxies,
+                auth=proxy_auth, timeout=(timeout, 60),
+            )
+
+            if response.status_code == 304:
+                if cache_is_valid:
+                    log(_('lki.install.debug.cache_hit') % log_prefix)
+                    return True
+                _log_overall(self, f"{log_prefix}: {_('lki.install.status.failed')} (HTTP 304 without valid cache)")
+                return False
+
+            response.raise_for_status()
+            with open(temp_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if self._cancel_event.is_set():
+                        _log_overall(self, f"{log_prefix}: {_('lki.install.status.cancelled')}")
+                        return False
+                    if chunk:
+                        f.write(chunk)
+
+            os.replace(temp_path, dest)
+            file_hash = utils.get_sha256(dest)
+            etags = info_data.get('etags', {}) if isinstance(info_data.get('etags'), dict) else {}
+            response_etag = response.headers.get('ETag')
+            if response_etag:
+                etags[url] = response_etag
+            else:
+                etags.pop(url, None)
+            with open(info_path, 'w', encoding='utf-8') as f:
+                json.dump({'file_sha256': file_hash, 'etags': etags}, f)
+
+            _log_overall(self, f"{log_prefix}: {_('lki.install.status.success')}")
+            return True
+        except (requests.exceptions.RequestException, OSError, ValueError) as e:
+            _log_overall(self, f"{log_prefix}: {_('lki.install.status.failed')} ({e})")
+            return False
+        finally:
+            if temp_path.exists():
+                try:
+                    temp_path.unlink()
+                except OSError:
+                    pass
 
     def _download_fonts(self, job: DownloadJob, task: InstallationTask) -> Tuple[bool, Optional[Path]]:
         from core.localizer import _
