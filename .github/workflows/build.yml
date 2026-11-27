@@ -38,23 +38,28 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuitka-
 
-      - name: Build MSIX
+      - name: Build MSIX and EXE installers
         shell: pwsh
         env:
           PFX_BASE64: ${{ secrets.LK_NEXT_PFX_BASE64 }}
           PFX_PASSWORD: ${{ secrets.LK_NEXT_PFX_PASSWORD }}
         run: |
+          if (-not (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+          }
           if ($env:PFX_BASE64) {
             $pfxPath = Join-Path $env:RUNNER_TEMP "signing.pfx"
             [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:PFX_BASE64))
             $env:PFX_PATH = $pfxPath
             try {
               python _compile_msix.py --build
+              python _compile.py --skip-nuitka
             } finally {
               Remove-Item $pfxPath -Force -ErrorAction SilentlyContinue
             }
           } else {
             python _compile_msix.py --build --no-sign
+            python _compile.py --skip-nuitka --no-sign
           }
 
       - name: Upload MSIX artifact
@@ -62,3 +67,11 @@ jobs:
         with:
           name: lk-next-msix
           path: msix/Output/*.msix
+
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lk-next-exe
+          path: |
+            inno/Output/LK Next v*.exe
+            inno/Output/version_info.json

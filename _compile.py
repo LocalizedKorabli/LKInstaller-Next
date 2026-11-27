@@ -13,6 +13,7 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+import argparse
 import json
 import os
 import re
@@ -27,14 +28,25 @@ from core import constants
 
 PFX_SHA1 = "43ff9aecc348a54ed61178eda015832ec5b050fc"
 TIMESTAMP_URL = "http://timestamp.digicert.com"
-# signtool.exe from Windows SDK; adjust the version folder if needed
 SIGNTOOL_PATH = r"C:\Program Files (x86)\Windows Kits\10\App Certification Kit\signtool.exe"
+
+
+def _signtool_auth_args():
+    pfx_path = os.environ.get("PFX_PATH", "")
+    pfx_password = os.environ.get("PFX_PASSWORD", "")
+    if pfx_path:
+        args = ["/f", pfx_path]
+        if pfx_password:
+            args.extend(["/p", pfx_password])
+        return args
+    return ["/sha1", PFX_SHA1]
+
 
 def sign_file(file_path):
     cmd = [
         SIGNTOOL_PATH, "sign",
         "/fd", "SHA256",
-        "/sha1", PFX_SHA1,
+        *_signtool_auth_args(),
         "/tr", TIMESTAMP_URL,
         "/td", "SHA256",
         str(file_path),
@@ -46,12 +58,10 @@ def sign_file(file_path):
         sys.exit(1)
     print(f"Signed OK: {file_path}")
 
-def run_build(major, minor, patch):
-    python_exe = os.path.join('.venv', 'Scripts', 'python.exe')
 
-    if not os.path.exists(python_exe):
-        print(f"Error: Cannot locate Python venv in '{python_exe}'")
-        sys.exit(1)
+def run_build(major, minor, patch):
+    venv_python = os.path.join('.venv', 'Scripts', 'python.exe')
+    python_exe = venv_python if os.path.exists(venv_python) else sys.executable
 
     nuitka_args = [
         '-m', 'nuitka',
@@ -133,12 +143,19 @@ except Exception as e:
 # Clean dist, then run Nuitka
 # Note: lki.build/ is Nuitka's incremental compilation cache, intentionally kept.
 
-if os.path.isdir('dist'):
-    shutil.rmtree('dist')
-run_build(major, minor, patch)
+parser = argparse.ArgumentParser(description="Build EXE installer for LKInstaller Next")
+parser.add_argument("--skip-nuitka", action="store_true", help="Reuse existing dist/lki.dist instead of running Nuitka")
+parser.add_argument("--no-sign", action="store_true", help="Skip signtool signing")
+args = parser.parse_args()
 
-# Sign lki.exe before Inno Setup packages it
-sign_file(Path('dist') / 'lki.dist' / 'lki.exe')
+if not args.skip_nuitka:
+    if os.path.isdir('dist'):
+        shutil.rmtree('dist')
+    run_build(major, minor, patch)
+
+if not args.no_sign:
+    # Sign lki.exe before Inno Setup packages it
+    sign_file(Path('dist') / 'lki.dist' / 'lki.exe')
 
 # Run Inno Setup to compile; /Smysign passes the sign tool used by SignTool=mysign in pack.iss
 output_path = Path('inno').joinpath('Output')
@@ -149,22 +166,32 @@ iscc_candidates = [
 ]
 iscc_path = next((p for p in iscc_candidates if os.path.exists(p)), iscc_candidates[0])
 target_iss_file = os.path.join('inno', 'pack.iss')
-sign_cmd = (
-    f'{SIGNTOOL_PATH} sign /fd SHA256'
-    f' /sha1 {PFX_SHA1} /tr {TIMESTAMP_URL} /td SHA256 $f'
-)
-result = subprocess.run(
-    [iscc_path, target_iss_file, f'/Smysign={sign_cmd}'],
-    capture_output=True, text=True,
-)
+
+iscc_cmd = [iscc_path, target_iss_file]
+if args.no_sign:
+    iscc_cmd.append('/DSKIP_SIGN')
+else:
+    pfx_path = os.environ.get("PFX_PATH", "")
+    pfx_password = os.environ.get("PFX_PASSWORD", "")
+    if pfx_path:
+        auth_part = f'/f $q{pfx_path}$q' + (f' /p $q{pfx_password}$q' if pfx_password else '')
+    else:
+        auth_part = f'/sha1 {PFX_SHA1}'
+    sign_cmd = f'{SIGNTOOL_PATH} sign /fd SHA256 {auth_part} /tr {TIMESTAMP_URL} /td SHA256 $f'
+    iscc_cmd.append(f'/Smysign={sign_cmd}')
+
+result = subprocess.run(iscc_cmd, capture_output=True, text=True)
 
 print("Compile prints:")
 print(result.stdout)
 if result.stderr:
     print("Compile errors:")
     print(result.stderr)
+if result.returncode != 0:
+    sys.exit(result.returncode)
 
-sign_file(output_path / 'lki_setup.exe')
+if not args.no_sign:
+    sign_file(output_path / 'lki_setup.exe')
 shutil.copy(output_path.joinpath('lki_setup.exe'), output_path.joinpath(f'LK Next v{app_version}.exe'))
 
 # Generate version_info.json

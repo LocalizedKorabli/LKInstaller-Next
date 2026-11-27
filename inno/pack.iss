@@ -39,16 +39,18 @@ UsePreviousLanguage=no
 VersionInfoDescription={#MyAppNameDefault}
 VersionInfoProductName={#MyAppNameDefault}
 PrivilegesRequired=admin
+#ifndef SKIP_SIGN
 SignTool=mysign
 SignedUninstaller=yes
+#endif
 
 [Files]
 Source: "..\dist\lki.dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Languages]
-Name: "zh_CN"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"; InfoBeforeFile: "..\assets\welcome_chs.txt"; LicenseFile: "..\assets\license.txt";
-Name: "zh_TW"; MessagesFile: "compiler:Languages\ChineseTraditional.isl"; InfoBeforeFile: "..\assets\welcome_cht.txt"; LicenseFile: "..\assets\license.txt";
+Name: "zh_CN"; MessagesFile: "Languages\ChineseSimplified.isl"; InfoBeforeFile: "..\assets\welcome_chs.txt"; LicenseFile: "..\assets\license.txt";
+Name: "zh_TW"; MessagesFile: "Languages\ChineseTraditional.isl"; InfoBeforeFile: "..\assets\welcome_cht.txt"; LicenseFile: "..\assets\license.txt";
 Name: "en"; MessagesFile: "compiler:Default.isl"; InfoBeforeFile: "..\assets\welcome_en.txt"; LicenseFile: "..\assets\license.txt";
 Name: "ru"; MessagesFile: "compiler:Languages\Russian.isl"; InfoBeforeFile: "..\assets\welcome_ru.txt"; LicenseFile: "..\assets\license.txt";
 Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"; InfoBeforeFile: "..\assets\welcome_ja.txt"; LicenseFile: "..\assets\license.txt";
