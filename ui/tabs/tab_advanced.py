@@ -375,7 +375,7 @@ class AdvancedTab(BaseTab):
 
         use_fonts = preset_data.get('use_fonts', False)
         fonts_text = tr('lki.generic.yes') if use_fonts else tr('lki.generic.no')
-        self.preset_fonts_label.config(text=f"{tr('lki.preset.manager.use_fonts')}: {fonts_text}")
+        self.preset_fonts_label.config(text=f"{tr('lki.preset.manager.use_fonts')} {fonts_text}")
 
     def _open_preset_manager(self):
         """打开预设管理器窗口"""
