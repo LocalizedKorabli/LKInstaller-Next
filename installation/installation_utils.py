@@ -208,6 +208,33 @@ def create_mkmod(output_path: Path, files_to_add: Dict[str, Path]):
         log(f"Failed to create {output_path}: {e}")
 
 
+def repack_zip_to_mkmod(source_zip_path: Path, output_path: Path) -> bool:
+    """Stream entries from a source ZIP directly into a ZIP_STORED .mkmod without disk extraction."""
+    mkdir(output_path.parent)
+    file_count = 0
+    with zipfile.ZipFile(source_zip_path, 'r') as src_zf:
+        process_possible_gbk_zip(src_zf)
+        with zipfile.ZipFile(output_path, 'w', compression=zipfile.ZIP_STORED) as dst_zf:
+            for info in src_zf.infolist():
+                if info.is_dir():
+                    continue
+                arcname = info.filename.replace("\\", "/").lstrip("/")
+                if not arcname:
+                    continue
+                dest_info = zipfile.ZipInfo(filename=arcname, date_time=info.date_time)
+                dest_info.compress_type = zipfile.ZIP_STORED
+                dest_info.external_attr = info.external_attr
+                with src_zf.open(info, 'r') as src_file, dst_zf.open(dest_info, 'w') as dst_file:
+                    shutil.copyfileobj(src_file, dst_file)
+                file_count += 1
+    if file_count == 0:
+        if output_path.exists():
+            output_path.unlink()
+        return False
+    log(f"Created {output_path}")
+    return True
+
+
 # (Mods 助手函数: _extract_zip_mods 保持不变)
 
 def _extract_zip_mods(zip_path: Path, temp_target_dir: Path):
