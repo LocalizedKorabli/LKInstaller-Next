@@ -178,6 +178,26 @@ class GameTab(BaseTab):
         self._bind_mousewheel(self.canvas)
         self._bind_mousewheel(self.client_list_frame)
 
+        self.empty_state_frame = ttk.Frame(list_container)
+        self.empty_hint_label = ttk.Label(
+            self.empty_state_frame,
+            text=_('lki.game.empty_list_hint'),
+            style="Hint.TLabel",
+            justify='center',
+            anchor='center',
+            wraplength=1,
+        )
+        self.empty_hint_label.pack(pady=(0, 12))
+
+        self.btn_empty_auto_import = ttk.Button(
+            self.empty_state_frame,
+            text="  " + _('lki.tooltip.detect_instances'),
+            image=self.icons.auto_import_icon,
+            compound='left',
+            command=self._on_auto_import,
+        )
+        self.btn_empty_auto_import.pack()
+
         ToolTip(self.btn_import, _('lki.tooltip.add_instance'))
         ToolTip(self.btn_rename, _('lki.tooltip.edit_instance'))
         ToolTip(self.btn_remove, _('lki.tooltip.remove_instance'))
@@ -249,6 +269,12 @@ class GameTab(BaseTab):
         # 实例存在时允许配置自动更新（即使未选中具体实例）
         if self.loaded_game_instances and not self.selected_instance_id:
             self.btn_auto_update_shortcut.config(state='normal')
+
+        if loaded_instances:
+            self.empty_state_frame.place_forget()
+        else:
+            self.empty_state_frame.place(relx=0.5, rely=0.5, anchor='center')
+            self.empty_state_frame.lift()
 
     def get_selected_game_instance(self) -> Optional[GameInstance]:
         if not self.selected_instance_id:
@@ -460,6 +486,8 @@ class GameTab(BaseTab):
     def _on_canvas_configure(self, event):
         canvas_width = event.width
         self.canvas.itemconfig(self.client_list_window, width=canvas_width)
+        wrap = max(1, canvas_width - utils.scale_dpi(self, 40))
+        self.empty_hint_label.config(wraplength=wrap)
 
     def _on_select_all(self):
         if 'alternate' in self.check_all_btn.state():
@@ -506,6 +534,7 @@ class GameTab(BaseTab):
         self.btn_refresh.config(image=self.icons.refresh)
         self.btn_play.config(image=self.icons.play)
         self.btn_auto_update_shortcut.config(image=self.icons.auto_upgrade)
+        self.btn_empty_auto_import.config(image=self.icons.auto_import_icon)
 
     def _clear_selection_and_refresh(self, default_checked_ids: Optional[Set[str]] = None):
         """内部助手，用于清除选择、刷新列表并通知 App"""
@@ -534,9 +563,14 @@ class GameTab(BaseTab):
 
         # 4. (已删除) 此处不应再有 on_instance_select_callback(None) 或禁用按钮的代码
 
+    def _set_auto_import_buttons_state(self, state: str):
+        """Sync enabled/disabled state across both auto-import buttons."""
+        self.btn_auto_import.config(state=state)
+        self.btn_empty_auto_import.config(state=state)
+
     def _on_auto_import(self, is_initial_run=False):
         """Kicks off the instance detection in a new thread."""
-        self.btn_auto_import.config(state='disabled')
+        self._set_auto_import_buttons_state('disabled')
 
         if not is_initial_run:
             self._clear_selection_and_refresh()
@@ -554,7 +588,7 @@ class GameTab(BaseTab):
                 self.app_master.after(0, messagebox.showinfo,
                                       _('lki.game.detected_clients'),
                                       _('lki.detect.none_found'))
-                self.app_master.after(0, self.btn_auto_import.config, {'state': 'normal'})
+                self.app_master.after(0, self._set_auto_import_buttons_state, 'normal')
                 return
 
             current_ui_lang = settings.global_settings.language
@@ -608,11 +642,11 @@ class GameTab(BaseTab):
                 self.app_master.after(0, messagebox.showerror,
                                       _('lki.game.detected_clients'),
                                       f"An error occurred: {e}")
-            self.app_master.after(0, self.btn_auto_import.config, {'state': 'normal'})
+            self.app_master.after(0, self._set_auto_import_buttons_state, 'normal')
 
     def _auto_import_finished(self, new_count: int, new_ids: List[str], is_initial_run: bool,
                               non_ascii_paths=None):
-        self.btn_auto_import.config(state='normal')
+        self._set_auto_import_buttons_state('normal')
 
         if not is_initial_run:
             if new_count > 0:

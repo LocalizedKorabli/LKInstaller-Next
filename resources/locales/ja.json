@@ -130,6 +130,7 @@
   "lki.game.client_type.production": "Mir Korabley ライブ",
   "lki.game.client_type.pts": "Mir Korabley PT",
   "lki.game.detected_clients": "ゲームインスタンス",
+  "lki.game.empty_list_hint": "Mir Korabley のインスタンスをインポートしてください。\nインストールが完了したゲームのみインポートできます。\n下のボタンから自動スキャンしてインポートできます。\n右上のアイコンボタンからもいつでも実行できます。",
   "lki.game.error.play_failed": "インスタンスを起動できませんでした。\n\nインスタンスディレクトリに %s も %s も見つかりませんでした。",
   "lki.game.i18n_status.corrupted": "改ざん",
   "lki.game.i18n_status.inactive": "非アクティブ",
