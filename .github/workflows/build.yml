@@ -1,4 +1,4 @@
-name: Build MSIX
+name: Build Artifacts
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-msix:
+  build-artifacts:
     runs-on: windows-latest
 
     steps:
