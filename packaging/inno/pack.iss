@@ -16,8 +16,8 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-WizardImageFile=..\assets\wizard.bmp
-WizardSmallImageFile=..\assets\wizard_small.bmp
+WizardImageFile=..\inno_assets\wizard.bmp
+WizardSmallImageFile=..\inno_assets\wizard_small.bmp
 DisableWelcomePage=no
 DefaultDirName={autopf}\LocalizedKorabli\LKInstallerNext
 ; "ArchitecturesAllowed=x64compatible" specifies that Setup cannot run
@@ -30,7 +30,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
 OutputBaseFilename="lki_setup"
-SetupIconFile=..\resources\logo\logo.ico
+SetupIconFile=..\..\src\resources\logo\logo.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -45,15 +45,15 @@ SignedUninstaller=yes
 #endif
 
 [Files]
-Source: "..\dist\lki.dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\..\dist\lki.dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Languages]
-Name: "zh_CN"; MessagesFile: "Languages\ChineseSimplified.isl"; InfoBeforeFile: "..\assets\welcome_chs.txt"; LicenseFile: "..\assets\license.txt";
-Name: "zh_TW"; MessagesFile: "Languages\ChineseTraditional.isl"; InfoBeforeFile: "..\assets\welcome_cht.txt"; LicenseFile: "..\assets\license.txt";
-Name: "en"; MessagesFile: "compiler:Default.isl"; InfoBeforeFile: "..\assets\welcome_en.txt"; LicenseFile: "..\assets\license.txt";
-Name: "ru"; MessagesFile: "compiler:Languages\Russian.isl"; InfoBeforeFile: "..\assets\welcome_ru.txt"; LicenseFile: "..\assets\license.txt";
-Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"; InfoBeforeFile: "..\assets\welcome_ja.txt"; LicenseFile: "..\assets\license.txt";
+Name: "zh_CN"; MessagesFile: "Languages\ChineseSimplified.isl"; InfoBeforeFile: "..\inno_assets\welcome_chs.txt"; LicenseFile: "..\inno_assets\license.txt";
+Name: "zh_TW"; MessagesFile: "Languages\ChineseTraditional.isl"; InfoBeforeFile: "..\inno_assets\welcome_cht.txt"; LicenseFile: "..\inno_assets\license.txt";
+Name: "en"; MessagesFile: "compiler:Default.isl"; InfoBeforeFile: "..\inno_assets\welcome_en.txt"; LicenseFile: "..\inno_assets\license.txt";
+Name: "ru"; MessagesFile: "compiler:Languages\Russian.isl"; InfoBeforeFile: "..\inno_assets\welcome_ru.txt"; LicenseFile: "..\inno_assets\license.txt";
+Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"; InfoBeforeFile: "..\inno_assets\welcome_ja.txt"; LicenseFile: "..\inno_assets\license.txt";
 
 [CustomMessages]
 zh_CN.MyAppName=澪刻 Next: Mir Korabley 本地化安装器

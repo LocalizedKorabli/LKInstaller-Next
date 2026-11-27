@@ -28,6 +28,8 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run unit tests
+        env:
+          PYTHONPATH: src
         run: python -m unittest discover -s tests -v
 
       - name: Cache Nuitka (clcache & downloads)
@@ -52,26 +54,26 @@ jobs:
             [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:PFX_BASE64))
             $env:PFX_PATH = $pfxPath
             try {
-              python _compile_msix.py --build
-              python _compile.py --skip-nuitka
+              python packaging/build_msix.py --build
+              python packaging/build_exe.py --skip-nuitka
             } finally {
               Remove-Item $pfxPath -Force -ErrorAction SilentlyContinue
             }
           } else {
-            python _compile_msix.py --build --no-sign
-            python _compile.py --skip-nuitka --no-sign
+            python packaging/build_msix.py --build --no-sign
+            python packaging/build_exe.py --skip-nuitka --no-sign
           }
 
       - name: Upload MSIX artifact
         uses: actions/upload-artifact@v4
         with:
           name: lk-next-msix
-          path: msix/Output/*.msix
+          path: packaging/msix/Output/*.msix
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: lk-next-exe
           path: |
-            inno/Output/LK Next v*.exe
-            inno/Output/version_info.json
+            packaging/inno/Output/LK Next v*.exe
+            packaging/inno/Output/version_info.json
