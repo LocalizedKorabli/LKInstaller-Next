@@ -95,20 +95,23 @@ jobs:
                   return
               parsed = urlparse(endpoint)
               host = parsed.hostname or ""
+              scheme = parsed.scheme or "http"
               is_cos = "myqcloud.com" in host
-              if is_cos and host.startswith(f"{bucket}."):
-                  new_host = host[len(bucket) + 1:]
-                  netloc = new_host if parsed.port is None else f"{new_host}:{parsed.port}"
-                  endpoint = urlunparse(parsed._replace(netloc=netloc))
-                  host = new_host
-
               region = "auto"
+
               if is_cos:
                   parts = host.split(".")
-                  if len(parts) >= 4 and parts[0] == "cos" and parts[1] != "accelerate":
-                      region = parts[1]
-                  else:
-                      region = "ap-shanghai"
+                  # Handle <bucket-appid>.cos.<region>.myqcloud.com
+                  if len(parts) >= 5 and parts[1] == "cos":
+                      endpoint_bucket = parts[0]
+                      if bucket == endpoint_bucket or endpoint_bucket.startswith(f"{bucket}-"):
+                          bucket = endpoint_bucket
+                      region = parts[2] if parts[2] != "accelerate" else "ap-shanghai"
+                      new_host = ".".join(parts[1:])
+                      netloc = new_host if parsed.port is None else f"{new_host}:{parsed.port}"
+                      endpoint = urlunparse(parsed._replace(netloc=netloc))
+                  elif len(parts) >= 4 and parts[0] == "cos":
+                      region = parts[1] if parts[1] != "accelerate" else "ap-shanghai"
 
               client = boto3.client(
                   "s3",
