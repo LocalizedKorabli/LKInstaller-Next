@@ -30,6 +30,14 @@ jobs:
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
 
+      - name: Cache Nuitka (clcache & downloads)
+        uses: actions/cache@v4
+        with:
+          path: ~/AppData/Local/Nuitka/Nuitka/Cache
+          key: ${{ runner.os }}-nuitka-${{ hashFiles('requirements.txt', '**/*.py') }}
+          restore-keys: |
+            ${{ runner.os }}-nuitka-
+
       - name: Build MSIX
         shell: pwsh
         env:
